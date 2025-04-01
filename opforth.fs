@@ -1,71 +1,70 @@
-\ Opforth Words
+\ Opforth Core and Core Extension Words
 
 
-\ Core Stack (14)
-\
-\ 2drop
-\ 2dup
-\ 2over
-\ 2swap
-\ >r
-\ ?dup
-\ depth
+\ Core Stack (13)
+
 \ drop
 \ dup
+\ swap
 \ over
+\ rot
+\ ?dup
+\ 2drop
+\ 2dup
+\ 2swap
+\ 2over
+\ >r
 \ r>
 \ r@
-\ rot
-\ swap
 
 
-\ Core Extension Stack (8)
-\
+\ Core Extension Stack (7)
+
+\ nip
+\ tuck
+\ pick
+\ roll
 \ 2>r
 \ 2r>
 \ 2r@
-\ nip
-\ pick
-\ roll
-\ tuck
-\ unused
 
 
-\ Core Arithmetic (17)
-\
-\ *
-\ */
-\ */mod
-\ +
-\ -
-\ /
-\ /mod
+\ Core Arithmetic (18)
+
 \ 1+
 \ 1-
+\ +
+\ -
+\ negate
 \ abs
-\ fm/mod
-\ m*
-\ mod
 \ s>d
-\ sm/rem
+\ *
+\ m*
 \ um*
+\ /
+\ mod
+\ /mod
+\ fm/mod
+\ sm/rem
 \ um/mod
+\ */
+\ */mod
 
 
 \ Core Number Test (8)
-\
-\ 0<
+
 \ 0=
-\ <
+\ 0<
 \ =
+\ <
 \ >
+\ u<
 \ max
 \ min
-\ u<
 
 
 \ Core Extension Number Test (5)
-\
+
 \ 0<>
 \ 0>
 \ <>
@@ -73,215 +72,220 @@
 \ within
 
 
-\ Core Bitwise Logic (9)
-\
+\ Core Bitwise Logic (8)
+
+\ invert
+\ and
+\ or
+\ xor
 \ 2*
 \ 2/
-\ and
-\ invert
 \ lshift
-\ negate
-\ or
 \ rshift
-\ xor
 
 
 \ Core Extension Bitwise Logic (2)
-\
-\ false
+
 \ true
+\ false
 
 
 \ Core Address Math (6)
-\
-\ aligned
-\ cell+
+
 \ cells
-\ char+
 \ chars
+\ cell+
+\ char+
+\ aligned
 \ count
 
 
 \ Core Memory (9)
-\
-\ !
-\ +!
-\ 2!
-\ 2@
+
 \ @
-\ c!
+\ !
 \ c@
+\ c!
+\ 2@
+\ 2!
+\ +!
 \ fill
 \ move
 
 
-\ Core Extension Memory (1)
-\
+\ Core Extension Memory (2)
+
 \ erase
+\ pad
 
 
-\ Core Text Display (8)
-\
+\ Core Text Display (7)
+
 \ ."
-\ bl
-\ cr
 \ emit
-\ s"
+\ cr
+\ bl
 \ space
 \ spaces
 \ type
 
 
-\ Core Extension Text Display (3)
-\
+\ Core Extension Text Display (1)
+
 \ .(
-\ c"
-\ s\"
 
 
 \ Core Numeric String (11)
-\
+
+\ .
+\ u.
+\ <#
+\ #>
 \ #
 \ #s
-\ #>
-\ .
-\ <#
+\ hold
+\ sign
 \ >number
 \ base
 \ decimal
-\ hold
-\ sign
-\ u.
 
 
 \ Core Extension Numeric String (4)
-\
+
 \ .r
-\ hex
-\ holds
 \ u.r
+\ holds
+\ hex
 
 
 \ Core Text Input (7)
-\
+
 \ (
+\ source
 \ >in
+\ key
 \ accept
 \ char
-\ key
-\ source
 \ word
 
 
 \ Core Extension Text Input (7)
-\
+
+\ \
 \ parse
 \ parse-name
-\ refill
-\ restore-input
-\ save-input
 \ source-id
-\ \
+\ save-input
+\ restore-input
+\ refill
 
 
-\ Core Execution Token (3)
-\
-\ '
+\ Core Execution Token (4)
+
 \ execute
+\ '
 \ find
+\ >body
 
 
 \ Core Extension Execution Token (4)
-\
-\ action-of
-\ defer!
+
 \ defer@
+\ defer!
+\ action-of
 \ is
 
 
 \ Core Compiler (13)
-\
+
 \ ,
-\ >body
-\ align
-\ allot
 \ c,
+\ allot
+\ align
 \ here
-\ literal
 \ postpone
-\ state
-\ [
-\ [']
+\ literal
+\ s"
 \ [char]
+\ [']
+\ [
 \ ]
+\ state
 
 
-\ Core Extension Compiler (2)
-\
+\ Core Extension Compiler (4)
+
+\ s\"
+\ c"
 \ compile,
 \ [compile]
 
 
 \ Core Definition (7)
-\
+
 \ :
 \ ;
+\ immediate
 \ constant
+\ variable
 \ create
 \ does>
-\ immediate
-\ variable
 
 
 \ Core Extension Definition (6)
-\
+
 \ :noname
 \ buffer:
+\ value
+\ to
 \ defer
 \ marker
-\ to
-\ value
 
 
 \ Core Control Flow (16)
-\
-\ +loop
-\ begin
-\ do
-\ else
-\ exit
-\ i
+
 \ if
-\ j
-\ leave
-\ loop
-\ recurse
-\ repeat
+\ else
 \ then
-\ unloop
+\ begin
 \ until
 \ while
+\ repeat
+\ exit
+\ recurse
+\ do
+\ loop
+\ +loop
+\ i
+\ j
+\ leave
+\ unloop
 
 
 \ Core Extension Control Flow (6)
-\
-\ ?do
+
 \ again
+\ ?do
 \ case
-\ endcase
-\ endof
 \ of
+\ endof
+\ endcase
 
 
-\ Core Forth System (5)
-\
+\ Core Query (2)
+
+\ depth
+\ environment?
+
+
+\ Core Extension Query (1)
+
+\ unused
+
+
+\ Core Outer Interpreter (4)
+
+\ quit
 \ abort
 \ abort"
-\ environment?
 \ evaluate
-\ quit
-
-
-\ Core Extension Forth System (1)
-\
-\ pad
