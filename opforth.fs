@@ -35,20 +35,20 @@
 \ 2dup     x1 x2 -- x1 x2 x1 x2
 \ 2swap    x1 x2 x3 x4 -- x3 x4 x1 x2
 \ 2over    x1 x2 x3 x4 -- x1 x2 x3 x4 x1 x2
-\ >r       Exe: x R: -- R:x
-\ r>       Exe: R:x -- x R:
-\ r@       Exe: R:x -- x R:x
+\ >r       Compi: --  Exe: x R: -- R:x
+\ r>       Compi: --  Exe: R:x -- x R:
+\ r@       Compi: --  Exe: R:x -- x R:x
 
 
-\ Core Extension Stack
+\ Core-Ext Stack
 
 \ nip     x1 x2 -- x2
 \ tuck    x1 x2 -- x2 x1 x2
 \ pick    xu...x1 x0 u -- xu...x1 x0 xu
 \ roll    xu xu-1...x0 u -- xu-1...x0 xu
-\ 2>r     Exe: x1 x2 R: -- R:x1 R:x2
-\ 2r>     Exe: R:x1 R:x2 -- x1 x2 R:
-\ 2r@     Exe: R:x1 R:x2 -- x1 x2 R:x1 R:x2
+\ 2>r     Compi: --  Exe: x1 x2 R: -- R:x1 R:x2
+\ 2r>     Compi: --  Exe: R:x1 R:x2 -- x1 x2 R:
+\ 2r@     Compi: --  Exe: R:x1 R:x2 -- x1 x2 R:x1 R:x2
 
 
 \ Core Arithmetic
@@ -85,7 +85,7 @@
 \ min    n1 n2 -- n3
 
 
-\ Core Extension Number Test
+\ Core-Ext Number Test
 
 \ 0<>       x -- flag
 \ 0>        n -- flag
@@ -106,10 +106,10 @@
 \ rshift    x1 u -- x2
 
 
-\ Core Extension Bitwise Logic
+\ Core-Ext Bitwise Logic
 
-\ true     x -- true
-\ false    x -- false
+\ true     -- true
+\ false    -- false
 
 
 \ Core Address Math
@@ -135,7 +135,7 @@
 \ fill    c-addr u char --
 
 
-\ Core Extension Memory
+\ Core-Ext Memory
 
 \ erase    c-addr u -- false | i*x true
 \ pad      -- c-addr
@@ -143,7 +143,7 @@
 
 \ Core Text Display
 
-\ ."        Inter,Compi: 'ccc"' --  Run: --
+\ ."        'ccc<quote>' --  Run: --
 \ emit      x --
 \ type      c-addr u --
 \ cr        --
@@ -152,165 +152,173 @@
 \ spaces    n --
 
 
-\ Core Extension Text Display
+\ Core-Ext Text Display
 
-\ .(    Inter,Compi: 'ccc<close-paren>' --
+\ .(    'ccc<close-paren>' --
 
 
 \ Core Numeric String
 
-\ .
-\ u.
-\ <#
-\ #>
-\ #
-\ #s
-\ hold
-\ sign
-\ >number
-\ base
-\ decimal
+\ .          n --
+\ u.         u --
+\ <#         --
+\ #>         xd -- c-addr u
+\ #          ud1 -- ud2
+\ #s         ud1 -- ud2
+\ hold       char --
+\ sign       n --
+\ >number    ud1 c-addr1 u1 -- ud2 c-addr2 u2
+\ decimal    --
+\ base       -- a-addr
 
 
-\ Core Extension Numeric String
+\ Core-Ext Numeric String
 
-\ .r
-\ u.r
-\ holds
-\ hex
+\ .r       n1 n2 --
+\ u.r      u n --
+\ holds    c-addr u --
+\ hex      --
 
 
 \ Core Text Input
 
-\ (
-\ source
-\ >in
-\ key
-\ accept
-\ char
-\ word
+\ (         Compi: 'ccc<close-paren>' --  Run: --
+\ source    -- c-addr u
+\ >in       -- a-addr
+\ key       -- char
+\ accept    c-addr +n1 -- +n2
+\ char      '<spaces>ccc' -- c
+\ word      '<chars>ccc<char>' char -- c-addr
 
 
-\ Core Extension Text Input
+\ Core-Ext Text Input
 
-\ \
-\ parse
-\ parse-name
-\ source-id
-\ save-input
-\ restore-input
-\ refill
-
-
-\ Core Execution Token
-
-\ execute
-\ '
-\ find
-\ >body
-
-
-\ Core Extension Execution Token
-
-\ defer@
-\ defer!
-\ action-of
-\ is
-
-
-\ Core Compiler
-
-\ ,
-\ c,
-\ allot
-\ align
-\ here
-\ postpone
-\ literal
-\ s"
-\ [char]
-\ [']
-\ [
-\ ]
-\ state
-
-
-\ Core Extension Compiler
-
-\ s\"
-\ c"
-\ compile,
-\ [compile]
-
-
-\ Core Definition
-
-\ :
-\ ;
-\ immediate
-\ constant
-\ variable
-\ create
-\ does>
-
-
-\ Core Extension Definition
-
-\ :noname
-\ buffer:
-\ value
-\ to
-\ defer
-\ marker
-
-
-\ Core Control Flow
-
-\ if
-\ else
-\ then
-\ begin
-\ until
-\ while
-\ repeat
-\ exit
-\ recurse
-\ do
-\ loop
-\ +loop
-\ i
-\ j
-\ leave
-\ unloop
-
-
-\ Core Extension Control Flow
-
-\ again
-\ ?do
-\ case
-\ of
-\ endof
-\ endcase
+\ \                Compi: 'ccc<eol>' --  Run: --
+\ parse            'ccc<char>' char -- c-addr u
+\ parse-name       '<spaces>name<space>' -- c-addr u
+\ source-id        -- 0 | -1
+\ save-input       -- xn...x1 n
+\ restore-input    xn...x1 n -- flag
+\ refill           -- flag
 
 
 \ Core Query
 
-\ depth
-\ environment?
+\ depth           -- +n
+\ environment?    c-addr u -- false | i*x true
 
 
-\ Core Extension Query
+\ Core-Ext Query
 
-\ unused
+\ unused    -- u
+
+
+\ Core Execution Token
+
+\ execute    i*x xt -- j*x
+\ '          '<spaces>name' -- xt
+\ find       c-addr -- c-addr 0 | xt 1 | xt -1
+\ >body      xt -- a-addr
+
+
+\ Core-Ext Execution Token
+
+\ defer@       xt1 -- xt2
+\ defer!       xt2 xt1 --
+\ action-of    '<spaces>name' -- xt
+\ is           '<spaces>name' xt --
+
+
+\ Core Compiler
+
+\ ,           x --
+\ c,          char --
+\ allot       n --
+\ align       --
+\ here        -- addr
+\ [           --
+\ ]           --
+\ state       -- a-addr
+\ postpone    Compi: '<spaces>name' --
+\ literal     Compi: x --  Run: -- x
+\ [char]      Compi: '<spaces>name' --  Run: -- char
+\ [']         Compi: '<spaces>name' --  Run: -- xt
+\ s"          Inter: 'ccc<quote>' -- c-addr u
+\             Compi: 'ccc<quote>' --  Run: -- c-addr u
+
+
+\ Core-Ext Compiler
+
+\ s\"          Compi: 'ccc<quote>' --
+\ c"           Compi: 'ccc<quote>' --  Run: -- c-addr
+\ compile,     Compi: --  Exe: xt --
+\ [compile]    Compi: '<spaces>name' --
+
+
+\ Core Definition
+
+\ :            '<spaces>name' -- colon-sys
+\              Initi: i*x R: -- i*x R:nest-sys  Exe: i*x -- j*x
+\ ;            Compi: colon-sys --  Run: R:nest-sys -- R:
+\ immediate    --
+\ constant     '<spaces>name' x --
+\ variable     '<spaces>name' --
+\ create       '<spaces>name' --
+\ does>        Compi: colon-sys1 -- colon-sys2
+\              Run: R:nest-sys1 -- R:
+\              Initi: i*x R: -- i*x a-addr R:nest-sys2
+\              Exe: i*x -- j*x
+
+
+\ Core-Ext Definition
+
+\ :noname    -- xt colon-sys
+\            Initi: i*x R: -- i*x R:nest-sys  Exe: i*x -- j*x
+\ buffer:    '<spaces>name' u --  Exe: -- a-addr
+\ value      '<spaces>name' x --  Exe: -- x
+\            to: x --
+\ to         Inter: '<spaces>name' i*x --
+\            Compi: '<spaces>name' --
+\ defer      '<spaces>name' --  Exe: i*x -- j*x
+\ marker     '<spaces>name' --  Exe: --
+
+
+\ Core Control Flow
+
+\ if         Compi: -- orig  Run: x --
+\ else       Compi: orig1 -- orig2  Run: --
+\ then       Compi: orig --  Run: --
+\ begin      Compi: -- dest  Run: --
+\ until      Compi: dest --  Run: x --
+\ while      Compi: dest -- orig dest  Run: x --
+\ repeat     Compi: orig dest --  Run: --
+\ do         Compi: -- do-sys  Run: nu1 nu2 R: -- R:n
+\ loop       Compi: do-sys --  Run: R:n1 -- R:|n2
+\ +loop      Compi: do-sys --  Run: n1 R:n2 -- R:|n3
+\ i          Compi: --  Exe: R:n -- nu R:n
+\ j          Compi: --  Exe: R:n1 n2 -- nu n1 n2
+\ leave      Compi: --  Exe: R:n -- R:
+\ unloop     Compi: --  Exe: R:n -- R:
+\ exit       Compi: --  Exe: R:nest-sys -- R:
+\ recurse    Compi: --
+
+
+\ Core-Ext Control Flow
+
+\ again      Compi: dest --  Run: --
+\ ?do        Compi: -- do-sys  Run: nu1 nu2 R: -- R:n
+\ case       Compi: -- case-sys  Run: --
+\ of         Compi: -- of-sys  Run: x1 x2 -- |x1
+\ endof      Compi: case-sys1 of-sys -- case-sys2  Run: --
+\ endcase    Compi: case-sys  Run: x --
 
 
 \ Core Outer Interpreter
 
-\ quit
-\ abort
-\ abort"
-\ evaluate
+\ quit        R:i*x -- R:
+\ abort       i*x R:j*x -- R:
+\ abort"      Compi: 'ccc<quote>' --  Run: i*x x1 R:j*x -- |i*x R:|j*x
+\ evaluate    i*x c-addr u -- j*x
 
 
 
@@ -391,7 +399,7 @@ $0008 opcode r@  ( Exe: R:x -- x R:x )
 
 
 
-\ Core Extension Stack
+\ Core-Ext Stack
 
 
 $0009 opcode nip  ( x1 x2 -- x2 )
