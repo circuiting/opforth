@@ -25,52 +25,52 @@
 
 \ Core Stack (13)
 
-\ drop
-\ dup
-\ swap
-\ over
-\ rot
-\ ?dup
-\ 2drop
-\ 2dup
-\ 2swap
-\ 2over
-\ >r
-\ r>
-\ r@
+\ drop     x --
+\ dup      x -- x x
+\ swap     x1 x2 -- x2 x1
+\ over     x1 x2 -- x1 x2 x1
+\ rot      x1 x2 x3 -- x2 x3 x1
+\ ?dup     x -- x x | 0
+\ 2drop    x1 x2 --
+\ 2dup     x1 x2 -- x1 x2 x1 x2
+\ 2swap    x1 x2 x3 x4 -- x3 x4 x1 x2
+\ 2over    x1 x2 x3 x4 -- x1 x2 x3 x4 x1 x2
+\ >r       exec: x R: -- R:x
+\ r>       exec: R:x -- x R:
+\ r@       exec: R:x -- x R:x
 
 
 \ Core Extension Stack (7)
 
-\ nip
-\ tuck
-\ pick
-\ roll
-\ 2>r
-\ 2r>
-\ 2r@
+\ nip     x1 x2 -- x2
+\ tuck    x1 x2 -- x2 x1 x2
+\ pick    xu...x1 x0 u -- xu...x1 x0 xu
+\ roll    xu xu-1...x0 u -- xu-1...x0 xu
+\ 2>r     exec: x1 x2 R: -- R:x1 R:x2
+\ 2r>     exec: R:x1 R:x2 -- x1 x2 R:
+\ 2r@     exec: R:x1 R:x2 -- x1 x2 R:x1 R:x2
 
 
 \ Core Arithmetic (18)
 
-\ 1+
-\ 1-
-\ +
-\ -
-\ negate
-\ abs
-\ s>d
-\ *
-\ m*
-\ um*
-\ /
-\ mod
-\ /mod
-\ fm/mod
-\ sm/rem
-\ um/mod
-\ */
-\ */mod
+\ +         nu1 nu2 -- nu3
+\ -         nu1 nu2 -- nu3
+\ 1+        nu1 -- nu2
+\ 1-        nu1 -- nu2
+\ negate    n1 -- n2
+\ abs       n -- u
+\ s>d       n -- d
+\ *         nu1 nu2 -- nu3
+\ m*        n1 n2 -- d
+\ um*       u1 u2 -- flag
+\ /         n1 n2 -- n3
+\ mod       n1 n2 -- n3
+\ /mod      n1 n2 -- n3 n4
+\ sm/rem    d1 n1 -- n2 n3
+\ fm/mod    d1 n1 -- n2 n3
+\ um/mod    d1 n1 -- n2 n3
+\ */        n1 n2 n3 -- n4
+\ */mod     n1 n2 n3 -- n4 n5
 
 
 \ Core Number Test (8)
@@ -313,21 +313,166 @@
 \ evaluate
 
 
-\ Core and Core Extension Words
+\ Core Stack Words
 
 
-\ Core Stack
+$0000 opcode drop  ( x -- )
 
-\ drop
-\ dup
-\ swap
-\ over
-\ rot
-\ ?dup
-\ 2drop
-\ 2dup
-\ 2swap
-\ 2over
-\ >r
-\ r>
-\ r@
+\ Remove the top stack item.
+
+
+$0001 opcode dup  ( x -- x x )
+
+\ Duplicate the top stack item.
+
+
+$0002 opcode swap  ( x1 x2 -- x2 x1 )
+
+\ Exchange the top two stack items.
+
+
+$0003 opcode over  ( x1 x2 -- x1 x2 x1 )
+
+\ Put a copy of the second stack item on top of the stack.
+
+
+$0004 opcode rot  ( x1 x2 x3 -- x2 x3 x1 )
+
+\ Rotate the top three stack items to bring the third item to
+\ the top.
+
+
+$0005 opcode ?dup  ( x -- x x | 0 )
+
+\ Duplicate the top stack item if it is nonzero.
+
+
+: 2drop  ( x1 x2 -- )  drop drop ;
+
+\ Remove the top two stack items.
+
+
+: 2dup  ( x1 x2 -- x1 x2 x1 x2 )  over over ;
+
+\ Duplicate the cell pair on top of the stack.
+
+
+: 2swap  ( x1 x2 x3 x4 -- x3 x4 x1 x2 )  rot >r rot r> ;
+
+\ Exchange the top two cell pairs on the stack.
+
+
+: 2over  ( x1 x2 x3 x4 -- x1 x2 x3 x4 x1 x2 )
+  2>r 2dup 2r> 2swap ;
+
+\ Put a copy of cell pair x1 x2 on top of the stack.
+
+
+$0006 opcode >r  ( exec: x R: -- R:x )
+
+\ Interpretation: Undefined
+\ Execution: Transfer the top data stack item to the return
+\ stack.
+
+
+$0007 opcode r>  ( exec: R:x -- x R: )
+
+\ Interpretation: Undefined
+\ Execution: Transfer the top return stack item to the data
+\ stack.
+
+
+$0008 opcode r@  ( exec: R:x -- x R:x )
+
+\ Interpretation: Undefined
+\ Execution: Put a copy of the top return stack item on the data
+\ stack.
+
+
+\ Core Extension Stack Words
+
+
+$0009 opcode nip  ( x1 x2 -- x2 )
+
+\ Remove the second stack item.
+
+
+$000a opcode tuck  ( x1 x2 -- x2 x1 x2 )
+
+\ Insert a copy of the top stack item underneath the second
+\ stack item.
+
+
+: pick  ( xu...x1 x0 u -- xu...x1 x0 xu )  sp@ + 1+ @ ;
+
+\ Remove u and put a copy of xu, the stack item indexed by u, on
+\ top of the stack. An ambiguous condition exists if there are
+\ fewer than u+2 items on the stack before PICK is executed.
+
+
+: roll  ( xu xu-1...x0 u -- xu-1...x0 xu )
+  dup if swap >r 1- recurse r> swap exit then drop ;
+
+\ Remove u and rotate the top u+1 stack items to bring xu to the
+\ top.
+
+
+: 2>r  ( exec: x1 x2 R: -- R:x1 R:x2 )  swap >r >r ;
+
+\ Interpretation: Undefined
+\ Execution: Transfer the cell pair on top of the data stack to
+\ the return stack.
+
+
+: 2r>  ( exec: R:x1 R:x2 -- x1 x2 R: )  r> r> swap ;
+
+\ Interpretation: Undefined
+\ Execution: Transfer the cell pair on top of the return stack
+\ to the data stack.
+
+
+: 2r@  ( exec: R:x1 R:x2 -- x1 x2 R:x1 R:x2 )
+  r> r> 2dup >r >r swap ;
+
+\ Interpretation: Undefined
+\ Execution: Put a copy of the cell pair on top of the return
+\ stack on the data stack.
+
+
+\ Core Arithmetic Words
+
+
+$000b opcode +  ( nu1 nu2 -- nu3 )
+
+\ Add nu1 to nu2. nu3 is the sum.
+
+
+$000c opcode -  ( nu1 nu2 -- nu3 )
+
+\ Subtract nu2 from nu1. nu3 is the difference.
+
+
+$000d opcode 1+  ( nu1 -- nu2 )
+
+\ nu2 is nu1 incremented by one.
+
+
+$000e opcode 1-  ( nu1 -- nu2 )
+
+\ nu2 is nu1 decremented by one.
+
+
+$000f opcode negate  ( n1 -- n2 )
+
+\ n2 is the arithmetic inverse of n1.
+
+
+$0010 opcode abs  ( n -- u )
+
+\ u is the absolute value of n.
+
+
+$0011 opcode s>d  ( n -- d )
+
+\ Convert the single-cell number n to a double-cell number with
+\ the same value. d is the result.
