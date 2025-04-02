@@ -1,7 +1,7 @@
-Opforth README
+## Opforth
 
-Opforth is a project under development that aims to be an
-implementation of the ANS Forth language.
+Opforth is a work in progress to create an implementation of
+the ANS Forth language.
 
 Author: Carlton Himes <mail@opforth.com>
 
