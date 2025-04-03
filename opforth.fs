@@ -2,6 +2,10 @@
 
 \ Copyright © 2025 Carlton Himes
 
+\ The source code comments are adapted from descriptions pub-
+\ lished by the Forth Standard Committee. See
+\ https://forth-standard.org
+
 \ This file is part of Opforth.
 
 \ Opforth is free software: you can redistribute it and/or
@@ -167,9 +171,9 @@
 \ #s         ud1 -- ud2
 \ hold       char --
 \ sign       n --
-\ >number    ud1 c-addr1 u1 -- ud2 c-addr2 u2
 \ decimal    --
 \ base       -- a-addr
+\ >number    ud1 c-addr1 u1 -- ud2 c-addr2 u2
 
 
 \ Core-Ext Numeric String
@@ -649,7 +653,7 @@ $0019 opcode u>  ( u1 u2 -- flag )
 
 : within  ( nu1 nu2 nu3 -- flag )  something ;
 
-\ Description goes here
+\ Description of something goes here
 
 
 
@@ -899,4 +903,118 @@ synonym c! !  ( char c-addr -- )
 
 : .(  ( 'ccc<right-paren> -- )  something ; immediate
 
-\ Parse ccc delimited by ) (right parenthesis).
+\ Parse ccc delimited by ) (right parenthesis). Display ccc.
+
+
+
+\ Core Digit String
+
+: .  ( n -- )  something ;
+
+\ Display a text representation of the integer n followed by a
+\ space.
+
+
+: u.  ( u -- )  something ;
+
+\ Display a text representation of the unsigned integer u fol-
+\ lowed by a space.
+
+
+: <#  ( -- )  something ;
+
+\ Start a numeric string conversion.
+
+
+: #>  ( xd -- c-addr u )  something ;
+
+\ Finish a numeric string conversion by dropping xd and making
+\ the numeric string available. c-addr is the starting address
+\ of the string, and u is the string length.
+
+
+: #  ( ud1 -- ud2 )  something ;
+
+\ As part of a <# #> delimited numeric string conversion, con-
+\ vert one digit by dividing ud1 by the number in BASE and put-
+\ ting the remainder at the beginning of the numeric string be-
+\ ing built. ud2 is the quotient, which can be used by the next
+\ numeric string conversion step. An ambiguous condition exists
+\ if # executes outside a <# #> delimited numeric string conver-
+\ sion.
+
+
+: #s  ( ud1 -- ud2 )  something ;
+
+\ As part of a <# #> delimited numeric string conversion, con-
+\ vert all digits of ud1 and put the digits at the beginning of
+\ the numeric string being built. ud2 is zero. An ambiguous con-
+\ dition exists if #S is executed outside of a <# #> delimited
+\ numeric string conversion.
+
+
+: hold  ( char -- )  something ;
+
+\ As part of a <# #> delimited numeric string conversion, put
+\ char at the beginning of the numeric string being built. An
+\ ambiguous condition exists if HOLD is executed outside of a
+\ <# #> delimited numeric string conversion.
+
+
+: sign  ( n -- )  something ;
+
+\ As part of a <# #> delimited numeric string conversion, put a
+\ minus sign at the beginning of the numeric string being built
+\ if n is negative. An ambiguous condition exists if SIGN is ex-
+\ ecuted outside of a <# #> delimited numeric string conversion.
+
+
+: decimal  ( -- )  something ;
+
+\ Set the base (radix) of the number system to ten.
+
+
+variable base  ( -- a-addr )  #10 base !
+
+\ a-addr is the address of a cell containing the base (radix) of
+\ the number system.
+
+
+: >number  ( ud1 c-addr1 u1 -- ud2 c-addr2 u2 )  something ;
+
+\ Convert the string specified by c-addr1 u1 into a double-cell
+\ unsigned integer using the following method. ( something )
+
+
+
+\ Core-Ext Numeric String
+
+
+: .r  ( n1 n2 -- )  something ;
+
+\ Display a text representation of n1 right-aligned in a field
+\ n2 characters wide. If the number of characters required to
+\ display n1 is greater than n2, all digits are displayed with
+\ no leading spaces in a field as wide as necessary.
+
+
+: u.r  ( u n -- )  something ;
+
+\ Display a text representation of u right-aligned in a field n
+\ characters wide. If the number of characters required to dis-
+\ play n1 is greater than n2, all digits are displayed with no
+\ leading spaces in a field as wide as necessary.
+
+
+: holds  ( c-addr u -- )  something ;
+
+\ As part of a <# #> delimited numeric string conversion, put
+\ the string represented by c-addr u at the beginning of the
+\ numeric string being built. An ambiguous condition exists if
+\ HOLDS is executed outside of a <# #> delimited numeric string
+\ conversion.
+
+
+: hex  ( -- )  something ;
+
+\ Set the base (radix) of the number system to 16 (hexadecimal).
