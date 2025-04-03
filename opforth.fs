@@ -154,7 +154,7 @@
 
 \ Core-Ext Text Display
 
-\ .(    'ccc<close-paren>' --
+\ .(    'ccc<right-paren>' --
 
 
 \ Core Numeric String
@@ -428,7 +428,7 @@ $000a opcode tuck  ( x1 x2 -- x2 x1 x2 )
 
 
 : 2>r  ( Compi: -- ) ( Exe: x1 x2 R: -- R:x1 R:x2 )
-  swap >r >r ;
+  postpone swap  postpone >r  postpone >r ; immediate
 
 \ Interpretation: Undefined
 \ Execution: Transfer the cell pair on top of the data stack to
@@ -436,7 +436,7 @@ $000a opcode tuck  ( x1 x2 -- x2 x1 x2 )
 
 
 : 2r>  ( Compi: -- ) ( Exe: R:x1 R:x2 -- x1 x2 R: )
-  r> r> swap ;
+  postpone r>  postpone r>  postpone swap ; immediate
 
 \ Interpretation: Undefined
 \ Execution: Transfer the cell pair on top of the return stack
@@ -444,7 +444,8 @@ $000a opcode tuck  ( x1 x2 -- x2 x1 x2 )
 
 
 : 2r@  ( Compi: -- ) ( Exe: R:x1 R:x2 -- x1 x2 R:x1 R:x2 )
-  r> r> 2dup >r >r swap ;
+  postpone r>  postpone r>  postpone 2dup
+  postpone >r  postpone >r  postpone swap ; immediate
 
 \ Interpretation: Undefined
 \ Execution: Put a copy of the cell pair on top of the return
@@ -619,7 +620,7 @@ $0015 opcode u<  ( u1 u2 -- flag )
 
 
 
-\ Core-ext Number Test
+\ Core-Ext Number Test
 
 
 $0016 opcode 0<>  ( x -- flag )
@@ -757,10 +758,10 @@ synonym char+ 1+  ( c-addr1 -- c-addr2 )
 
 : count  ( c-addr1 -- c-addr2 u )  something ;
 
-\ Given a counted string with the count character located at
-\ c-addr1, return the non-counted string representation. c-addr2
-\ is the location of the first character after the count charac-
-\ ter, and u is the string length excluding the count character.
+\ Given a counted string located at c-addr1, return the non-
+\ counted string representation. c-addr2 is the location of the
+\ first character after the count character, and u is the string
+\ length excluding the count character.
 
 
 
@@ -812,17 +813,20 @@ synonym c! !  ( char c-addr -- )
 
 : move  ( addr1 addr2 u -- )  something ;
 
-\ If u is greater than zero, copy the contents of u consecutive
-\ address units at addr1 to the u consecutive address units at
-\ addr2. After MOVE completes, the u consecutive address units
-\ at addr2 contain exactly what the u consecutive address units
-\ at addr1 contained before the move.
+\ If u is greater than zero, write a copy of the u consecutive
+\ address units of memory starting at addr1 to the u consecutive
+\ address units starting at addr2. The u characters of memory
+\ starting at addr2 will contain exactly what the u characters
+\ of memory starting at addr1 contained before the move, even if
+\ the memory regions overlap.
 
 
 : fill  ( c-addr u char -- )  something ;
 
-\ If u is greater than zero, store char in each of u consecutive
-\ characters of memory beginning at c-addr.
+\ If u is greater than zero, write char to each of the u consec-
+\ utive characters beginning at memory address c-addr. Because
+\ Opforth characters and cells are the same size, this is equi-
+\ valent to writing char to u consecutive cells.
 
 
 
@@ -831,11 +835,68 @@ synonym c! !  ( char c-addr -- )
 
 : erase  ( addr u -- )  something ;
 
-\ If u is greater than zero, clear all bits in each of u consec-
-\ utive address units of memory beginning at addr.
+\ If u is greater than zero, clear all bits of the u consecutive
+\ memory locations starting at address addr. Because the size of
+\ an Opforth cell is one address unit, this is equivalent to
+\ writing to u consecutive cells.
 
 
 : pad  ( -- c-addr )  something ;
 
-\ c-addr is the address of a transient region that can be used
-\ to hold data for intermediate processing.
+\ c-addr is the address of the pad, which is a region of memory
+\ that can be used to hold data for intermediate processing.
+
+
+
+\ Core Text Display
+
+
+: ."  ( 'ccc<quote>' -- )  ( Run: -- )  something ;
+
+\ Interpretation: Parse ccc delimited by " (double-quote). Dis-
+\ play ccc.
+\ Compilation: Parse ccc delimited by " (double-quote). Compile
+\ the following runtime semantics.
+\ Runtime: Display ccc.
+
+
+: emit  ( x -- )  something ;
+
+\ If x is a graphic character, display x.
+
+
+: type  ( c-addr u -- )  something ;
+
+\ If u is greater than zero, display the string with starting
+\ address c-addr and length u.
+
+
+: cr  ( -- )  something ;
+
+\ Move the text cursor to the beginning of the next line.
+
+
+: bl  ( -- char )  something ;
+
+\ char is the code for the space character. Because Opforth uses
+\ ASCII/UTF-8 and the size of an Opforth character is 16 bits,
+\ char is $0020.
+
+
+: space  ( -- )  something ;
+
+\ Display one space.
+
+
+: spaces  ( n -- )  something ;
+
+\ If n is greater than zero, display n spaces.
+
+
+
+\ Core-Ext Text Display
+
+
+: .(  ( 'ccc<right-paren> -- )  something ; immediate
+
+\ Parse ccc delimited by ) (right parenthesis).
