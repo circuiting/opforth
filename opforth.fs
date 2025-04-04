@@ -2,10 +2,6 @@
 
 \ Copyright © 2025 Carlton Himes
 
-\ The source code comments are adapted from descriptions pub-
-\ lished by the Forth Standard Committee. See
-\ https://forth-standard.org
-
 \ This file is part of Opforth.
 
 \ Opforth is free software: you can redistribute it and/or
@@ -21,6 +17,10 @@
 \ You should have received a copy of the GNU General Public
 \ License along with Opforth. If not, see
 \ <https://www.gnu.org/licenses/>.
+
+\ Comments in the source code are adapted from descriptions
+\ published by the Forth Standard Committee. See
+\ https://forth-standard.org
 
 
 
@@ -186,18 +186,18 @@
 
 \ Core Text Input
 
-\ (         Compi: 'ccc<close-paren>' --  Run: --
+\ (         'ccc<right-paren>' --  Run: --
 \ source    -- c-addr u
 \ >in       -- a-addr
 \ key       -- char
 \ accept    c-addr +n1 -- +n2
-\ char      '<spaces>ccc' -- c
+\ char      '<spaces>name' -- char
 \ word      '<chars>ccc<char>' char -- c-addr
 
 
 \ Core-Ext Text Input
 
-\ \                Compi: 'ccc<eol>' --  Run: --
+\ \                'ccc<eol>' --  Run: --
 \ parse            'ccc<char>' char -- c-addr u
 \ parse-name       '<spaces>name<space>' -- c-addr u
 \ source-id        -- 0 | -1
@@ -229,8 +229,10 @@
 
 \ defer@       xt1 -- xt2
 \ defer!       xt2 xt1 --
-\ action-of    '<spaces>name' -- xt
-\ is           '<spaces>name' xt --
+\ is           Inter: '<spaces>name' xt --
+\              Compi: '<spaces>name' --  Run: xt --
+\ action-of    Inter: '<spaces>name' -- xt
+\              Compi: '<spaces>name' --  Run: -- xt
 
 
 \ Core Compiler
@@ -247,8 +249,7 @@
 \ literal     Compi: x --  Run: -- x
 \ [char]      Compi: '<spaces>name' --  Run: -- char
 \ [']         Compi: '<spaces>name' --  Run: -- xt
-\ s"          Inter: 'ccc<quote>' -- c-addr u
-\             Compi: 'ccc<quote>' --  Run: -- c-addr u
+\ s"          Compi: 'ccc<quote>' --  Run: -- c-addr u
 
 
 \ Core-Ext Compiler
@@ -382,22 +383,28 @@ $0005 opcode ?dup  ( x -- x x | 0 )
 
 
 $0006 opcode >r  ( Compi: -- ) ( Exe: x R: -- R:x )
+compile-only
 
 \ Interpretation: Undefined
+\ Compilation: Compile the following execution semantics.
 \ Execution: Transfer the top data stack item to the return
 \ stack.
 
 
 $0007 opcode r>  ( Compi: -- ) ( Exe: R:x -- x R: )
+compile-only
 
 \ Interpretation: Undefined
+\ Compilation: Compile the following execution semantics.
 \ Execution: Transfer the top return stack item to the data
 \ stack.
 
 
 $0008 opcode r@  ( Compi: -- ) ( Exe: R:x -- x R:x )
+compile-only
 
 \ Interpretation: Undefined
+\ Compilation: Compile the following execution semantics.
 \ Execution: Put a copy of the top return stack item onto the
 \ data stack.
 
@@ -432,26 +439,32 @@ $000a opcode tuck  ( x1 x2 -- x2 x1 x2 )
 
 
 : 2>r  ( Compi: -- ) ( Exe: x1 x2 R: -- R:x1 R:x2 )
-  postpone swap  postpone >r  postpone >r ; immediate
+  postpone swap  postpone >r  postpone >r
+; immediate compile-only
 
 \ Interpretation: Undefined
+\ Compilation: Compile the following execution semantics.
 \ Execution: Transfer the cell pair on top of the data stack to
 \ the return stack.
 
 
 : 2r>  ( Compi: -- ) ( Exe: R:x1 R:x2 -- x1 x2 R: )
-  postpone r>  postpone r>  postpone swap ; immediate
+  postpone r>  postpone r>  postpone swap
+; immediate compile-only
 
 \ Interpretation: Undefined
+\ Compilation: Compile the following execution semantics.
 \ Execution: Transfer the cell pair on top of the return stack
 \ to the data stack.
 
 
 : 2r@  ( Compi: -- ) ( Exe: R:x1 R:x2 -- x1 x2 R:x1 R:x2 )
   postpone r>  postpone r>  postpone 2dup
-  postpone >r  postpone >r  postpone swap ; immediate
+  postpone >r  postpone >r  postpone swap
+; immediate compile-only
 
 \ Interpretation: Undefined
+\ Compilation: Compile the following execution semantics.
 \ Execution: Put a copy of the cell pair on top of the return
 \ stack onto the data stack.
 
@@ -923,50 +936,50 @@ synonym c! !  ( char c-addr -- )
 
 : <#  ( -- )  something ;
 
-\ Start a numeric string conversion.
+\ Start a number-to-string conversion.
 
 
 : #>  ( xd -- c-addr u )  something ;
 
-\ Finish a numeric string conversion by dropping xd and making
-\ the numeric string available. c-addr is the starting address
-\ of the string, and u is the string length.
+\ Finish a number-to-string conversion by dropping xd and making
+\ the string available. c-addr is the starting address of the
+\ string, and u is the string length. A program may replace
+\ characters within the string.
 
 
 : #  ( ud1 -- ud2 )  something ;
 
-\ As part of a <# #> delimited numeric string conversion, con-
-\ vert one digit by dividing ud1 by the number in BASE and put-
-\ ting the remainder at the beginning of the numeric string be-
-\ ing built. ud2 is the quotient, which can be used by the next
-\ numeric string conversion step. An ambiguous condition exists
-\ if # executes outside a <# #> delimited numeric string conver-
-\ sion.
+\ As part of a <# #> delimited number-to-string conversion, con-
+\ vert one digit of ud1 using the following method. Divide ud1
+\ by the number in BASE. Prepend a text representation of the
+\ remainder to the string being built. ud2 is the quotient,
+\ which can be used by a subsequent number-to-string conversion
+\ word. An ambiguous condition exists if # is executed outside
+\ of a <# #> delimited conversion.
 
 
 : #s  ( ud1 -- ud2 )  something ;
 
-\ As part of a <# #> delimited numeric string conversion, con-
-\ vert all digits of ud1 and put the digits at the beginning of
-\ the numeric string being built. ud2 is zero. An ambiguous con-
-\ dition exists if #S is executed outside of a <# #> delimited
-\ numeric string conversion.
+\ As part of a <# #> delimited number-to-string conversion, con-
+\ vert all digits of ud1 and prepend the digits to the string
+\ being built. ud2 is zero. An ambiguous condition exists if #S
+\ is executed outside of a <# #> delimited conversion.
 
 
 : hold  ( char -- )  something ;
 
-\ As part of a <# #> delimited numeric string conversion, put
-\ char at the beginning of the numeric string being built. An
-\ ambiguous condition exists if HOLD is executed outside of a
-\ <# #> delimited numeric string conversion.
+\ As part of a <# #> delimited number-to-string conversion, pre-
+\ pend char to the string being built. An ambiguous condition
+\ exists if HOLD is executed outside of a <# #> delimited con-
+\ version.
 
 
 : sign  ( n -- )  something ;
 
-\ As part of a <# #> delimited numeric string conversion, put a
-\ minus sign at the beginning of the numeric string being built
-\ if n is negative. An ambiguous condition exists if SIGN is ex-
-\ ecuted outside of a <# #> delimited numeric string conversion.
+\ As part of a <# #> delimited number-to-string conversion, put
+\ a minus sign at the beginning of the string being built if n
+\ is negative. An ambiguous condition exists if SIGN is executed
+\ outside of a <# #> delimited conversion.
 
 
 : decimal  ( -- )  something ;
@@ -1008,13 +1021,391 @@ variable base  ( -- a-addr )  #10 base !
 
 : holds  ( c-addr u -- )  something ;
 
-\ As part of a <# #> delimited numeric string conversion, put
-\ the string represented by c-addr u at the beginning of the
-\ numeric string being built. An ambiguous condition exists if
-\ HOLDS is executed outside of a <# #> delimited numeric string
-\ conversion.
+\ As part of a <# #> delimited number-to-string conversion, pre-
+\ pend the string represented by c-addr u to the string being
+\ built. An ambiguous condition exists if HOLDS is executed out-
+\ side of a <# #> delimited numeric string conversion.
 
 
 : hex  ( -- )  something ;
 
 \ Set the base (radix) of the number system to 16 (hexadecimal).
+
+
+
+\ Core Text Input
+
+
+: (  ( 'ccc<right-paren>' -- ) ( Run: -- )
+  something ; immediate
+
+\ Parse ccc delimited by ) (right parenthesis). This causes the
+\ outer interpreter to skip past the text enclosed in the paren-
+\ theses.
+
+
+: source  ( -- c-addr u )  something ;
+
+\ c-addr is the address of the input buffer. u is the number of
+\ characters in the input buffer.
+
+
+variable >in  ( -- a-addr )  $____ >in !
+
+\ a-addr is the address of a cell containing the offset in char-
+\ acters from the start of the input buffer to the start of the
+\ parse area.
+
+
+: key  ( -- char )  something ;
+
+\ Receive one character char from the user input device. Key-
+\ board events that do not correspond to characters in the char-
+\ acter set are discarded until a valid character is received,
+\ and those events are subsequently unavailable.
+
+
+: accept  ( c-addr +n1 -- +n2 )  something ;
+
+\ Receive a string of at most +n1 characters from the user input
+\ device, write the string to the memory region with starting
+\ address c-addr, and display graphic characters as they are re-
+\ ceived. Input terminates when a line terminator character is
+\ received. When input terminates, nothing is appended to the
+\ string, and the display is maintained. An ambiguous condition
+\ exists if +n1 is zero or is greater than +32767.
+
+
+: char  ( '<spaces>name' -- char )  something ;
+
+\ Skip leading spaces and parse name delimited by a space. Put
+\ the first character of name on the stack.
+
+
+: word  ( '<chars>ccc<char>' char -- c-addr )  something ;
+
+\ Skip leading delimiters and parse ccc delimited by char. Write
+\ the parsed word to a dedicated buffer as a counted string, and
+\ put the address of the counted string on the stack. If the
+\ parse area was empty or contained no characters other than the
+\ delimiter, the resulting string has zero length. A program may
+\ replace characters in the string. An ambiguous condition ex-
+\ ists if the length of the parsed string is greater than 65535.
+
+
+
+\ Core-Ext Text Input
+
+
+: \  ( 'ccc<eol>' -- ) ( Run: -- )  something ;
+
+\ Parse the remainder of the parse area. This causes the outer
+\ interpreter to skip past the text that begins with \ and ends
+\ at the end of the line.
+
+
+: parse  ( 'ccc<char>' char -- c-addr u )  something ;
+
+\ Parse ccc delimited by the delimiter char. c-addr is the ad-
+\ dress of the parsed string within the input buffer, and u is
+\ the string length. If the parse area was empty, the resulting
+\ string has zero length.
+
+
+: parse-name  ( '<spaces>name<space>' -- c-addr u )  something ;
+
+\ Skip leading spaces and parse name delimited by a space.
+\ c-addr is the address of the parsed string within the input
+\ buffer, and u is the string length. If the parse area was emp-
+\ ty or contains only white space, the resulting string has zero
+\ length.
+
+
+value source-id  ( -- 0 | -1 )  0 to source-id
+
+\ If the input source is the user input device, put 0 on the
+\ stack. If the input source is a string via EVALUATE, put -1
+\ on the stack.
+
+
+: save-input  ( -- xn...x1 n )  something ;
+
+\ x1 through xn describe the current state of the input source
+\ specification for later use by RESTORE-INPUT.
+
+
+: restore-input  ( xn...x1 n -- flag )  something ;
+
+\ Attempt to restore the input source specification to the state
+\ described by x1 through xn. flag is true if the input source
+\ specification cannot be so restored. An ambiguous condition
+\ exists if the input source represented by the arguments is not
+\ the same as the current input source.
+
+
+: refill  ( -- flag )  something ;
+
+\ Attempt to fill the input buffer from the input source.
+\ When the input source is the user input device, attempt to re-
+\ ceive input into the terminal input buffer. If successful,
+\ make the result the input buffer, set >IN to zero, and return
+\ a true flag. Receipt of a line containing no characters is
+\ considered successful. If no input is available from the input
+\ source, return false.
+\ When the input source is a string via EVALUATE, return false
+\ and perform no other action.
+
+
+
+\ Core Query
+
+
+: depth  ( -- +n )  something ;
+
+\ +n is the number of single-cell values contained in the data
+\ stack before +n was placed on the stack.
+
+
+: environment?  ( c-addr u -- false | i*x true )  something ;
+
+\ Description of something goes here
+
+
+
+\ Core-Ext Query
+
+
+: unused  ( -- u )  something ;
+
+\ u is the number of address units remaining in the space ad-
+\ dressed by HERE.
+
+
+
+\ Core Execution Token
+
+
+: execute  ( i*x xt -- j*x )  something ;
+
+\ Remove xt from the stack and execute the word corresponding to
+\ xt.
+
+
+: '  ( '<spaces>name' -- xt )  something ;
+
+\ Skip leading spaces and parse name delimited by a space. Find
+\ name and put the corresponding execution token on the stack.
+\ When interpreting, ' xyz EXECUTE is equivalent to xyz.
+
+
+: find  ( c-addr -- c-addr 0 | xt 1 | xt -1 )  something ;
+
+\ Attempt to match the counted string at c-addr to the name of a
+\ dictionary definition. If the definition is not found, return
+\ c-addr and zero. If the definition is found, return the corre-
+\ sponding execution token. If the definition is immediate, also
+\ return 1. Otherwise, also return -1. For a given string, the
+\ values returned by FIND while compiling may differ from those
+\ returned while not compiling.
+
+
+: >body  ( xt -- a-addr )  something ;
+
+\ a-addr is the address of the data field of the definition with
+\ execution token xt. An ambiguous condition exists if xt is not
+\ the execution token of a word defined by CREATE.
+
+
+
+\ Core-Ext Execution Token
+
+
+: defer@  ( xt1 -- xt2 )  something ;
+
+\ xt2 is the execution token xt1 is set to execute. An ambiguous
+\ condition exists if xt1 is not the execution token of a word
+\ defined by DEFER, or if xt1 has not been set to execute an xt.
+
+
+: defer!  ( xt1 xt2 -- )  something ;
+
+\ Set the word xt1 to execute xt2. An ambiguous condition exists
+\ if xt1 is not for a word defined by DEFER.
+
+
+: is  ( Inter: '<spaces>name' xt -- )
+  ( Compi: '<spaces>name' -- ) ( Run: xt -- )
+  something ;
+
+\ Interpretation: Description of something goes here
+\ Compilation: Description of something goes here
+\ Runtime: Description of something goes here
+
+
+: action-of  ( Inter: '<spaces>name' -- xt )
+  ( Compi: '<spaces>name' -- ) ( Run: -- xt )
+  something ;
+
+\ Interpretation: Description of something goes here
+\ Compilation: Description of something goes here
+\ Runtime: Description of something goes here
+
+
+
+\ Core Compiler
+
+
+: ,  ( x -- )  something ;
+
+\ Reserve one cell of dictionary space and store x in the cell.
+\ If the dictionary pointer is aligned when , begins execution,
+\ it will remain aligned when , finishes execution. An ambiguous
+\ condition exists if the dictionary pointer is not aligned pri-
+\ or to the execution of ,.
+
+
+synonym c, ,  ( char -- )
+
+\ Reserve space for one character in the dictionary and store
+\ char in the space. If the dictionary pointer is character a-
+\ ligned when c, begins execution, it will remain character a-
+\ ligned when c, finishes execution. Because Opforth characters
+\ and cells are the same size, this operation is equivalent to
+\ ,. An ambiguous condition exists if the dictionary pointer is
+\ not character aligned prior to the execution of c,.
+
+
+: allot  ( n -- )  something ;
+
+\ If n is greater than zero, reserve n address units of dictio-
+\ nary space. If n is less than zero, release |n| address units
+\ of dictionary space. If n is zero, leave the dictionary point-
+\ er unchanged. If the dictionary pointer is aligned and n is a
+\ multiple of the size of a cell when ALLOT begins execution, it
+\ will remain aligned when ALLOT finishes execution.
+
+
+: align  ( -- )  ; immediate
+
+\ If the dictionary pointer is not aligned, reserve enough space
+\ to align it. Because the size of an Opforth cell is one ad-
+\ dress unit, all addresses are aligned and this operation does
+\ nothing.
+
+
+: here  ( -- addr )  something ;
+
+\ addr is the dictionary pointer.
+
+
+: [  ( -- )  something ; immediate
+
+\ Enter interpretation state.
+
+
+: ]  ( -- )  something ;
+
+\ Enter compilation state.
+
+
+variable state  ( -- a-addr )  false state !
+
+\ a-addr is the address of a cell containing the compilation-
+\ state flag. STATE is true when in compilation state. STATE is
+\ false otherwise. Only the following standard words alter the
+\ value of STATE: : (colon), ; (semicolon), ABORT, QUIT,
+\ :NONAME, [ (left-bracket), ] (right-bracket).
+
+
+: postpone  ( Compi: '<spaces>name' -- )  something ;
+
+\ Skip leading spaces and parse name delimited by a space. Find
+\ name in the dictionary. Compile the compilation semantics of
+\ name. An ambiguous condition exists if name is not found.
+
+
+: literal  ( Compi: x -- ) ( Run: -- x )  something ;
+
+\ Interpretation: Undefined
+\ Compilation: Compile the following runtime semantics.
+\ Runtime: Put x on the stack.
+
+
+: [char]  ( Compi: '<spaces>name' -- ) ( Run: -- char )
+  something ;
+
+\ Interpretation: Undefined
+\ Compilation: Skip leading spaces and parse name delimited by a
+\ space. Compile the following runtime semantics.
+\ Runtime: Put the value of the first character of name on the
+\ stack.
+
+
+: [']  ( Compi: '<spaces>name' -- ) ( Run: -- xt )  something ;
+
+\ Interpretation: Undefined
+\ Compilation: Skip leading spaces and parse name delimited by a
+\ space. Find name in the dictionary. Compile the following run-
+\ time semantics. An ambiguous condition exists if name is not
+\ found.
+\ Runtime: Put the execution token corresponding to name onto
+\ the stack. The execution token returned by the compiled phrase
+\ "['] X" is the same token returned by "' X" outside of compi-
+\ lation state.
+
+
+: s"  ( Compi: 'ccc<quote>' -- ) ( Run: -- c-addr u )
+  something ;
+
+\ Interpretation: Undefined
+\ Compilation: Parse ccc delimited by " (double-quote). Compile
+\ the runtime semantics below.
+\ Runtime: Return the address c-addr and length u of a string
+\ consisting of the characters ccc. A program shall not alter
+\ the returned string.
+
+
+
+\ Core-Ext Compiler
+
+
+: s\"  ( Compi: 'ccc<quote>' -- )  something ;
+
+\ Interpretation: Undefined
+\ Compilation: Parse ccc delimited by " (double-quote) using the
+\ translation rules below. Compile the following runtime seman-
+\ tics.
+\ Runtime: Return the address c-addr and length u of a string
+\ consisting of the characters ccc. A program shall not alter
+\ the returned string.
+\ Translation Rules: something
+
+
+: c"  ( Compi: 'ccc<quote>' -- ) ( Run: -- c-addr )  something ;
+
+\ Interpretation: Undefined
+\ Compilation: Parse ccc delimited by " (double-quote) and com-
+\ pile the runtime semantics below.
+\ Runtime: Return the address of a counted string consisting of
+\ the characters ccc. A program shall not alter the returned
+\ string.
+
+
+: compile,  ( Compi: -- ) ( Exe: xt -- )  something ;
+
+\ Interpretation: Undefined
+\ Compilation: Compile the following execution semantics.
+\ Execution: Compile the execution semantics of the definition
+\ represented by xt.
+
+
+: [compile]  ( Compi: '<spaces>name' -- )  something ;
+
+\ Interpretation: Undefined
+\ Compilation: Skip leading spaces and parse name delimited by a
+\ space. Find name in the dictionary. If name has other than de-
+\ fault compilation semantics, compile the compilation seman-
+\ tics. Otherwise, compile the execution semantics of name. An
+\ ambiguous condition exists if name is not found.
+\ Note: This word is obsolescent and is included for compatibil-
+\ ity with existing Forth code.
