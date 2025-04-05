@@ -266,9 +266,9 @@
 \              Initi: i*x R: -- i*x R:nest-sys  Exe: i*x -- j*x
 \ ;            Compi: colon-sys --  Run: R:nest-sys -- R:
 \ immediate    --
-\ constant     '<spaces>name' x --
-\ variable     '<spaces>name' --
-\ create       '<spaces>name' --
+\ constant     '<spaces>name' x --  Exe: -- x
+\ variable     '<spaces>name' --  Exe: -- a-addr
+\ create       '<spaces>name' --  Exe: -- a-addr
 \ does>        Compi: colon-sys1 -- colon-sys2
 \              Run: R:nest-sys1 -- R:
 \              Initi: i*x R: -- i*x a-addr R:nest-sys2
@@ -280,8 +280,7 @@
 \ :noname    -- xt colon-sys
 \            Initi: i*x R: -- i*x R:nest-sys  Exe: i*x -- j*x
 \ buffer:    '<spaces>name' u --  Exe: -- a-addr
-\ value      '<spaces>name' x --  Exe: -- x
-\            to: x --
+\ value      '<spaces>name' x --  Exe: -- x  to: x --
 \ to         Inter: '<spaces>name' i*x --
 \            Compi: '<spaces>name' --
 \ defer      '<spaces>name' --  Exe: i*x -- j*x
@@ -386,7 +385,9 @@ $0006 opcode >r  ( Compi: -- ) ( Exe: x R: -- R:x )
 compile-only
 
 \ Interpretation: Undefined
+
 \ Compilation: Compile the following execution semantics.
+
 \ Execution: Transfer the top data stack item to the return
 \ stack.
 
@@ -395,7 +396,9 @@ $0007 opcode r>  ( Compi: -- ) ( Exe: R:x -- x R: )
 compile-only
 
 \ Interpretation: Undefined
+
 \ Compilation: Compile the following execution semantics.
+
 \ Execution: Transfer the top return stack item to the data
 \ stack.
 
@@ -404,7 +407,9 @@ $0008 opcode r@  ( Compi: -- ) ( Exe: R:x -- x R:x )
 compile-only
 
 \ Interpretation: Undefined
+
 \ Compilation: Compile the following execution semantics.
+
 \ Execution: Put a copy of the top return stack item onto the
 \ data stack.
 
@@ -443,7 +448,9 @@ $000a opcode tuck  ( x1 x2 -- x2 x1 x2 )
 ; immediate compile-only
 
 \ Interpretation: Undefined
+
 \ Compilation: Compile the following execution semantics.
+
 \ Execution: Transfer the cell pair on top of the data stack to
 \ the return stack.
 
@@ -453,7 +460,9 @@ $000a opcode tuck  ( x1 x2 -- x2 x1 x2 )
 ; immediate compile-only
 
 \ Interpretation: Undefined
+
 \ Compilation: Compile the following execution semantics.
+
 \ Execution: Transfer the cell pair on top of the return stack
 \ to the data stack.
 
@@ -464,7 +473,9 @@ $000a opcode tuck  ( x1 x2 -- x2 x1 x2 )
 ; immediate compile-only
 
 \ Interpretation: Undefined
+
 \ Compilation: Compile the following execution semantics.
+
 \ Execution: Put a copy of the cell pair on top of the return
 \ stack onto the data stack.
 
@@ -872,8 +883,10 @@ synonym c! !  ( char c-addr -- )
 
 \ Interpretation: Parse ccc delimited by " (double-quote). Dis-
 \ play ccc.
+
 \ Compilation: Parse ccc delimited by " (double-quote). Compile
 \ the following runtime semantics.
+
 \ Runtime: Display ccc.
 
 
@@ -1238,7 +1251,9 @@ value source-id  ( -- 0 | -1 )  0 to source-id
   something ;
 
 \ Interpretation: Description of something goes here
+
 \ Compilation: Description of something goes here
+
 \ Runtime: Description of something goes here
 
 
@@ -1247,7 +1262,9 @@ value source-id  ( -- 0 | -1 )  0 to source-id
   something ;
 
 \ Interpretation: Description of something goes here
+
 \ Compilation: Description of something goes here
+
 \ Runtime: Description of something goes here
 
 
@@ -1327,7 +1344,9 @@ variable state  ( -- a-addr )  false state !
 : literal  ( Compi: x -- ) ( Run: -- x )  something ;
 
 \ Interpretation: Undefined
+
 \ Compilation: Compile the following runtime semantics.
+
 \ Runtime: Put x on the stack.
 
 
@@ -1335,8 +1354,10 @@ variable state  ( -- a-addr )  false state !
   something ;
 
 \ Interpretation: Undefined
+
 \ Compilation: Skip leading spaces and parse name delimited by a
 \ space. Compile the following runtime semantics.
+
 \ Runtime: Put the value of the first character of name on the
 \ stack.
 
@@ -1344,10 +1365,12 @@ variable state  ( -- a-addr )  false state !
 : [']  ( Compi: '<spaces>name' -- ) ( Run: -- xt )  something ;
 
 \ Interpretation: Undefined
+
 \ Compilation: Skip leading spaces and parse name delimited by a
 \ space. Find name in the dictionary. Compile the following run-
 \ time semantics. An ambiguous condition exists if name is not
 \ found.
+
 \ Runtime: Put the execution token corresponding to name onto
 \ the stack. The execution token returned by the compiled phrase
 \ "['] X" is the same token returned by "' X" outside of compi-
@@ -1358,8 +1381,10 @@ variable state  ( -- a-addr )  false state !
   something ;
 
 \ Interpretation: Undefined
+
 \ Compilation: Parse ccc delimited by " (double-quote). Compile
-\ the runtime semantics below.
+\ the following runtime semantics.
+
 \ Runtime: Return the address c-addr and length u of a string
 \ consisting of the characters ccc. A program shall not alter
 \ the returned string.
@@ -1372,9 +1397,11 @@ variable state  ( -- a-addr )  false state !
 : s\"  ( Compi: 'ccc<quote>' -- )  something ;
 
 \ Interpretation: Undefined
+
 \ Compilation: Parse ccc delimited by " (double-quote) using the
 \ translation rules below. Compile the following runtime seman-
 \ tics.
+
 \ Runtime: Return the address c-addr and length u of a string
 \ consisting of the characters ccc. A program shall not alter
 \ the returned string.
@@ -1384,8 +1411,10 @@ variable state  ( -- a-addr )  false state !
 : c"  ( Compi: 'ccc<quote>' -- ) ( Run: -- c-addr )  something ;
 
 \ Interpretation: Undefined
+
 \ Compilation: Parse ccc delimited by " (double-quote) and com-
-\ pile the runtime semantics below.
+\ pile the following runtime semantics.
+
 \ Runtime: Return the address of a counted string consisting of
 \ the characters ccc. A program shall not alter the returned
 \ string.
@@ -1394,7 +1423,9 @@ variable state  ( -- a-addr )  false state !
 : compile,  ( Compi: -- ) ( Exe: xt -- )  something ;
 
 \ Interpretation: Undefined
+
 \ Compilation: Compile the following execution semantics.
+
 \ Execution: Compile the execution semantics of the definition
 \ represented by xt.
 
@@ -1402,10 +1433,224 @@ variable state  ( -- a-addr )  false state !
 : [compile]  ( Compi: '<spaces>name' -- )  something ;
 
 \ Interpretation: Undefined
+
 \ Compilation: Skip leading spaces and parse name delimited by a
 \ space. Find name in the dictionary. If name has other than de-
 \ fault compilation semantics, compile the compilation seman-
 \ tics. Otherwise, compile the execution semantics of name. An
 \ ambiguous condition exists if name is not found.
+
 \ Note: This word is obsolescent and is included for compatibil-
 \ ity with existing Forth code.
+
+
+
+\ Core Definition
+
+
+: :  ( '<spaces>name' -- colon-sys )
+  ( Initi: i*x R: -- i*x R:nest-sys ) ( Exe: i*x -- j*x )
+  something ;
+
+\ Skip leading spaces and parse name delimited by a space. Cre-
+\ ate a new definition for name. Enter compilation state, start
+\ the current definition, and produce colon-sys. Compile the ex-
+\ ecution semantics described below. The execution semantics
+\ will be determined by the words compiled into the body of the
+\ definition. The current definition shall not be findable in
+\ the dictionary until it is ended.
+\ (Decision about something: Is the definition made findable by
+\ the execution of DOES>?)
+
+\ Initiation: Put the return address nest-sys on the return
+\ stack. The stack effects i*x represent arguments to name.
+
+\ name Execution: Execute the definition. The stack effects i*x
+\ and j*x represent arguments to and results from name, respect-
+\ ively.
+
+
+: ;  ( Compi: colon-sys -- ) ( Run: R:nest-sys -- R: )
+  something ;
+
+\ Interpretation: Undefined
+
+\ Compilation: Compile the runtime semantics described below.
+\ End the current definition, allow it to be found in the dic-
+\ tionary, enter interpretation state, and consume colon-sys.
+\ If the dictionary pointer is not aligned, reserve enough space
+\ to align it.
+
+\ Runtime: Return to the calling definition specified by the re-
+\ turn address nest-sys.
+
+
+: immediate  ( -- )  something ;
+
+\ Make the most recent definition an immediate word. An ambigu-
+\ ous condition exists if the most recent definition does not
+\ have a name or if it was defined by SYNONYM.
+
+
+: constant  ( '<spaces>name' x -- ) ( Exe: -- x )  something ;
+
+\ Skip leading spaces and parse name delimited by a space. Cre-
+\ ate a definition for name with the following execution seman-
+\ tics.
+
+\ name Execution: Put x on the stack.
+
+
+: variable  ( '<spaces>name' -- ) ( Exe: -- a-addr ) something ;
+
+\ Skip leading spaces and parse name delimited by a space. Cre-
+\ ate a definition for name with the following execution seman-
+\ tics.
+
+\ name Execution: a-addr is the address of the reserved cell. A
+\ program is responsible for initializing the contents of the
+\ reserved cell.
+
+
+: create  ( '<spaces>name' -- ) ( Exe: -- a-addr )  something ;
+
+\ Skip leading spaces and parse name delimited by a space. Cre-
+\ ate a definition for name with the execution semantics de-
+\ scribed below. If the dictionary pointer is not aligned, re-
+\ serve enough space to align it. The new dictionary pointer de-
+\ fines the data field of name. CREATE does not allocate dictio-
+\ nary space in the data field.
+
+\ Execution: a-addr is the address of the data field of name.
+\ The execution semantics of name may be extended by using
+\ DOES>.
+
+
+: does>  ( Compi: colon-sys1 -- colon-sys2 )
+  ( Run: R:nest-sys1 -- R: )
+  ( Initi: i*x R: -- i*x a-addr R:nest-sys2 )
+  ( Exe: i*x -- j*x )
+  something ;
+
+\ Interpretation: Undefined
+
+\ Compilation: Compile the runtime semantics described below.
+\ ( comment about something related to whether the definition
+\ becomes findable in the dictionary )
+\ Consume colon-sys1 and produce colon-sys2. Compile the initia-
+\ tion semantics described below.
+
+\ Runtime: Replace the execution semantics of the most recent
+\ definition, referred to as name, with the name execution se-
+\ mantics described below. Return control to the calling defini-
+\ tion specified by nest-sys1. An ambiguous condition exists if
+\ name was not defined by CREATE or a user-defined word that
+\ calls CREATE.
+
+\ Initiation: Put the return address nest-sys2 on the return
+\ stack. Put the address of the data field of name on the data
+\ stack. The stack effects i*x represent arguments to name.
+
+\ name Execution: Execute the portion of the definition that be-
+\ gins with the initiation semantics appended by the DOES> that
+\ modified name. The stack effects i*x and j*x represent argu-
+\ ments to and results from name, respectively.
+
+
+
+\ Core-Ext Definition
+
+: :noname  ( -- xt colon-sys )
+  ( Initi: i*x R: -- i*x R:nest-sys ) ( Exe: i*x -- j*x )
+  something ;
+
+\ Create an execution token xt, enter compilation state, start
+\ the current definition, and produce colon-sys. Compile the
+\ initiation semantics described below. The execution semantics
+\ of xt will be determined by the words compiled into the body
+\ of the definition. This definition can be executed later by
+\ using xt EXECUTE.
+
+\ Initiation: Put the return address nest-sys on the return
+\ stack. The stack effects i*x represent arguments to xt.
+
+\ xt Execution: Execute the definition specified by xt. The
+\ stack effects i*x and j*x represent arguments to and results
+\ from xt, respectively.
+
+
+: buffer:  ( '<spaces>name' u -- ) ( Exe: -- a-addr )
+  something ;
+
+\ Skip leading spaces and parse name delimited by a space. Cre-
+\ ate a definition for name with the execution semantics de-
+\ scribed below. Reserve u address units at an aligned address.
+\ ( something about contiguity of the region for Opforth and
+\ other Forth systems )
+
+\ name Execution: a-addr is the address of the space reserved by
+\ BUFFER: when it defined name. A program is responsible for
+\ initializing the contents.
+
+
+: value  ( '<spaces>name' x -- ) ( Exe: -- x ) ( to: x -- )
+  something ;
+
+\ Skip leading spaces and parse name delimited by a space. Cre-
+\ ate a definition for name with the execution semantics de-
+\ scribed below. Write x to the data field.
+
+\ name Execution: Put x on the stack. The contents of x are
+\ those assigned by the most recent execution of the phrase
+\ x TO name. If x TO name has not been executed, the contents
+\ of x are those assigned when name was created.
+
+\ TO name Runtime: Write x to the data field of name.
+
+
+: to  ( Inter: '<spaces>name' i*x -- )
+  ( Compi: '<spaces>name' -- )
+  something ;
+
+\ Interpretation: Skip leading spaces and parse name delimited
+\ by a space. Perform the "TO name Runtime" semantics given in
+\ the definition of the defining word of name. An ambiguous con-
+\ dition exists if name was not defined by a word with "TO name
+\ Runtime" semantics.
+
+\ Compilation: Skip leading spaces and parse name delimited by a
+\ space. Compile the "TO name Runtime" semantics given in the
+\ definition of the defining word of name. An ambiguous condi-
+\ tion exists if name was not defined by a word with "TO name
+\ Runtime" semantics.
+
+\ Note: An ambiguous condition exists if any of POSTPONE,
+\ [COMPILE], or ', or ['] are applied to TO.
+
+
+: defer  ( '<spaces>name' -- ) ( Exe: i*x -- j*x )
+  something ;
+
+\ Skip leading spaces and parse name delimited by a space. Cre-
+\ ate a definition for name with the execution semantics de-
+\ scribed below.
+
+\ name Execution: Execute the xt that name is set to execute. An
+\ ambuguous condition exists if name has not been set to execute
+\ an xt.
+
+
+: marker  ( '<spaces>name' -- ) ( Exe: -- )
+  something ;
+
+\ Skip leading spaces and parse name delimited by a space. Cre-
+\ ate a definition for name with the execution semantics defined
+\ below.
+
+\ name Execution: Restore all dictionary allocation and search
+\ order pointers to the state they had just prior to the defini-
+\ tion of name. Remove the definition and all subsequent defini-
+\ tions. Restoration of any structures still existing that could
+\ refer to deleted definitions or deallocated data space is not
+\ necessarily provided. No other contextual information (such as
+\ the base of the number system) is affected.
