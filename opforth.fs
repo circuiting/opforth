@@ -296,9 +296,11 @@
 \ until      Compi: dest --  Run: x --
 \ while      Compi: dest -- orig dest  Run: x --
 \ repeat     Compi: orig dest --  Run: --
-\ do         Compi: -- do-sys  Run: nu1 nu2 R: -- R:n
-\ loop       Compi: do-sys --  Run: R:n1 -- R:|n2
-\ +loop      Compi: do-sys --  Run: n1 R:n2 -- R:|n3
+\ do         Compi: -- do-sys
+\            Run: n1|u1 nu2|u2 R: -- R:loop-sys
+\ loop       Compi: do-sys --  Run: R:loop-sys1 -- R:|loop-sys2
+\ +loop      Compi: do-sys --
+\            Run: n R:loop-sys1 -- R:|loop-sys2
 \ i          Compi: --  Exe: R:n -- nu R:n
 \ j          Compi: --  Exe: R:n1 n2 -- nu n1 n2
 \ leave      Compi: --  Exe: R:n -- R:
@@ -314,7 +316,7 @@
 \ case       Compi: -- case-sys  Run: --
 \ of         Compi: -- of-sys  Run: x1 x2 -- |x1
 \ endof      Compi: case-sys1 of-sys -- case-sys2  Run: --
-\ endcase    Compi: case-sys  Run: x --
+\ endcase    Compi: case-sys --  Run: x --
 
 
 \ Core Outer Interpreter
@@ -1628,8 +1630,7 @@ variable state  ( -- a-addr )  false state !
 \ [COMPILE], or ', or ['] are applied to TO.
 
 
-: defer  ( '<spaces>name' -- ) ( Exe: i*x -- j*x )
-  something ;
+: defer  ( '<spaces>name' -- ) ( Exe: i*x -- j*x )  something ;
 
 \ Skip leading spaces and parse name delimited by a space. Cre-
 \ ate a definition for name with the execution semantics de-
@@ -1640,8 +1641,7 @@ variable state  ( -- a-addr )  false state !
 \ an xt.
 
 
-: marker  ( '<spaces>name' -- ) ( Exe: -- )
-  something ;
+: marker  ( '<spaces>name' -- ) ( Exe: -- )  something ;
 
 \ Skip leading spaces and parse name delimited by a space. Cre-
 \ ate a definition for name with the execution semantics defined
@@ -1654,3 +1654,342 @@ variable state  ( -- a-addr )  false state !
 \ refer to deleted definitions or deallocated data space is not
 \ necessarily provided. No other contextual information (such as
 \ the base of the number system) is affected.
+
+
+
+\ Core Control Flow
+
+: if  ( Compi: -- orig ) ( Run: x -- )  something ;
+
+\ Interpretation: Undefined
+
+\ Compilation: Put the location of a new unresolved forward ref-
+\ erence orig onto the stack. Compile the runtime semantics de-
+\ scribed below. The semantics are incomplete until resolved,
+\ e.g., by THEN or ELSE.
+
+\ Runtime: If all bits of x are zero, continue execution at the
+\ location specified by the resolution of orig.
+
+
+: else  ( Compi: orig1 -- orig2 ) ( Run: -- )  something ;
+
+\ Interpretation: Undefined
+
+\ Compilation: Put the location of a new unresolved forward ref-
+\ erence orig2 onto the stack. Compile the runtime semantics de-
+\ scribed below. The semantics will be incomplete until resolved
+\ (e.g. by THEN). Resolve the forward reference orig1 using the
+\ location of the compiled runtime semantics.
+
+\ Runtime: Continue execution at the location given by the res-
+\ olution of orig2.
+
+
+: then  ( Compi: orig -- ) ( Run: -- )  something ;
+
+\ Interpretation: Undefined
+
+\ Compilation: Compile the runtime semantics described below.
+\ Resolve the forward reference orig using the location of the
+\ compiled runtime semantics.
+
+\ Runtime: Continue execution.
+
+
+: begin  ( Compi: -- dest ) ( Run: -- )  something ;
+
+\ Interpretation: Undefined
+
+\ Compilation: Put dest, the next location for a transfer of
+\ control, onto the stack. Compile the runtime semantics below.
+
+\ Runtime: Continue execution.
+
+
+: until  ( Compi: dest -- ) ( Run: x -- )  something ;
+
+\ Interpretation: Undefined
+
+\ Compilation: Compile the runtime semantics described below.
+\ Resolve the backward reference dest.
+
+\ Runtime: If all bits of x are zero, continue execution at the
+\ location specified by dest.
+
+
+: while  ( Compi: dest -- orig dest ) ( Run: x -- )  something ;
+
+\ Interpretation: Undefined
+
+\ Compilation: Put orig, the location of a new unresolved for-
+\ ward reference, onto the stack under the existing dest. Com-
+\ pile the runtime semantics described below. The semantics are
+\ incomplete until orig and dest are resolved (e.g., by REPEAT).
+
+\ Runtime: If all bits of x are zero, continue execution at the
+\ location specified by the resolution of orig.
+
+
+: repeat  ( COmpi: orig dest -- ) ( Run: -- )  something ;
+
+\ Interpretation: Undefined
+
+\ Compilation: Put orig, the location of a new unresolved for-
+\ ward reference, onto the stack.
+
+\ Runtime: Continue execution at the location given by dest.
+
+
+: do  ( -- do-sys ) ( Run: n1|u1 nu2|u2 R: -- R:loop-sys )
+  something ;
+
+\ Interpretation: Undefined
+
+\ Compilation: Put do-sys onto the stack. Compile the runtime
+\ semantics below. The semantics are incomplete until resolved
+\ by a consumer of do-sys such as LOOP.
+
+\ Runtime: Set up loop parameters with index n2|u2 and limit
+\ n1|u1. An ambiguous condition exists if n1|u1 and n2|u2 are
+\ not both the same type. Anything already on the return stack
+\ becomes unavailable until the loop-control parameters are dis-
+\ carded.
+
+
+: loop  ( Compi: do-sys -- )
+  ( Run: R:loop-sys1 -- R:|loop-sys2 )
+  something ;
+
+\ Interpretation: Undefined
+
+\ Compilation: Compile the runtime semantics below. Resolve the
+\ destination of all unresolved occurrences of LEAVE - between
+\ the location given by do-sys and the next location for a
+\ transfer of control - to execute the words following the LOOP.
+
+\ Runtime: Add one to the loop index. If the loop index is then
+\ equal to the loop limit, discard the loop parameters and con-
+\ tinue execution immediately following the loop. Otherwise,
+\ continue execution at the beginning of the loop. An ambiguous
+\ condition exists if the runtime semantics execute when the
+\ loop parameters are unavailable.
+
+
+: +loop  ( Compi: do-sys -- )
+  ( Run: n R:loop-sys1 -- |loop-sys2 )
+  something ;
+
+\ Interpretation: Undefined
+
+\ Compilation: Compile the runtime semantics described below.
+\ Resolve the destination of all unresolved occurrences of LEAVE
+\ - between the location of do-sys and the next location for a
+\ transfer of control - to execute the words following +LOOP.
+
+\ Runtime: Add n to the loop index. If the loop index did not
+\ cross the boundary between the loop index minus one and the
+\ loop limit, continue execution at the beginning of the loop.
+\ Otherwise, discard the loop parameters and continue execution
+\ immediately following the loop. An ambiguous condition exists
+\ if the runtime semantics execute when the loop parameters are
+\ unavailable.
+
+
+: i  ( Compi: -- ) ( Exe: -- nu )  something ;
+
+\ Interpretation: Undefined
+
+\ Compilation: Compile the following runtime semantics.
+
+\ Execution: nu is a copy of the current (innermost) loop index.
+\ an ambiguous condition exists if the loop parameters are un-
+\ available.
+
+
+: j  ( Compi: -- )
+  ( Exe: R:loop-sys1 R:loop-sys2 -- nu R:loop-sys1 R:loop-sys2 )
+  something ;
+
+\ Interpretation: Undefined
+
+\ Compilation: Compile the following runtime semantics.
+
+\ Execution: nu is a copy of the next-outer loop index. An am-
+\ biguous condition exists if the loop parameters of the next-
+\ outer loop, loop-sys2, are unavailable.
+
+
+: leave  ( Compi: -- ) ( Exe: R:n -- R: )  something ;
+
+\ Interpretation: Undefined
+
+\ Compilation: Compile the following runtime semantics.
+
+\ Execution: Discard the current loop parameters. An ambiguous
+\ condition exists if they are unavailable. Continue execution
+\ immediately following the innermost syntactically enclosing
+\ DO...LOOP or DO...+LOOP.
+
+
+: unloop  ( Compi: -- ) ( R:n -- R: )  something ;
+
+\ Interpretation: Undefined
+
+\ Compilation: Compile the following runtime semantics.
+
+\ Execution: Discard the loop parameters for the current nesting
+\ level. An UNLOOP is required for each nesting level before the
+\ definition may be EXITed. An ambiguous condition exists if the
+\ loop parameters are unavailable.
+
+
+: exit  ( Compi: -- ) ( Exe: R:nest-sys -- R: )  something ;
+
+\ Interpretation: Undefined
+
+\ Compilation: Compile the following runtime semantics.
+
+\ Execution: Return control the calling definition specified by
+\ the return address nest-sys. Before executing EXIT within a
+\ counted loop (e.g. DO...LOOP), a program shall discard the
+\ loop parameters by executing UNLOOP.
+
+
+: recurse  ( Compi: -- )  something ;
+
+\ Interpretation: Undefined
+
+\ Compilation: Compile the execution semantics of the current
+\ definition. An ambiguous condition exists if RECURSE appears
+\ in a definition after DOES>.
+
+
+
+\ Core-Ext Control Flow
+
+
+: again  ( Compi: dest -- ) ( Run: -- )  something ;
+
+\ Interpretation: Undefined
+
+\ Compilation: Compile the runtime semantics described below and
+\ resolve the backward reference dest.
+
+\ Runtime: Continue execution at the location specified by dest.
+\ If no other control flow words are used, any program code af-
+\ ter AGAIN will not be executed.
+
+
+: ?do  ( Compi: -- do-sys )
+  ( Run: n1|u1 n2|u2 R: -- R:loop-sys )
+  something ;
+
+\ Interpretation: Undefined
+
+\ Compilation: Put do-sys on the stack. Compile the runtime se-
+\ mantics described below to the current definition. The seman-
+\ tics are incomplete until resolved by a consumer of do-sys
+\ such as LOOP.
+
+\ Runtime: If n1|u1 is equal to n2|u2, continue execution at the
+\ location given by the consumer of do-sys. Otherwise, set up
+\ loop parameters with index n2|u2 and limit n1|u1, then contin-
+\ ue executing immediately following ?DO. Anything already on
+\ the return stack becomes unavailable until the loop parameters
+\ are discarded. An ambiguous condition exists if n1|u1 and
+\ n2|u2 are not both the same type.
+
+
+: case  ( Compi: -- case-sys ) ( Run: -- )  something ;
+
+\ Interpretation: Undefined
+
+\ Compilation: Mark the start of the CASE...OF...ENDOF...ENDCASE
+\ structure. Compile the following runtime semantics.
+
+\ Runtime: Continue execution.
+
+
+: of  ( Compi: -- of-sys ) ( Run: x1 x2 -- |x1 )  something ;
+
+\ Interpretation: Undefined
+
+\ Compilation: Put of-sys on the stack and compile the runtime
+\ semantics described below. The semantics are incomplete until
+\ resolved by a consumer of of-sys such as ENDOF.
+
+\ Runtime: If the top two stack items are not bit-for-bit the
+\ same, discard the top item and continue execution at the loca-
+\ tion specified by the consumer of of-sys (e.g., following the
+\ next ENDOF). Otherwise, discard both values and continue exe-
+\ cution in line.
+
+
+: endof  ( Compi: case-sys1 of-sys -- case-sys2 ) ( Run: -- )
+  something ;
+
+\ Interpretation: Undefined
+
+\ Compilation: Mark the end of the OF...ENDOF part of the CASE
+\ structure. The next location for a transfer of control re-
+\ solves the reference given by of-sys. Compile the runtime se-
+\ mantics described below. Replace case-sys1 with case-sys2,
+\ which will be resolved by ENDCASE.
+
+
+: endcase  ( Compi: case-sys -- ) ( Run: x -- )  something ;
+
+\ Interpretation: Undefined
+
+\ Compilation: Mark the end of the CASE...OF...ENDOF...ENDCASE
+\ structure. Use case-sys to resolve the entire structure. Com-
+\ pile the following runtime semantics.
+
+\ Runtime: Discard the case selector x and continue execution.
+
+
+
+\ Core Outer Interpreter
+
+
+: quit  ( R:i*x -- R: )  something ;
+
+\ Empty the return stack, store zero in SOURCE-ID, make the user
+\ input device the input source, and enter interpretation state.
+\ Do not display a message. Repeat the following:
+\ - Accept a line from the input source into the input buffer,
+\   set >IN to zero, and interpret.
+\ - Display "ok" if in interpretation state, all processing has
+\   been completed, and no ambiguous condition exists.
+
+
+: abort  ( i*x R:j*x -- )  something ;
+
+\ Empty the data stack and perform the function of QUIT, which
+\ includes emptying the return stack, without displaying a mes-
+\ sage.
+
+
+: abort"  ( Compi: 'ccc<quote>' -- )
+  ( Run: i*x x1 R:j*x -- |i*x R:|j*x )
+  something ;
+
+\ Interpretation: Undefined
+
+\ Compilation: Parse ccc delimited by " (double-quote). Compile
+\ the following runtime semantics.
+
+\ Runtime: Remove x1 from the stack. If any bit of x1 is non-
+\ zero, display ccc and perform an abort sequence that includes
+\ the function of ABORT.
+
+
+: evaluate  ( i*x c-addr u -- j*x )  something ;
+
+\ Save the current input source specification, store -1 in
+\ SOURCE-ID, make the string with address c-addr and length u
+\ both the input source and the input buffer, set >IN to zero,
+\ and interpret. When the parse area is empty, restore the prior
+\ input source specification. Other stack effects are due to the
+\ words EVALUATEd.
