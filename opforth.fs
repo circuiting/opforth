@@ -945,7 +945,7 @@ synonym c! !  ( char c-addr -- )
 \ Core-Ext Text Display
 
 
-: .(  ( 'ccc<right-paren> -- )  something ; immediate
+: .(  ( 'ccc<right-paren>' -- )  something ; immediate
 
 \ Parse ccc delimited by ) (right parenthesis). Display ccc.
 
@@ -1026,8 +1026,20 @@ variable base  ( -- a-addr )  #10 base !
 
 : >number  ( ud1 c-addr1 u1 -- ud2 c-addr2 u2 )  something ;
 
-\ Convert the string specified by c-addr1 u1 into a double-cell
-\ unsigned integer using the following method. ( something )
+\ Attempt to convert the string with address c-addr1 and length
+\ u1 to a double-cell unsigned integer using ud1 as an accumula-
+\ tor. For each character in the string, from left to right,
+\ convert the character to a number using the radix in BASE, add
+\ the number to ud1, and then multiply ud1 by the radix. Conver-
+\ sion continues until the string is entirely converted or a
+\ non-convertible character is encountered. + and - are non-
+\ convertible characters.
+
+\ c-addr2 is the location of the first unconverted character or
+\ the first character past the end of the string if the string
+\ was entirely converted. u2 is the number of unconverted char-
+\ acters in the string. An ambiguous condition exists if ud2
+\ overflows during the conversion.
 
 
 
@@ -1177,12 +1189,14 @@ value source-id  ( -- 0 | -1 )  0 to source-id
 : refill  ( -- flag )  something ;
 
 \ Attempt to fill the input buffer from the input source.
+
 \ When the input source is the user input device, attempt to re-
 \ ceive input into the terminal input buffer. If successful,
 \ make the result the input buffer, set >IN to zero, and return
 \ a true flag. Receipt of a line containing no characters is
 \ considered successful. If no input is available from the input
 \ source, return false.
+
 \ When the input source is a string via EVALUATE, return false
 \ and perform no other action.
 
@@ -1199,7 +1213,26 @@ value source-id  ( -- 0 | -1 )  0 to source-id
 
 : environment?  ( c-addr u -- false | i*x true )  something ;
 
-\ Description of something goes here
+\ Provide information about the programming environment by at-
+\ tempting to match the string with address c-addr and length u
+\ to an entry in the table below. If no match is found, return
+\ a false flag. Otherwise, return the query result i*x with a
+\ true flag.
+
+\ String              Type  Meaning
+
+\ /COUNTED-STRING     n     Counted string length limit in chars
+\ /HOLD               n     Size of the buffer used by <# #>
+\ /PAD                n     Size of the buffer used by PAD
+\ ADDRESS-UNIT-BITS   n     Size of one address unit in bits
+\ FLOORED             flag  true if division is floored
+\ MAX-CHAR            u     Maximum value of any character
+\ MAX-D               d     Maximum signed double-cell integer
+\ MAX-N               n     Maximum signed single-cell integer
+\ MAX-U               u     Maximum unsigned single-cell integer
+\ MAX-UD              ud    Maximum unsigned double-cell integer
+\ RETURN-STACK-CELLS  n     Maximum cells on the return stack
+\ STACK-CELLS         n     Maximum cells on the data stack
 
 
 
@@ -1268,22 +1301,35 @@ value source-id  ( -- 0 | -1 )  0 to source-id
   ( Compi: '<spaces>name' -- ) ( Run: xt -- )
   something ;
 
-\ Interpretation: Description of something goes here
+\ Interpretation: Skip leading spaces and parse name delimited
+\ by a space. Set name to execute xt. An ambiguous condition ex-
+\ ists if name was not defined by DEFER.
 
-\ Compilation: Description of something goes here
+\ Compilation: Skip leading spaces and parse name delimited by a
+\ space. Compile the runtime semantics described below. An am-
+\ biguous condition exists if name was not defined by DEFER.
 
-\ Runtime: Description of something goes here
+\ Runtime: Set name to execute xt. An ambiguous condition exists
+\ if POSTPONE, [COMPILE], ['], or ' is applied to IS.
 
 
 : action-of  ( Inter: '<spaces>name' -- xt )
   ( Compi: '<spaces>name' -- ) ( Run: -- xt )
   something ;
 
-\ Interpretation: Description of something goes here
+\ Interpretation: Skip leading spaces and parse name delimited
+\ by a space. xt is the execution token that name is set to exe-
+\ cute. An ambiguous condition exists if name was not defined by
+\ DEFER or if name was not set to execute an xt.
 
-\ Compilation: Description of something goes here
+\ Compilation: Skip leading spaces and parse name delimited by a
+\ space. Compile the runtime semantics described below. An am-
+\ biguous condition exists if name was not defined by DEFER.
 
-\ Runtime: Description of something goes here
+\ Runtime: xt is the execution token that name is set to exe-
+\ cute. An ambiguous condition exists if name has not been set
+\ up to execute an xt. An ambiguous condition exists if
+\ POSTPONE, [COMPILE], ['], or ' is applied to ACTION-OF.
 
 
 
@@ -1423,7 +1469,32 @@ variable state  ( -- a-addr )  false state !
 \ Runtime: Return the address c-addr and length u of a string
 \ consisting of the characters ccc. A program shall not alter
 \ the returned string.
-\ Translation Rules: something
+
+\ Translation Rules: Characters are processed one at a time and
+\ appended to the compiled string. If the character is \ (back-
+\ slash), it is processed by parsing and substituting one or
+\ more characters according to the table below. The character
+\ after the backslash is case sensitive. Opforth translates \n
+\ to the ASCII line feed code, but other Forth systems may
+\ translate it differently.
+
+\ Characters        Meaning                    ASCII Code (Hex)
+
+\ \a                alert                      07
+\ \b                backspace                  08
+\ \e                escape                     1b
+\ \f                form feed                  0c
+\ \l                line feed                  0a
+\ \m                carriage return line feed  0d,0a
+\ \n                new line                   0a
+\ \q                double quote               22
+\ \r                carriage return            0d
+\ \t                horizontal tab             09
+\ \v                vertical tab               0b
+\ \z                no character               00
+\ \"                double quote               22
+\ \x<digit><digit>  ASCII character by code    <digit><digit>
+\ \\                backslash itself           5c
 
 
 : c"  ( Compi: 'ccc<quote>' -- ) ( Run: -- c-addr )  something ;
@@ -1475,10 +1546,8 @@ variable state  ( -- a-addr )  false state !
 \ the current definition, and produce colon-sys. Compile the ex-
 \ ecution semantics described below. The execution semantics
 \ will be determined by the words compiled into the body of the
-\ definition. The current definition shall not be findable in
-\ the dictionary until it is ended.
-\ (Decision about something: Is the definition made findable by
-\ the execution of DOES>?)
+\ definition. The current definition will not be findable in the
+\ dictionary until it is ended.
 
 \ Initiation: Put the return address nest-sys on the return
 \ stack. The stack effects i*x represent arguments to name.
@@ -1553,10 +1622,10 @@ variable state  ( -- a-addr )  false state !
 \ Interpretation: Undefined
 
 \ Compilation: Compile the runtime semantics described below.
-\ ( comment about something related to whether the definition
-\ becomes findable in the dictionary )
 \ Consume colon-sys1 and produce colon-sys2. Compile the initia-
-\ tion semantics described below.
+\ tion semantics described below. Standard Forth does not re-
+\ quire the compilation of DOES> to make the current definition
+\ findable in the dictionary.
 
 \ Runtime: Replace the execution semantics of the most recent
 \ definition, referred to as name, with the name execution se-
@@ -1603,8 +1672,9 @@ variable state  ( -- a-addr )  false state !
 \ Skip leading spaces and parse name delimited by a space. Cre-
 \ ate a definition for name with the execution semantics de-
 \ scribed below. Reserve u address units at an aligned address.
-\ ( something about contiguity of the region for Opforth and
-\ other Forth systems )
+\ The area reserved by the Opforth implementation of BUFFER: is
+\ contiguous with the rest of the dictionary. The ANS Forth
+\ standard does not require the reserved area to be contiguous.
 
 \ name Execution: a-addr is the address of the space reserved by
 \ BUFFER: when it defined name. A program is responsible for
