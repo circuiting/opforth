@@ -57,14 +57,14 @@
 
 \ Core Arithmetic
 
-\ +         nu1 nu2 -- nu3
-\ -         nu1 nu2 -- nu3
-\ 1+        nu1 -- nu2
-\ 1-        nu1 -- nu2
+\ +         n1|u1 n2|u2 -- n3|u3
+\ -         n1|u1 n2|u2 -- n3|u3
+\ 1+        n1|u1 -- n2|u2
+\ 1-        n1|u1 -- n2|u2
 \ negate    n1 -- n2
 \ abs       n -- u
 \ s>d       n -- d
-\ *         nu1 nu2 -- nu3
+\ *         n1|u1 n2|u2 -- n3|u3
 \ m*        n1 n2 -- d
 \ um*       u1 u2 -- ud
 \ /         n1 n2 -- n3
@@ -95,7 +95,7 @@
 \ 0>        n -- flag
 \ <>        x1 x2 -- flag
 \ u>        u1 u2 -- flag
-\ within    nu1 nu2 nu3 -- flag
+\ within    n1 n2 n3 | u1 u2 u3 -- flag
 
 
 \ Core Bitwise Logic
@@ -134,7 +134,7 @@
 \ c!      char c-addr --
 \ 2@      a-addr -- x1 x2
 \ 2!      x1 x2 a-addr --
-\ +!      nu a-addr --
+\ +!      n|u a-addr --
 \ move    addr1 addr2 u --
 \ fill    c-addr u char --
 
@@ -297,14 +297,15 @@
 \ while      Compi: dest -- orig dest  Run: x --
 \ repeat     Compi: orig dest --  Run: --
 \ do         Compi: -- do-sys
-\            Run: n1|u1 nu2|u2 R: -- R:loop-sys
+\            Run: n1 n2 R: | n1 n2 R: -- R:loop-sys
 \ loop       Compi: do-sys --  Run: R:loop-sys1 -- R:|loop-sys2
 \ +loop      Compi: do-sys --
 \            Run: n R:loop-sys1 -- R:|loop-sys2
-\ i          Compi: --  Exe: R:n -- nu R:n
-\ j          Compi: --  Exe: R:n1 n2 -- nu n1 n2
-\ leave      Compi: --  Exe: R:n -- R:
-\ unloop     Compi: --  Exe: R:n -- R:
+\ i          Compi: --  Exe: R:loop-sys -- n|u R:loop-sys
+\ j          Compi: --  Exe: R:loop-sys1 loop-sys2
+\                            -- n|u loop-sys1 loop-sys2
+\ leave      Compi: --  Exe: R:loop-sys -- R:
+\ unloop     Compi: --  Exe: R:loop-sys -- R:
 \ exit       Compi: --  Exe: R:nest-sys -- R:
 \ recurse    Compi: --
 
@@ -312,7 +313,8 @@
 \ Core-Ext Control Flow
 
 \ again      Compi: dest --  Run: --
-\ ?do        Compi: -- do-sys  Run: nu1 nu2 R: -- R:n
+\ ?do        Compi: -- do-sys
+\            Run: n1 n2 R: | u1 u2 R: -- R:loop-sys
 \ case       Compi: -- case-sys  Run: --
 \ of         Compi: -- of-sys  Run: x1 x2 -- |x1
 \ endof      Compi: case-sys1 of-sys -- case-sys2  Run: --
@@ -380,7 +382,8 @@ $0005 opcode ?dup  ( x -- x x | 0 )
 : 2over  ( x1 x2 x3 x4 -- x1 x2 x3 x4 x1 x2 )
   2>r 2dup 2r> 2swap ;
 
-\ Put a copy of cell pair x1 x2 on top of the stack.
+\ Put a copy of the second cell pair, x1 x2, on top of the
+\ stack.
 
 
 $0006 opcode >r  ( Compi: -- ) ( Exe: x R: -- R:x )
@@ -446,8 +449,8 @@ $000a opcode tuck  ( x1 x2 -- x2 x1 x2 )
 
 
 : 2>r  ( Compi: -- ) ( Exe: x1 x2 R: -- R:x1 R:x2 )
-  postpone swap  postpone >r  postpone >r
-; immediate compile-only
+  postpone swap
+  postpone >r  postpone >r ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -458,8 +461,8 @@ $000a opcode tuck  ( x1 x2 -- x2 x1 x2 )
 
 
 : 2r>  ( Compi: -- ) ( Exe: R:x1 R:x2 -- x1 x2 R: )
-  postpone r>  postpone r>  postpone swap
-; immediate compile-only
+  postpone r>  postpone r>
+  postpone swap ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -471,8 +474,8 @@ $000a opcode tuck  ( x1 x2 -- x2 x1 x2 )
 
 : 2r@  ( Compi: -- ) ( Exe: R:x1 R:x2 -- x1 x2 R:x1 R:x2 )
   postpone r>  postpone r>  postpone 2dup
-  postpone >r  postpone >r  postpone swap
-; immediate compile-only
+  postpone >r  postpone >r
+  postpone swap ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -486,29 +489,34 @@ $000a opcode tuck  ( x1 x2 -- x2 x1 x2 )
 \ Core Arithmetic
 
 
-$000b opcode +  ( nu1 nu2 -- nu3 )
+$000b opcode +  ( n1|u1 n2|u2 -- n3|u3 )
 
-\ Add nu1 to nu2. nu3 is the sum.
-
-
-$000c opcode -  ( nu1 nu2 -- nu3 )
-
-\ Subtract nu2 from nu1. nu3 is the difference.
+\ Add the top two stack items, then put the sum on the stack.
+\ Any of the integers can be signed or unsigned.
 
 
-$000d opcode 1+  ( nu1 -- nu2 )
+$000c opcode -  ( n1|u1 n2|u2 -- n3|u3 )
 
-\ nu2 is the result of incrementing nu1 by one.
+\ Subtract the top stack item from the second stack item, then
+\ put the difference on the stack. Any of the integers can be
+\ signed or unsigned.
+
+
+$000d opcode 1+  ( n1|u1 -- n2|u2 )
+
+\ n2 is the result of incrementing n1 by one. The integers can
+\ be signed or unsigned.
 
 
 $000e opcode 1-  ( nu1 -- nu2 )
 
-\ nu2 is the result of decrementing nu1 by one.
+\ n2 is the result of decrementing n1 by one. The integers can
+\ be signed or unsigned.
 
 
 $000f opcode negate  ( n1 -- n2 )
 
-\ n2 is the arithmetic inverse of n1.
+\ n2 is the arithmetic inverse of n1 (i.e., n2 = 0 - n1).
 
 
 $0010 opcode abs  ( n -- u )
@@ -518,13 +526,14 @@ $0010 opcode abs  ( n -- u )
 
 $0011 opcode s>d  ( n -- d )
 
-\ Convert the single-cell integer n to a double-cell integer
-\ with the same value. d is the result.
+\ d is the result of converting the single-cell integer n to a
+\ double-cell integer with the same value.
 
 
-: *  ( nu1 nu2 -- nu3 )  m* drop ;
+: *  ( n1|u1 n2|u2 -- n3|u3 )  m* drop ;
 
-\ Multiply nu1 by nu2. nu3 is the single-cell product.
+\ Multiply n1 by n2. n3 is the single-cell product. Any of the
+\ integers can be signed or unsigned.
 
 
 : m*  ( n1 n2 -- d )  something ;
@@ -677,9 +686,16 @@ $0019 opcode u>  ( u1 u2 -- flag )
 \ false.
 
 
-: within  ( nu1 nu2 nu3 -- flag )  something ;
+: within  ( n1 n2 n3 | u1 u2 u3 -- flag )  something ;
 
-\ Description of something goes here
+\ flag is true if either of the following is true:
+
+\ n2<n3 and n1 lies inside the interval [n2,n3)
+\ n2>=n3 and n1 lies outside the interval [n3,n2)
+
+\ Otherwise, flag is false. The integers can be signed or un-
+\ signed. An ambiguous condition exists if WITHIN is used on a
+\ mix of signed and unsigned integers.
 
 
 
@@ -834,11 +850,11 @@ synonym c! !  ( char c-addr -- )
 \ cell.
 
 
-: +!  ( nu a-addr -- )  tuck @ + swap ! ;
+: +!  ( n|u a-addr -- )  tuck @ + swap ! ;
 
-\ Read the single-cell integer located at memory address a-addr,
-\ add nu to the integer, and write the result to the same ad-
-\ dress.
+\ Add the second stack item to the single-cell integer located
+\ at memory address a-addr, then store the sum to a-addr. Any of
+\ the integers can be signed or unsigned.
 
 
 : move  ( addr1 addr2 u -- )  something ;
@@ -1741,7 +1757,7 @@ variable state  ( -- a-addr )  false state !
 \ Runtime: Continue execution at the location given by dest.
 
 
-: do  ( -- do-sys ) ( Run: n1|u1 nu2|u2 R: -- R:loop-sys )
+: do  ( -- do-sys ) ( Run: n1 n2 R: | u1 u2 R: -- R:loop-sys )
   something ;
 
 \ Interpretation: Undefined
@@ -1750,11 +1766,12 @@ variable state  ( -- a-addr )  false state !
 \ semantics below. The semantics are incomplete until resolved
 \ by a consumer of do-sys such as LOOP.
 
-\ Runtime: Set up loop parameters with index n2|u2 and limit
-\ n1|u1. An ambiguous condition exists if n1|u1 and n2|u2 are
-\ not both the same type. Anything already on the return stack
-\ becomes unavailable until the loop-control parameters are dis-
-\ carded.
+\ Runtime: Set up loop parameters using the top data stack item
+\ as the index and the second data stack item as the limit. The
+\ index and limit can be signed or unsigned. Anything already on
+\ the return stack becomes unavailable until the loop parameters
+\ are discarded. An ambiguous condition exists if the index and
+\ limit are not of the same type.
 
 
 : loop  ( Compi: do-sys -- )
@@ -1796,31 +1813,34 @@ variable state  ( -- a-addr )  false state !
 \ unavailable.
 
 
-: i  ( Compi: -- ) ( Exe: -- nu )  something ;
-
-\ Interpretation: Undefined
-
-\ Compilation: Compile the following runtime semantics.
-
-\ Execution: nu is a copy of the current (innermost) loop index.
-\ an ambiguous condition exists if the loop parameters are un-
-\ available.
-
-
-: j  ( Compi: -- )
-  ( Exe: R:loop-sys1 R:loop-sys2 -- nu R:loop-sys1 R:loop-sys2 )
+: i  ( Compi: -- ) ( Exe: R:loop-sys -- n|u R:loop-sys )
   something ;
 
 \ Interpretation: Undefined
 
 \ Compilation: Compile the following runtime semantics.
 
-\ Execution: nu is a copy of the next-outer loop index. An am-
+\ Execution: Put a copy of the current (innermost) loop index
+\ onto the data stack. The loop index can be signed or unsigned.
+\ An ambiguous condition exists if the loop parameters are un-
+\ available.
+
+
+: j  ( Compi: -- ) ( Exe: R:loop-sys1 R:loop-sys2
+                          -- n|u R:loop-sys1 R:loop-sys2 )
+  something ;
+
+\ Interpretation: Undefined
+
+\ Compilation: Compile the following runtime semantics.
+
+\ Execution: Put a copy of the next-outer loop index onto the
+\ data stack. The loop index can be signed or unsigned. An am-
 \ biguous condition exists if the loop parameters of the next-
 \ outer loop, loop-sys2, are unavailable.
 
 
-: leave  ( Compi: -- ) ( Exe: R:n -- R: )  something ;
+: leave  ( Compi: -- ) ( Exe: R:loop-sys -- R: )  something ;
 
 \ Interpretation: Undefined
 
@@ -1832,7 +1852,7 @@ variable state  ( -- a-addr )  false state !
 \ DO...LOOP or DO...+LOOP.
 
 
-: unloop  ( Compi: -- ) ( R:n -- R: )  something ;
+: unloop  ( Compi: -- ) ( R:loop-sys -- R: )  something ;
 
 \ Interpretation: Undefined
 
@@ -1882,7 +1902,7 @@ variable state  ( -- a-addr )  false state !
 
 
 : ?do  ( Compi: -- do-sys )
-  ( Run: n1|u1 n2|u2 R: -- R:loop-sys )
+  ( Run: n1 n2 R: | u1 u2 R: -- R:loop-sys )
   something ;
 
 \ Interpretation: Undefined
@@ -1892,13 +1912,14 @@ variable state  ( -- a-addr )  false state !
 \ tics are incomplete until resolved by a consumer of do-sys
 \ such as LOOP.
 
-\ Runtime: If n1|u1 is equal to n2|u2, continue execution at the
-\ location given by the consumer of do-sys. Otherwise, set up
-\ loop parameters with index n2|u2 and limit n1|u1, then contin-
-\ ue executing immediately following ?DO. Anything already on
-\ the return stack becomes unavailable until the loop parameters
-\ are discarded. An ambiguous condition exists if n1|u1 and
-\ n2|u2 are not both the same type.
+\ Runtime: If n1 is bit-for-bit the same as n2, continue execu-
+\ tion at the location given by the consumer of do-sys. Other-
+\ wise, set up loop parameters using the top data stack item as
+\ the index and the second data stack item as the limit, then
+\ continue executing immediately following ?DO. Anything already
+\ on the return stack becomes unavailable until the loop parame-
+\ ters are discarded. An ambiguous condition exists if the index
+\ and limit are not of the same type.
 
 
 : case  ( Compi: -- case-sys ) ( Run: -- )  something ;
