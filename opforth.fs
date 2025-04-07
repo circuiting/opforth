@@ -116,6 +116,11 @@
 \ false    -- false
 
 
+\ Opforth Bitwise Logic
+
+\ u2/    x1 -- x2
+
+
 \ Core Address Math
 
 \ cells      n1 -- n2
@@ -143,6 +148,11 @@
 
 \ erase    addr u --
 \ pad      -- c-addr
+
+
+\ Opforth Memory
+
+\ tuck!  ( x a-addr -- a-addr )
 
 
 \ Core Text Display
@@ -630,12 +640,22 @@ $0014 opcode =  ( x1 x2 -- flag )
 \ flag is false.
 
 
-: <  ( n1 n2 -- flag )  something ;
+: <  ( n1 n2 -- flag )
+  over over 0< if
+    0< if u>= else false then
+  else
+    0< if u< else true then
+  then ;
 
 \ If n1 is less than n2, flag is true. Otherwise flag is false.
 
 
-: >  ( n1 n2 -- flag )  something ;
+: >  ( n1 n2 -- flag )
+  over over 0< if
+    0< if u< else true then
+  else
+    0< if u>= else false then
+  then ;
 
 \ If n1 is greater than n2, flag is true. Otherwise flag is
 \ false.
@@ -646,13 +666,13 @@ $0015 opcode u<  ( u1 u2 -- flag )
 \ If u1 is less than u2, flag is true. Otherwise flag is false.
 
 
-: max  ( n1 n2 -- n3 )  something ;
+: max  ( n1 n2 -- n3 )  over over < if nip then ;
 
 \ Compare the top two integers on the stack. n3 is the integer
 \ that is greater (closer to positive infinity).
 
 
-: min  ( n1 n2 -- n3 )  something ;
+: min  ( n1 n2 -- n3 )  over over < if drop then ;
 
 \ Compare the top two integers on the stack. n3 is the integer
 \ that is lesser (closer to negative infinity).
@@ -725,27 +745,28 @@ $001d opcode xor  ( x1 x2 -- x3 )
 $001c opcode 2*  ( x1 -- x2 )
 
 \ x2 is the result of shifting all bits of x1 to the left by one
-\ binary digit. The vacated least significant bit becomes zero.
+\ bit position. The vacated least significant bit becomes zero.
 
 
 $001d opcode 2/  ( x1 -- x2 )
 
 \ x2 is the result of shifting all bits of x1 to the right by
-\ one binary digit. The vacated most significant bit is un-
+\ one bit position. The vacated most significant bit is un-
 \ changed.
 
 
-: lshift  ( x1 u -- x2 )  something ;
+: lshift  ( x1 u -- x2 )  0 ?do 2* loop ;
 
 \ x2 is the result of shifting all bits of x1 to the left by u
-\ binary digits. The vacated least significant bits become ze-
+\ bit positions. The vacated least significant bits become ze-
 \ roes.
 
 
-: rshift  ( x1 u -- x2 )  something ;
+: rshift  ( x1 u -- x2 )  0 ?do u2/ loop ;
 
 \ x2 is the result of shifting all bits of x1 to the right by u
-\ binary digits. The vacated most significant bits are unchanged.
+\ bit positions. The vacated most significant bits become ze-
+\ roes.
 
 
 
@@ -762,6 +783,16 @@ $001f opcode false  ( -- false )
 
 \ Put a logical FALSE flag on the stack. All bits of the flag
 \ are zeroes.
+
+
+
+\ Opforth Bitwise Logic
+
+$____ opcode u2/  ( x1 -- x2 )
+
+\ x2 is the result of shifting all bits of x1 to the right by
+\ one bit position. The vacated most significant bit becomes ze-
+\ ro.
 
 
 
@@ -822,7 +853,8 @@ $0020 opcode @  ( a-addr -- x )
 
 : !  ( x a-addr -- )  tuck! drop ;
 
-\ Write x to memory address a-addr.
+\ Write x to memory address a-addr. The top two stack items are
+\ removed.
 
 
 synonym c@ @  ( c-addr -- char )
@@ -891,6 +923,16 @@ synonym c! !  ( char c-addr -- )
 
 \ c-addr is the address of the pad, which is a region of memory
 \ that can be used to hold data for intermediate processing.
+
+
+
+\ Opforth Memory
+
+
+$____ opcode tuck!  ( x a-addr -- a-addr )
+
+\ Write x to memory address a-addr. x is removed from the stack,
+\ but a-addr remains.
 
 
 
