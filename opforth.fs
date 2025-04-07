@@ -376,10 +376,16 @@ $0005 opcode ?dup  ( x -- x x | 0 )
 
 : 2drop  ( x1 x2 -- )  drop drop ;
 
+|: 2drop  ( Compi: -- ) ( Run: x1 x2 -- )
+  postpone drop  postpone drop ;| immediate
+
 \ Remove the top two stack items.
 
 
 : 2dup  ( x1 x2 -- x1 x2 x1 x2 )  over over ;
+
+|: 2dup  ( Compi: -- ) ( Run: x1 x2 -- x1 x2 x1 x2 )
+  postpone over  postpone over ;| immediate
 
 \ Duplicate the cell pair on top of the stack.
 
@@ -641,7 +647,8 @@ $0014 opcode =  ( x1 x2 -- flag )
 
 
 : <  ( n1 n2 -- flag )
-  over over 0< if
+  2dup 0<
+  if
     0< if u>= else false then
   else
     0< if u< else true then
@@ -651,7 +658,8 @@ $0014 opcode =  ( x1 x2 -- flag )
 
 
 : >  ( n1 n2 -- flag )
-  over over 0< if
+  2dup 0<
+  if
     0< if u< else true then
   else
     0< if u>= else false then
@@ -666,13 +674,13 @@ $0015 opcode u<  ( u1 u2 -- flag )
 \ If u1 is less than u2, flag is true. Otherwise flag is false.
 
 
-: max  ( n1 n2 -- n3 )  over over < if nip then ;
+: max  ( n1 n2 -- n3 )  2dup < if nip then ;
 
 \ Compare the top two integers on the stack. n3 is the integer
 \ that is greater (closer to positive infinity).
 
 
-: min  ( n1 n2 -- n3 )  over over < if drop then ;
+: min  ( n1 n2 -- n3 )  2dup < if drop then ;
 
 \ Compare the top two integers on the stack. n3 is the integer
 \ that is lesser (closer to negative infinity).
@@ -714,8 +722,8 @@ $0019 opcode u>  ( u1 u2 -- flag )
 \ n2>=n3 and n1 lies outside the interval [n3,n2)
 
 \ Otherwise, flag is false. The integers can be signed or un-
-\ signed. An ambiguous condition exists if WITHIN is used on a
-\ mix of signed and unsigned integers.
+\ signed. An ambiguous condition exists if the integers are not
+\ all of the same type.
 
 
 
@@ -833,7 +841,7 @@ synonym char+ 1+  ( c-addr1 -- c-addr2 )
 \ a-addr is equal to addr.
 
 
-: count  ( c-addr1 -- c-addr2 u )  something ;
+: count  ( c-addr1 -- c-addr2 u )  dup char+ swap c@ ;
 
 \ Given a counted string located at c-addr1, return the non-
 \ counted string representation. c-addr2 is the location of the
@@ -852,6 +860,9 @@ $0020 opcode @  ( a-addr -- x )
 
 
 : !  ( x a-addr -- )  tuck! drop ;
+
+|: !  ( Comp: -- ) ( Run: x a-addr -- )
+  postpone tuck!  postpone drop ;| immediate
 
 \ Write x to memory address a-addr. The top two stack items are
 \ removed.
@@ -899,7 +910,12 @@ synonym c! !  ( char c-addr -- )
 \ the memory regions overlap.
 
 
-: fill  ( c-addr u char -- )  something ;
+: fill  ( c-addr u char -- )
+  -rot 0
+  ?do                  ( char c-addr )
+    2dup i + !
+  loop
+  2drop ;
 
 \ If u is greater than zero, write char to each of the u consec-
 \ utive characters beginning at memory address c-addr. Because
@@ -963,22 +979,22 @@ $____ opcode tuck!  ( x a-addr -- a-addr )
 
 : cr  ( -- )  something ;
 
-\ Move the text cursor to the beginning of the next line.
+\ Position the text cursor at the beginning of the next line.
 
 
-: bl  ( -- char )  something ;
+$0020 constant bl  ( -- char )
 
 \ char is the code for the space character. Because Opforth uses
 \ ASCII/UTF-8 and the size of an Opforth character is 16 bits,
 \ char is $0020.
 
 
-: space  ( -- )  something ;
+: space  ( -- )  bl emit ;
 
 \ Display one space.
 
 
-: spaces  ( n -- )  something ;
+: spaces  ( n -- )  0 ?do space loop ;
 
 \ If n is greater than zero, display n spaces.
 
@@ -1055,15 +1071,15 @@ $____ opcode tuck!  ( x a-addr -- a-addr )
 \ outside of a <# #> delimited conversion.
 
 
-: decimal  ( -- )  something ;
+: decimal  ( -- )  #10 base ! ;
 
 \ Set the base (radix) of the number system to ten.
 
 
-variable base  ( -- a-addr )  #10 base !
+variable base  ( -- a-addr )  decimal
 
 \ a-addr is the address of a cell containing the base (radix) of
-\ the number system.
+\ the number system. BASE is initialized to ten (decimal).
 
 
 : >number  ( ud1 c-addr1 u1 -- ud2 c-addr2 u2 )  something ;
@@ -1112,7 +1128,7 @@ variable base  ( -- a-addr )  #10 base !
 \ side of a <# #> delimited numeric string conversion.
 
 
-: hex  ( -- )  something ;
+: hex  ( -- )  #16 base ! ;
 
 \ Set the base (radix) of the number system to 16 (hexadecimal).
 
@@ -1161,7 +1177,7 @@ variable >in  ( -- a-addr )  $____ >in !
 \ exists if +n1 is zero or is greater than +32767.
 
 
-: char  ( '<spaces>name' -- char )  something ;
+: char  ( '<spaces>name' -- char )  bl word char+ c@ ;
 
 \ Skip leading spaces and parse name delimited by a space. Put
 \ the first character of name on the stack.
@@ -1206,7 +1222,7 @@ variable >in  ( -- a-addr )  $____ >in !
 \ length.
 
 
-value source-id  ( -- 0 | -1 )  0 to source-id
+0 value source-id  ( -- 0 | -1 )
 
 \ If the input source is the user input device, put 0 on the
 \ stack. If the input source is a string via EVALUATE, put -1
