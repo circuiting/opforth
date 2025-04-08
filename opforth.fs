@@ -57,6 +57,15 @@
 \ 2r@     Compi: --  Exe: R:x1 R:x2 -- x1 x2 R:x1 R:x2
 
 
+\ Opforth Stack
+
+\ -rot    x1 x2 x3 -- x3 x1 x2
+\ sp@     -- u
+\ rp@     -- u
+\ sp!     i*x u -- j*x
+\ rp!     u R:i*x -- R:j*x
+
+
 \ Core Arithmetic
 
 \ +         n1|u1 n2|u2 -- n3|u3
@@ -98,6 +107,12 @@
 \ <>        x1 x2 -- flag
 \ u>        u1 u2 -- flag
 \ within    n1 n2 n3 | u1 u2 u3 -- flag
+
+
+\ Opforth Number Test
+
+\ 0<=    n -- flag
+\ 0>=    n -- flag
 
 
 \ Core Bitwise Logic
@@ -158,7 +173,6 @@
 \ tuck!  ( x a-addr -- a-addr )
 \ !'     ( x a-addr1 -- a-addr2 )
 \ c!'    ( char c-addr1 -- c-addr2 )
-\ au!'   ( x addr1 -- addr2 )
 
 
 \ Core Text Display
@@ -281,6 +295,7 @@
 
 \ Opforth Compiler
 
+\ dp        -- a-addr
 \ s"buf     -- c-addr
 \ s\"buf    -- c-addr
 
@@ -358,33 +373,33 @@
 \ Core Stack
 
 
-$0000 opcode drop  ( x -- )
+$____ opcode drop  ( x -- )
 
 \ Remove the top stack item.
 
 
-$0001 opcode dup  ( x -- x x )
+$____ opcode dup  ( x -- x x )
 
 \ Duplicate the top stack item.
 
 
-$0002 opcode swap  ( x1 x2 -- x2 x1 )
+$____ opcode swap  ( x1 x2 -- x2 x1 )
 
 \ Exchange the top two stack items.
 
 
-$0003 opcode over  ( x1 x2 -- x1 x2 x1 )
+$____ opcode over  ( x1 x2 -- x1 x2 x1 )
 
 \ Put a copy of the second stack item on top of the stack.
 
 
-$0004 opcode rot  ( x1 x2 x3 -- x2 x3 x1 )
+$____ opcode rot  ( x1 x2 x3 -- x2 x3 x1 )
 
 \ Rotate the top three stack items to bring the third item to
 \ the top.
 
 
-$0005 opcode ?dup  ( x -- x x | 0 )
+$____ opcode ?dup  ( x -- x x | 0 )
 
 \ Duplicate the top stack item if it is nonzero.
 
@@ -417,8 +432,8 @@ $0005 opcode ?dup  ( x -- x x | 0 )
 \ stack.
 
 
-$0006 opcode >r  ( Compi: -- ) ( Exe: x R: -- R:x )
-compile-only
+$____ opcode >r  ( Compi: -- ) ( Exe: x R: -- R:x )
+  compile-only
 
 \ Interpretation: Undefined
 
@@ -428,8 +443,8 @@ compile-only
 \ stack.
 
 
-$0007 opcode r>  ( Compi: -- ) ( Exe: R:x -- x R: )
-compile-only
+$____ opcode r>  ( Compi: -- ) ( Exe: R:x -- x R: )
+  compile-only
 
 \ Interpretation: Undefined
 
@@ -439,8 +454,8 @@ compile-only
 \ stack.
 
 
-$0008 opcode r@  ( Compi: -- ) ( Exe: R:x -- x R:x )
-compile-only
+$____ opcode r@  ( Compi: -- ) ( Exe: R:x -- x R:x )
+  compile-only
 
 \ Interpretation: Undefined
 
@@ -454,12 +469,12 @@ compile-only
 \ Core-Ext Stack
 
 
-$0009 opcode nip  ( x1 x2 -- x2 )
+$____ opcode nip  ( x1 x2 -- x2 )
 
 \ Remove the second stack item.
 
 
-$000a opcode tuck  ( x1 x2 -- x2 x1 x2 )
+$____ opcode tuck  ( x1 x2 -- x2 x1 x2 )
 
 \ Insert a copy of the top stack item under the second stack
 \ item.
@@ -519,45 +534,75 @@ $000a opcode tuck  ( x1 x2 -- x2 x1 x2 )
 
 
 
+\ Opforth Stack
+
+
+$____ opcode -rot  ( x1 x2 x3 -- x3 x1 x2)
+
+\ Rotate the top three stack items to put the top item in the
+\ third position.
+
+
+$____ opcode sp@  ( -- u )
+
+\ u is the data stack pointer before u was placed on the stack.
+
+
+$____ opcode rp@  ( -- u )
+
+\ u is the return stack pointer.
+
+
+$____ opcode sp!  ( i*x u -- j*x )
+
+\ Set the data stack pointer to u.
+
+
+$____ opcode rp!  ( u R:i*x -- R:j*x )
+
+\ Set the return stack pointer to u.
+
+
+
 \ Core Arithmetic
 
 
-$000b opcode +  ( n1|u1 n2|u2 -- n3|u3 )
+$____ opcode +  ( n1|u1 n2|u2 -- n3|u3 )
 
 \ Add the top two stack items, then put the sum on the stack.
 \ Any of the integers can be signed or unsigned.
 
 
-$000c opcode -  ( n1|u1 n2|u2 -- n3|u3 )
+$____ opcode -  ( n1|u1 n2|u2 -- n3|u3 )
 
 \ Subtract the top stack item from the second stack item, then
 \ put the difference on the stack. Any of the integers can be
 \ signed or unsigned.
 
 
-$000d opcode 1+  ( n1|u1 -- n2|u2 )
+$____ opcode 1+  ( n1|u1 -- n2|u2 )
 
 \ n2 is the result of incrementing n1 by one. The integers can
 \ be signed or unsigned.
 
 
-$000e opcode 1-  ( nu1 -- nu2 )
+$____ opcode 1-  ( nu1 -- nu2 )
 
 \ n2 is the result of decrementing n1 by one. The integers can
 \ be signed or unsigned.
 
 
-$000f opcode negate  ( n1 -- n2 )
+$____ opcode negate  ( n1 -- n2 )
 
 \ n2 is the arithmetic inverse of n1 (i.e., n2 = 0 - n1).
 
 
-$0010 opcode abs  ( n -- u )
+$____ opcode abs  ( n -- u )
 
 \ u is the absolute value of n.
 
 
-$0011 opcode s>d  ( n -- d )
+$____ opcode s>d  ( n -- d )
 
 \ d is the result of converting the single-cell integer n to a
 \ double-cell integer with the same value.
@@ -658,17 +703,17 @@ $0011 opcode s>d  ( n -- d )
 \ Core Number Test
 
 
-$0012 opcode 0=  ( x -- flag )
+$____ opcode 0=  ( x -- flag )
 
 \ If all bits of x are zero, flag is true. Otherwise flag is false.
 
 
-$0013 opcode 0<  ( n -- flag )
+$____ opcode 0<  ( n -- flag )
 
 \ If n is less than zero, flag is true. Otherwise flag is false.
 
 
-$0014 opcode =  ( x1 x2 -- flag )
+$____ opcode =  ( x1 x2 -- flag )
 
 \ If x1 is bit-for-bit the same as x2, flag is true. Otherwise
 \ flag is false.
@@ -697,7 +742,7 @@ $0014 opcode =  ( x1 x2 -- flag )
 \ false.
 
 
-$0015 opcode u<  ( u1 u2 -- flag )
+$____ opcode u<  ( u1 u2 -- flag )
 
 \ If u1 is less than u2, flag is true. Otherwise flag is false.
 
@@ -718,25 +763,25 @@ $0015 opcode u<  ( u1 u2 -- flag )
 \ Core-Ext Number Test
 
 
-$0016 opcode 0<>  ( x -- flag )
+$____ opcode 0<>  ( x -- flag )
 
 \ If all bits of x are zero, flag is false. Otherwise flag is
 \ true.
 
 
-$0017 opcode 0>  ( n -- flag )
+$____ opcode 0>  ( n -- flag )
 
 \ If n is greater than zero, flag is true. Otherwise flag is
 \ false.
 
 
-$0018 opcode <>  ( x1 x2 -- flag )
+$____ opcode <>  ( x1 x2 -- flag )
 
 \ If x1 is bit-for-bit the same as x2, flag is false. Otherwise
 \ flag is true.
 
 
-$0019 opcode u>  ( u1 u2 -- flag )
+$____ opcode u>  ( u1 u2 -- flag )
 
 \ If u1 is greater than u2, flag is true. Otherwise flag is
 \ false.
@@ -757,36 +802,52 @@ $0019 opcode u>  ( u1 u2 -- flag )
 
 
 
+\ Opforth Number Test
+
+
+$____ opcode 0<=  ( n -- flag )
+
+\ If n is less than or equal to zero, flag is true. Otherwise
+\ flag is false.
+
+
+$____ opcode 0>=  ( n -- flag )
+
+\ If n is greater than or equal to zero, flag is true. Otherwise
+\ flag is false.
+
+
+
 \ Core Bitwise Logic
 
 
-$001a opcode invert  ( x1 -- x2 )
+$____ opcode invert  ( x1 -- x2 )
 
 \ x2 is the result of inverting all bits of x1.
 
 
-$001b opcode and  ( x1 x2 -- x3 )
+$____ opcode and  ( x1 x2 -- x3 )
 
 \ x3 is the bit-for-bit logical AND of x1 with x2.
 
 
-$001c opcode or  ( x1 x2 -- x3 )
+$____ opcode or  ( x1 x2 -- x3 )
 
 \ x3 is the bit-for-bit logical OR of x1 with x2.
 
 
-$001d opcode xor  ( x1 x2 -- x3 )
+$____ opcode xor  ( x1 x2 -- x3 )
 
 \ x3 is the bit-for-bit logical XOR of x1 with x2.
 
 
-$001c opcode 2*  ( x1 -- x2 )
+$____ opcode 2*  ( x1 -- x2 )
 
 \ x2 is the result of shifting all bits of x1 to the left by one
 \ bit position. The vacated least significant bit becomes zero.
 
 
-$001d opcode 2/  ( x1 -- x2 )
+$____ opcode 2/  ( x1 -- x2 )
 
 \ x2 is the result of shifting all bits of x1 to the right by
 \ one bit position. The vacated most significant bit is un-
@@ -811,13 +872,13 @@ $001d opcode 2/  ( x1 -- x2 )
 \ Core-Ext Bitwise Logic
 
 
-$001e opcode true  ( -- true )
+$____ opcode true  ( -- true )
 
 \ Put a logical TRUE flag on the stack. All bits of the flag are
 \ ones.
 
 
-$001f opcode false  ( -- false )
+$____ opcode false  ( -- false )
 
 \ Put a logical FALSE flag on the stack. All bits of the flag
 \ are zeroes.
@@ -841,18 +902,23 @@ $____ opcode u2/  ( x1 -- x2 )
 
 \ n2 is the size in address units of n1 cells.
 
-\ In Opforth, one address unit is the size of one cell. CELLS is
-\ used for compatibility with Forth systems that have a cell
-\ size of greater than one address unit.
+\ In Opforth, the size of a cell is the same as the size of a
+\ character. CELLS is used for compatibility with Forth systems
+\ that have a cell size of greater than one character.
+
+\ Standard Forth allows the size of a character to be greater
+\ than one address unit. In Opforth, there is no distinction
+\ between characters and address units.
 
 
 : chars  ( n1 -- n2 )  ; immediate
 
 \ n2 is the size in address units of n1 characters.
 
-\ In Opforth, one address unit is the size of one character.
-\ CHARS is used for compatibility with Forth systems that have a
-\ character size of greater than one address unit.
+\ In Opforth, there is no distinction between characters and ad-
+\ dress units. CHARS is used for compatibility with Forth sys-
+\ tems that have a character size of greater than one address
+\ unit.
 
 
 synonym cell+ 1+  ( a-addr1 -- a-addr2 )
@@ -860,9 +926,9 @@ synonym cell+ 1+  ( a-addr1 -- a-addr2 )
 \ a-addr2 is the result of incrementing a-addr1 by the size of
 \ one cell in address units.
 
-\ In Opforth, the size of one cell is one address unit. CELL+ is
+\ In Opforth, characters and cells are the same size. CELL+ is
 \ used for compatibility with Forth systems that have a cell
-\ size of greater than one address unit.
+\ size of greater than one character.
 
 
 synonym char+ 1+  ( c-addr1 -- c-addr2 )
@@ -870,9 +936,10 @@ synonym char+ 1+  ( c-addr1 -- c-addr2 )
 \ c-addr2 is the result of incrementing c-addr1 by the size of
 \ one character in address units.
 
-\ In Opforth, the size of one character is one address unit.
-\ CHAR+ is used for compatibility with Forth systems that have a
-\ character size of greater than one addess unit.
+\ In Opforth, there is no distinction between characters and ad-
+\ dress units. CHAR+ is used for compatibility with Forth sys-
+\ tems that have a character size of greater than one address
+\ unit.
 
 
 : aligned  ( addr -- a-addr )  ; immediate
@@ -897,7 +964,7 @@ synonym char+ 1+  ( c-addr1 -- c-addr2 )
 \ Core Memory
 
 
-$0020 opcode @  ( a-addr -- x )
+$____ opcode @  ( a-addr -- x )
 
 \ Read the cell located at memory address a-addr and put the
 \ cell on the stack.
@@ -917,14 +984,14 @@ synonym c@ @  ( c-addr -- char )
 \ Read the character located at memory address c-addr and put
 \ the character on the stack.
 
-\ In Opforth, the size of one character is the size of one cell.
+\ In Opforth, characters and cells are the same size.
 
 
 synonym c! !  ( char c-addr -- )
 
 \ Write char to memory address c-addr.
 
-\ In Opforth, the size of one character is the size of one cell.
+\ In Opforth, characters and cells are the same size.
 
 
 : 2@  ( a-addr -- x1 x2 )  dup cell+ @ swap @ ;
@@ -953,19 +1020,20 @@ synonym c! !  ( char c-addr -- )
   if
     r> move>
   else
-    r> 0 ?do over i + au@ over i + au! loop 2drop
+    r> 0 ?do over i + c@ over i + c! loop 2drop
   then ;
 
 \ If u is greater than zero, write a copy of the u consecutive
 \ address units of memory starting at addr1 to the u consecutive
 \ address units starting at addr2. After MOVE is executed, the u
-\ characters of memory starting at addr2 will contain exactly
-\ what the u characters of memory starting at addr1 contained
-\ before MOVE was executed.
+\ address units of memory starting at addr2 contain exactly what
+\ the u address units of memory starting at addr1 contained be-
+\ fore MOVE was executed.
 
-\ In Opforth, one address unit is the size of one character.
-\ This implementation of MOVE is compatible with Forth systems
-\ that have a character size of greater than one address unit.
+\ In Opforth, there is no distinction between characters and ad-
+\ dress units. This implementation of MOVE is incompatible with
+\ Forth systems that have a character size of greater than one
+\ address unit.
 
 
 : fill  ( c-addr u char -- )
@@ -974,23 +1042,20 @@ synonym c! !  ( char c-addr -- )
 \ If u is greater than zero, write char to each of the u consec-
 \ utive characters of memory beginning at address c-addr.
 
-\ In Opforth, the size of a character is one address unit. This
-\ implementation of FILL is compatible with Forth systems that
-\ have a character size of greater than one address unit.
-
 
 
 \ Core-Ext Memory
 
 
-: erase  ( addr u -- )  0 ?do 0 swap au!' loop drop ;
+: erase  ( addr u -- )  0 ?do 0 swap c!' loop drop ;
 
 \ If u is greater than zero, clear all bits of the u consecutive
 \ address units of memory starting at address addr.
 
-\ In Opforth, one address unit is the size of one character.
-\ This implementation of ERASE is compatible with Forth systems
-\ that have a character size of greater than one address unit.
+\ In Opforth, there is no distinction between characters and ad-
+\ dress units. This implementation of ERASE is incompatible with
+\ Forth systems that have a character size of greater than one
+\ address unit.
 
 
 $____ constant pad  ( -- c-addr )
@@ -1022,17 +1087,7 @@ synonym c!'  ( char c-addr1 -- c-addr2 )
 \ stack, and c-addr2 is the result of incrementing c-addr1 by
 \ one character.
 
-\ In Opforth, the size of one character is the size of one cell.
-
-
-synonym au!'  ( x addr1 -- addr2 )
-
-\ Write x to memory address addr1. x is removed from the stack,
-\ and addr2 is the result of incrementing addr1 by one address
-\ unit.
-
-\ In Opforth, one address unit is both the size of one character
-\ and the size of one cell.
+\ In Opforth, the characters and cells are the same size.
 
 
 
@@ -1102,6 +1157,7 @@ $0020 constant bl  ( -- char )
 
 
 \ Core Numeric String
+
 
 : .  ( n -- )  something ;
 
@@ -1510,7 +1566,7 @@ variable >in  ( -- a-addr )  $____ >in !
 \ Core Compiler
 
 
-: ,  ( x -- )  something ;
+: ,  ( x -- )  1 cells allot here ! ;
 
 \ Reserve one cell of dictionary space and store x in the cell.
 \ If the dictionary pointer is aligned when , begins execution,
@@ -1531,16 +1587,16 @@ synonym c, ,  ( char -- )
 \ aligned when C, begins execution, it will remain character-
 \ aligned when C, finishes execution.
 
-\ In Opforth, the size of one character is the size of one cell,
-\ and all addresses are character-aligned addresses. This imple-
-\ mentation of C, is compatible with Forth systems that may have
-\ non-character-aligned addresses.
+\ In Opforth, characters and cells are the same size and all ad-
+\ dresses are character-aligned. This implementation of C, is
+\ compatible with Forth systems that may have non-character-
+\ aligned addresses.
 
 \ An ambiguous condition exists if the dictionary pointer is not
 \ character-aligned prior to the execution of C,.
 
 
-: allot  ( n -- )  something ;
+: allot  ( n -- )  dp @ tuck + dp ! ;
 
 \ If n is greater than zero, reserve n address units of dictio-
 \ nary space. If n is less than zero, release |n| address units
@@ -1565,12 +1621,12 @@ synonym c, ,  ( char -- )
 \ addr is the dictionary pointer.
 
 
-: [  ( -- )  something ; immediate
+: [  ( -- )  false state ! ; immediate
 
 \ Enter interpretation state.
 
 
-: ]  ( -- )  something ;
+: ]  ( -- )  true state ! ;
 
 \ Enter compilation state.
 
@@ -1730,6 +1786,13 @@ variable state  ( -- a-addr )  false state !
 
 
 \ Opforth Compiler
+
+
+variable dp  ( -- a-addr )  $____ dp !
+
+\ a-addr is the address of a cell containing the dictionary
+\ pointer.
+
 
 $____ constant s"buf  ( -- c-addr )
 
@@ -1953,6 +2016,7 @@ $____ constant s\"buf  ( -- c-addr )
 
 
 \ Core Control Flow
+
 
 : if  ( Compi: -- orig ) ( Run: x -- )  something ;
 
