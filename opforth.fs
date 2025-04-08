@@ -136,7 +136,8 @@
 \ Core Memory
 
 \ @       a-addr -- x
-\ !       x a-addr --
+\ !       Inter: x a-addr --
+\         Compi: --  Run: x a-addr --
 \ c@      c-addr -- char
 \ c!      char c-addr --
 \ 2@      a-addr -- x1 x2
@@ -155,6 +156,9 @@
 \ Opforth Memory
 
 \ tuck!  ( x a-addr -- a-addr )
+\ !'     ( x a-addr1 -- a-addr2 )
+\ c!'    ( char c-addr1 -- c-addr2 )
+\ au!'   ( x addr1 -- addr2 )
 
 
 \ Core Text Display
@@ -464,8 +468,10 @@ $000a opcode tuck  ( x1 x2 -- x2 x1 x2 )
 : pick  ( xu...x1 x0 u -- xu...x1 x0 xu )  sp@ + 1+ @ ;
 
 \ Remove u and put a copy of xu, the stack item indexed by u, on
-\ top of the stack. An ambiguous condition exists if there are
-\ fewer than u+2 items on the stack before PICK is executed.
+\ top of the stack.
+
+\ An ambiguous condition exists if there are fewer than u+2
+\ items on the stack before PICK is executed.
 
 
 : roll  ( xu xu-1...x0 u -- xu-1...x0 xu )
@@ -576,55 +582,65 @@ $0011 opcode s>d  ( n -- d )
 
 : /  ( n1 n2 -- n3 )  >r s>d r> sm/rem nip ;
 
-\ Divide n1 by n2. n3 is the quotient. An ambiguous condition
-\ exists if n2 is zero.
+\ Divide n1 by n2. n3 is the quotient.
+
+\ An ambiguous condition exists if n2 is zero.
 
 
 : mod  ( n1 n2 -- n3 )  >r s>d r> sm/rem drop ;
 
 \ Divide n1 by n2. n3 is the remainder. If n1 and n2 differ in
-\ sign, n3 is determined by symmetric division. An ambiguous
-\ condition exists if n2 is zero.
+\ sign, n3 is determined by symmetric division.
+
+\ An ambiguous condition exists if n2 is zero.
 
 
 : /mod  ( n1 n2 -- n3 n4 )  >r s>d r> sm/rem ;
 
 \ Divide n1 by n2. n3 is the remainder and n4 is the quotient.
 \ If n1 and n2 differ in sign, n3 and n4 are determined by sym-
-\ metric division. An ambiguous condition exists if n2 is zero.
+\ metric division.
+
+\ An ambiguous condition exists if n2 is zero.
 
 
 : sm/rem  ( d n1 -- n2 n3 )  something ;
 
 \ Divide d by n1. n2 is the remainder and n3 is the quotient. If
 \ d and n1 differ in sign, n2 and n3 are determined by symmetric
-\ division. An ambiguous condition exists if n1 is zero or if n3
-\ is outside the range of a single-cell signed integer.
+\ division.
+
+\ An ambiguous condition exists if n1 is zero or if n3 is out-
+\ side the range of a single-cell signed integer.
 
 
 : fm/mod  ( d n1 -- n2 n3 )  something ;
 
 \ Divide d by n1. n2 is the remainder and n3 is the quotient. If
 \ d and n1 differ in sign, n2 and n3 are determined by floored
-\ division. An ambiguous condition exists if n1 is zero or if n3
-\ is outside the range of a single-cell signed integer.
+\ division.
+
+\ An ambiguous condition exists if n1 is zero or if n3 is out-
+\ side the range of a single-cell signed integer.
 
 
 : um/mod  ( ud u1 -- u2 u3 )  something ;
 
 \ Divide ud by u1. u2 is the remainder and u3 is the quotient.
-\ All values and arithmetic are unsigned. An ambiguous condition
-\ exists if u1 is zero or if u3 is outside the range of a
-\ single-cell unsigned integer.
+\ All values and arithmetic are unsigned.
+
+\ An ambiguous condition exists if u1 is zero or if u3 is out-
+\ side the range of a single-cell unsigned integer.
 
 
 : */  ( n1 n2 n3 -- n4 )  >r m* r> sm/rem drop ;
 
 \ Multiply n1 by n2 to produce an intermediate double-cell prod-
 \ uct d, then divide d by n3. n4 is the quotient. If d and n3
-\ differ in sign, n4 is determined by symmetric division. An am-
-\ biguous condition exists if n3 is zero or if n4 is outside the
-\ range of a single-cell signed integer.
+\ differ in sign, n4 is determined by symmetric division.
+
+\ An ambiguous condition exists if n3 is zero or if n4 is out-
+\ side the range of a single-cell signed integer.
 
 
 : */mod  ( n1 n2 n3 -- n4 n5 )  >r m* r> sm/rem ;
@@ -632,9 +648,10 @@ $0011 opcode s>d  ( n -- d )
 \ Multiply n1 by n2 to produce an intermediate double-cell prod-
 \ uct d, then divide d by n3. n4 is the remainder and n3 is the
 \ quotient. If d and n3 differ in sign, n4 and n5 are determined
-\ by symmetric division. An ambiguous condition exists if n3 is
-\ zero or if n5 is outside the range of a single-cell signed
-\ integer.
+\ by symmetric division.
+
+\ An ambiguous condition exists if n3 is zero or if n5 is out-
+\ side the range of a single-cell signed integer.
 
 
 
@@ -733,8 +750,10 @@ $0019 opcode u>  ( u1 u2 -- flag )
 \ n2>=n3 and n1 lies outside the interval [n3,n2)
 
 \ Otherwise, flag is false. The integers can be signed or un-
-\ signed. An ambiguous condition exists if the integers are not
-\ all of the same type.
+\ signed.
+
+\ An ambiguous condition exists if the integers are not all of
+\ the same type.
 
 
 
@@ -820,36 +839,50 @@ $____ opcode u2/  ( x1 -- x2 )
 
 : cells  ( n1 -- n2 )  ; immediate
 
-\ n2 is the size in address units of n1 cells. Because the size
-\ of an Opforth cell is one address unit, n2 is equal to n1.
+\ n2 is the size in address units of n1 cells.
+
+\ In Opforth, one address unit is the size of one cell. CELLS is
+\ used for compatibility with Forth systems that have a cell
+\ size of greater than one address unit.
 
 
 : chars  ( n1 -- n2 )  ; immediate
 
-\ n2 is the size in address units of n1 character. Because the
-\ size of an Opforth character is one address unit, n2 is equal
-\ to n1.
+\ n2 is the size in address units of n1 characters.
+
+\ In Opforth, one address unit is the size of one character.
+\ CHARS is used for compatibility with Forth systems that have a
+\ character size of greater than one address unit.
 
 
 synonym cell+ 1+  ( a-addr1 -- a-addr2 )
 
-\ a-addr2 is the result of incrementing a-addr1 by one address
-\ unit. Because the size of an Opforth cell is one address unit,
-\ this operation is equivalent to 1+.
+\ a-addr2 is the result of incrementing a-addr1 by the size of
+\ one cell in address units.
+
+\ In Opforth, the size of one cell is one address unit. CELL+ is
+\ used for compatibility with Forth systems that have a cell
+\ size of greater than one address unit.
 
 
 synonym char+ 1+  ( c-addr1 -- c-addr2 )
 
-\ a-addr2 is the result of incrementing c-addr1 by one address
-\ unit. Because the size of an Opforth character is one address
-\ unit, this operation is equivalent to 1+.
+\ c-addr2 is the result of incrementing c-addr1 by the size of
+\ one character in address units.
+
+\ In Opforth, the size of one character is one address unit.
+\ CHAR+ is used for compatibility with Forth systems that have a
+\ character size of greater than one addess unit.
 
 
 : aligned  ( addr -- a-addr )  ; immediate
 
 \ a-addr is the first aligned address greater than or equal to
-\ addr. Because the size of an Opforth cell is one address unit,
-\ a-addr is equal to addr.
+\ addr.
+
+\ In Opforth, all addresses are aligned addresses. ALIGNED is
+\ used for compatibility with other Forth systems that may have
+\ non-aligned addresses.
 
 
 : count  ( c-addr1 -- c-addr2 u )  dup char+ swap c@ ;
@@ -870,9 +903,9 @@ $0020 opcode @  ( a-addr -- x )
 \ cell on the stack.
 
 
-: !  ( x a-addr -- )  tuck! drop ;
+: !  ( Inter: x a-addr -- )  tuck! drop ;
 
-|: !  ( Comp: -- ) ( Run: x a-addr -- )
+|: !  ( Compi: -- ) ( Run: x a-addr -- )
   postpone tuck!  postpone drop ;| immediate
 
 \ Write x to memory address a-addr. The top two stack items are
@@ -884,10 +917,14 @@ synonym c@ @  ( c-addr -- char )
 \ Read the character located at memory address c-addr and put
 \ the character on the stack.
 
+\ In Opforth, the size of one character is the size of one cell.
+
 
 synonym c! !  ( char c-addr -- )
 
 \ Write char to memory address c-addr.
+
+\ In Opforth, the size of one character is the size of one cell.
 
 
 : 2@  ( a-addr -- x1 x2 )  dup cell+ @ swap @ ;
@@ -920,30 +957,37 @@ synonym c! !  ( char c-addr -- )
 \ of memory starting at addr1 contained before the move, even if
 \ the memory regions overlap.
 
+\ In Opforth, one address unit is the size of one character.
+\ This implementation of MOVE is compatible with Forth systems
+\ that have a character size of greater than one address unit.
+
 
 : fill  ( c-addr u char -- )
   -rot 0 ?do 2dup c! char+ loop 2drop ;
 
 \ If u is greater than zero, write char to each of the u consec-
-\ utive characters beginning at memory address c-addr. Opforth
-\ characters and cells are the same size. This implementation of
-\ FILL is compatible with Forth systems that use different char-
-\ acter sizes.
+\ utive characters of memory beginning at address c-addr.
+
+\ In Opforth, the size of a character is one address unit. This
+\ implementation of FILL is compatible with Forth systems that
+\ have a character size of greater than one address unit.
 
 
 
 \ Core-Ext Memory
 
 
-: erase  ( addr u -- )  something ;
+: erase  ( addr u -- )  0 ?do 0 swap au!' loop drop ;
 
 \ If u is greater than zero, clear all bits of the u consecutive
-\ memory locations starting at address addr. Because the size of
-\ an Opforth cell is one address unit, this is equivalent to
-\ writing to u consecutive cells.
+\ address units of memory starting at address addr.
+
+\ In Opforth, one address unit is the size of one character.
+\ This implementation of ERASE is compatible with Forth systems
+\ that have a character size of greater than one address unit.
 
 
-: pad  ( -- c-addr )  something ;
+$____ constant pad  ( -- c-addr )
 
 \ c-addr is the address of the pad, which is a region of memory
 \ that can be used to hold data for intermediate processing.
@@ -957,6 +1001,32 @@ $____ opcode tuck!  ( x a-addr -- a-addr )
 
 \ Write x to memory address a-addr. x is removed from the stack,
 \ but a-addr remains.
+
+
+$____ opcode !'  ( x a-addr1 -- a-addr2 )
+
+\ Write x to memory address a-addr1. x is removed from the
+\ stack, and a-addr2 is the result of incrementing a-addr1 by
+\ one cell.
+
+
+synonym c!'  ( char c-addr1 -- c-addr2 )
+
+\ Write char to memory address c-addr1. x is removed from the
+\ stack, and c-addr2 is the result of incrementing c-addr1 by
+\ one character.
+
+\ In Opforth, the size of one character is the size of one cell.
+
+
+synonym au!'  ( x addr1 -- addr2 )
+
+\ Write x to memory address addr1. x is removed from the stack,
+\ and addr2 is the result of incrementing addr1 by one address
+\ unit.
+
+\ In Opforth, one address unit is both the size of one character
+\ and the size of one cell.
 
 
 
@@ -995,9 +1065,10 @@ $____ opcode tuck!  ( x a-addr -- a-addr )
 
 $0020 constant bl  ( -- char )
 
-\ char is the code for the space character. Because Opforth uses
-\ ASCII/UTF-8 and the size of an Opforth character is 16 bits,
-\ char is $0020.
+\ char is the code for the space character.
+
+\ Because Opforth uses ASCII/UTF-8 and the size of an Opforth
+\ character is 16 bits, char is $0020.
 
 
 : space  ( -- )  bl emit ;
@@ -1054,32 +1125,39 @@ $0020 constant bl  ( -- char )
 \ by the number in BASE. Prepend a text representation of the
 \ remainder to the string being built. ud2 is the quotient,
 \ which can be used by a subsequent number-to-string conversion
-\ word. An ambiguous condition exists if # is executed outside
-\ of a <# #> delimited conversion.
+\ word.
+
+\ An ambiguous condition exists if # is executed outside of a
+\ <# #> delimited conversion.
 
 
 : #s  ( ud1 -- ud2 )  something ;
 
 \ As part of a <# #> delimited number-to-string conversion, con-
 \ vert all digits of ud1 and prepend the digits to the string
-\ being built. ud2 is zero. An ambiguous condition exists if #S
-\ is executed outside of a <# #> delimited conversion.
+\ being built. ud2 is zero.
+
+\ An ambiguous condition exists if #S is executed outside of a
+\ <# #> delimited conversion.
 
 
 : hold  ( char -- )  something ;
 
 \ As part of a <# #> delimited number-to-string conversion, pre-
-\ pend char to the string being built. An ambiguous condition
-\ exists if HOLD is executed outside of a <# #> delimited con-
-\ version.
+\ pend char to the string being built.
+
+\ An ambiguous condition exists if HOLD is executed outside of a
+\ <# #> delimited conversion.
 
 
 : sign  ( n -- )  something ;
 
 \ As part of a <# #> delimited number-to-string conversion, put
 \ a minus sign at the beginning of the string being built if n
-\ is negative. An ambiguous condition exists if SIGN is executed
-\ outside of a <# #> delimited conversion.
+\ is negative.
+
+\ An ambiguous condition exists if SIGN is executed outside of a
+\ <# #> delimited conversion.
 
 
 : decimal  ( -- )  #10 base ! ;
@@ -1107,8 +1185,10 @@ variable base  ( -- a-addr )  decimal
 \ c-addr2 is the location of the first unconverted character or
 \ the first character past the end of the string if the string
 \ was entirely converted. u2 is the number of unconverted char-
-\ acters in the string. An ambiguous condition exists if ud2
-\ overflows during the conversion.
+\ acters in the string.
+
+\ An ambiguous condition exists if ud2 overflows during the con-
+\ version.
 
 
 
@@ -1135,8 +1215,10 @@ variable base  ( -- a-addr )  decimal
 
 \ As part of a <# #> delimited number-to-string conversion, pre-
 \ pend the string represented by c-addr u to the string being
-\ built. An ambiguous condition exists if HOLDS is executed out-
-\ side of a <# #> delimited numeric string conversion.
+\ built.
+
+\ An ambiguous condition exists if HOLDS is executed outside of
+\ a <# #> delimited conversion.
 
 
 : hex  ( -- )  #16 base ! ;
@@ -1186,8 +1268,10 @@ variable >in  ( -- a-addr )  $____ >in !
 \ address c-addr, and display graphic characters as they are re-
 \ ceived. Input terminates when a line terminator character is
 \ received. When input terminates, nothing is appended to the
-\ string, and the display is maintained. An ambiguous condition
-\ exists if +n1 is zero or is greater than +32767.
+\ string, and the display is maintained.
+
+\ An ambiguous condition exists if +n1 is zero or is greater
+\ than +32767.
 
 
 : char  ( '<spaces>name' -- char )  bl word char+ c@ ;
@@ -1203,8 +1287,10 @@ variable >in  ( -- a-addr )  $____ >in !
 \ put the address of the counted string on the stack. If the
 \ parse area was empty or contained no characters other than the
 \ delimiter, the resulting string has zero length. A program may
-\ replace characters in the string. An ambiguous condition ex-
-\ ists if the length of the parsed string is greater than 65535.
+\ replace characters in the string.
+
+\ An ambiguous condition exists if the length of the parsed
+\ string is greater than 65535.
 
 
 
@@ -1252,9 +1338,10 @@ variable >in  ( -- a-addr )  $____ >in !
 
 \ Attempt to restore the input source specification to the state
 \ described by x1 through xn. flag is true if the input source
-\ specification cannot be so restored. An ambiguous condition
-\ exists if the input source represented by the arguments is not
-\ the same as the current input source.
+\ specification cannot be so restored.
+
+\ An ambiguous condition exists if the input source represented
+\ by the arguments is not the same as the current input source.
 
 
 : refill  ( -- flag )  something ;
@@ -1347,8 +1434,10 @@ variable >in  ( -- a-addr )  $____ >in !
 : >body  ( xt -- a-addr )  something ;
 
 \ a-addr is the address of the data field of the definition with
-\ execution token xt. An ambiguous condition exists if xt is not
-\ the execution token of a word defined by CREATE.
+\ execution token xt.
+
+\ An ambiguous condition exists if xt is not the execution token
+\ of a word defined by CREATE.
 
 
 
@@ -1357,15 +1446,19 @@ variable >in  ( -- a-addr )  $____ >in !
 
 : defer@  ( xt1 -- xt2 )  something ;
 
-\ xt2 is the execution token xt1 is set to execute. An ambiguous
-\ condition exists if xt1 is not the execution token of a word
-\ defined by DEFER, or if xt1 has not been set to execute an xt.
+\ xt2 is the execution token xt1 is set to execute.
+
+\ An ambiguous condition exists if xt1 is not the execution to-
+\ ken of a word defined by DEFER, or if xt1 has not been set to
+\ execute an xt.
 
 
 : defer!  ( xt1 xt2 -- )  something ;
 
-\ Set the word xt1 to execute xt2. An ambiguous condition exists
-\ if xt1 is not for a word defined by DEFER.
+\ Set the word xt1 to execute xt2.
+
+\ An ambiguous condition exists if xt1 is not for a word defined
+\ by DEFER.
 
 
 : is  ( Inter: '<spaces>name' xt -- )
@@ -1373,15 +1466,15 @@ variable >in  ( -- a-addr )  $____ >in !
   something ;
 
 \ Interpretation: Skip leading spaces and parse name delimited
-\ by a space. Set name to execute xt. An ambiguous condition ex-
-\ ists if name was not defined by DEFER.
+\ by a space. Set name to execute xt.
 
 \ Compilation: Skip leading spaces and parse name delimited by a
-\ space. Compile the runtime semantics described below. An am-
-\ biguous condition exists if name was not defined by DEFER.
+\ space. Compile the runtime semantics described below.
 
-\ Runtime: Set name to execute xt. An ambiguous condition exists
-\ if POSTPONE, [COMPILE], ['], or ' is applied to IS.
+\ Runtime: Set name to execute xt.
+
+\ An ambiguous condition exists if name was not defined by DEFER,
+\ or if POSTPONE, [COMPILE], ['], or ' is applied to IS.
 
 
 : action-of  ( Inter: '<spaces>name' -- xt )
@@ -1390,17 +1483,17 @@ variable >in  ( -- a-addr )  $____ >in !
 
 \ Interpretation: Skip leading spaces and parse name delimited
 \ by a space. xt is the execution token that name is set to exe-
-\ cute. An ambiguous condition exists if name was not defined by
-\ DEFER or if name was not set to execute an xt.
+\ cute.
 
 \ Compilation: Skip leading spaces and parse name delimited by a
-\ space. Compile the runtime semantics described below. An am-
-\ biguous condition exists if name was not defined by DEFER.
+\ space. Compile the runtime semantics described below.
 
 \ Runtime: xt is the execution token that name is set to exe-
-\ cute. An ambiguous condition exists if name has not been set
-\ up to execute an xt. An ambiguous condition exists if
-\ POSTPONE, [COMPILE], ['], or ' is applied to ACTION-OF.
+\ cute.
+
+\ An ambiguous condition exists if name was not defined by
+\ DEFER, if name was not set to execute an xt, or if POSTPONE,
+\ [COMPILE], ['], or ' is applied to ACTION-OF.
 
 
 
@@ -1411,20 +1504,30 @@ variable >in  ( -- a-addr )  $____ >in !
 
 \ Reserve one cell of dictionary space and store x in the cell.
 \ If the dictionary pointer is aligned when , begins execution,
-\ it will remain aligned when , finishes execution. An ambiguous
-\ condition exists if the dictionary pointer is not aligned pri-
-\ or to the execution of ,.
+\ it will remain aligned when , finishes execution.
+
+\ In Opforth, all addresses are aligned addresses. This imple-
+\ mentation of , is compatible with Forth systems that may have
+\ non-aligned addresses.
+
+\ An ambiguous condition exists if the dictionary pointer is not
+\ aligned prior to the execution of ,.
 
 
 synonym c, ,  ( char -- )
 
 \ Reserve space for one character in the dictionary and store
-\ char in the space. If the dictionary pointer is character a-
-\ ligned when c, begins execution, it will remain character a-
-\ ligned when c, finishes execution. Because Opforth characters
-\ and cells are the same size, this operation is equivalent to
-\ ,. An ambiguous condition exists if the dictionary pointer is
-\ not character aligned prior to the execution of c,.
+\ char in the space. If the dictionary pointer is character-
+\ aligned when C, begins execution, it will remain character-
+\ aligned when C, finishes execution.
+
+\ In Opforth, the size of one character is the size of one cell,
+\ and all addresses are character-aligned addresses. This imple-
+\ mentation of C, is compatible with Forth systems that may have
+\ non-character-aligned addresses.
+
+\ An ambiguous condition exists if the dictionary pointer is not
+\ character-aligned prior to the execution of C,.
 
 
 : allot  ( n -- )  something ;
@@ -1440,9 +1543,11 @@ synonym c, ,  ( char -- )
 : align  ( -- )  ; immediate
 
 \ If the dictionary pointer is not aligned, reserve enough space
-\ to align it. Because the size of an Opforth cell is one ad-
-\ dress unit, all addresses are aligned and this operation does
-\ nothing.
+\ to align it.
+
+\ In Opforth, all addresses are aligned addresses. ALIGN is used
+\ for compatibility with Forth systems that may have non-aligned
+\ addresses.
 
 
 : here  ( -- addr )  something ;
@@ -1473,7 +1578,9 @@ variable state  ( -- a-addr )  false state !
 
 \ Skip leading spaces and parse name delimited by a space. Find
 \ name in the dictionary. Compile the compilation semantics of
-\ name. An ambiguous condition exists if name is not found.
+\ name.
+
+\ An ambiguous condition exists if name is not found.
 
 
 : literal  ( Compi: x -- ) ( Run: -- x )  something ;
@@ -1503,13 +1610,14 @@ variable state  ( -- a-addr )  false state !
 
 \ Compilation: Skip leading spaces and parse name delimited by a
 \ space. Find name in the dictionary. Compile the following run-
-\ time semantics. An ambiguous condition exists if name is not
-\ found.
+\ time semantics.
 
 \ Runtime: Put the execution token corresponding to name onto
 \ the stack. The execution token returned by the compiled phrase
 \ "['] X" is the same token returned by "' X" outside of compi-
 \ lation state.
+
+\ An ambiguous condition exists if name is not found.
 
 
 : s"  ( Inter: 'ccc<quote>' -- c-addr u )
@@ -1602,8 +1710,9 @@ variable state  ( -- a-addr )  false state !
 \ Compilation: Skip leading spaces and parse name delimited by a
 \ space. Find name in the dictionary. If name has other than de-
 \ fault compilation semantics, compile the compilation seman-
-\ tics. Otherwise, compile the execution semantics of name. An
-\ ambiguous condition exists if name is not found.
+\ tics. Otherwise, compile the execution semantics of name.
+
+\ An ambiguous condition exists if name is not found.
 
 \ Note: This word is obsolescent and is included for compatibil-
 \ ity with existing Forth code.
@@ -1663,9 +1772,10 @@ $____ constant s\"buf  ( -- c-addr )
 
 : immediate  ( -- )  something ;
 
-\ Make the most recent definition an immediate word. An ambigu-
-\ ous condition exists if the most recent definition does not
-\ have a name or if it was defined by SYNONYM.
+\ Make the most recent definition an immediate word.
+
+\ An ambiguous condition exists if the most recent definition
+\ does not have a name or if it was defined by SYNONYM.
 
 
 : constant  ( '<spaces>name' x -- ) ( Exe: -- x )  something ;
@@ -1719,9 +1829,7 @@ $____ constant s\"buf  ( -- c-addr )
 \ Runtime: Replace the execution semantics of the most recent
 \ definition, referred to as name, with the name execution se-
 \ mantics described below. Return control to the calling defini-
-\ tion specified by nest-sys1. An ambiguous condition exists if
-\ name was not defined by CREATE or a user-defined word that
-\ calls CREATE.
+\ tion specified by nest-sys1.
 
 \ Initiation: Put the return address nest-sys2 on the return
 \ stack. Put the address of the data field of name on the data
@@ -1732,9 +1840,13 @@ $____ constant s\"buf  ( -- c-addr )
 \ modified name. The stack effects i*x and j*x represent argu-
 \ ments to and results from name, respectively.
 
+\ An ambiguous condition exists if name was not defined by
+\ CREATE or a user-defined word that calls CREATE.
+
 
 
 \ Core-Ext Definition
+
 
 : :noname  ( -- xt colon-sys )
   ( Initi: i*x R: -- i*x R:nest-sys ) ( Exe: i*x -- j*x )
@@ -1791,17 +1903,14 @@ $____ constant s\"buf  ( -- c-addr )
 
 \ Interpretation: Skip leading spaces and parse name delimited
 \ by a space. Perform the "TO name Runtime" semantics given in
-\ the definition of the defining word of name. An ambiguous con-
-\ dition exists if name was not defined by a word with "TO name
-\ Runtime" semantics.
+\ the definition of the defining word of name.
 
 \ Compilation: Skip leading spaces and parse name delimited by a
 \ space. Compile the "TO name Runtime" semantics given in the
-\ definition of the defining word of name. An ambiguous condi-
-\ tion exists if name was not defined by a word with "TO name
-\ Runtime" semantics.
+\ definition of the defining word of name.
 
-\ Note: An ambiguous condition exists if any of POSTPONE,
+\ An ambiguous condition exists if name was not defined by a
+\ word with "TO name Runtime" semantics, or if any of POSTPONE,
 \ [COMPILE], or ', or ['] are applied to TO.
 
 
@@ -1811,9 +1920,10 @@ $____ constant s\"buf  ( -- c-addr )
 \ ate a definition for name with the execution semantics de-
 \ scribed below.
 
-\ name Execution: Execute the xt that name is set to execute. An
-\ ambuguous condition exists if name has not been set to execute
-\ an xt.
+\ name Execution: Execute the xt that name is set to execute.
+
+\ An ambuguous condition exists if name has not been set to exe-
+\ cute an xt.
 
 
 : marker  ( '<spaces>name' -- ) ( Exe: -- )  something ;
@@ -1929,8 +2039,10 @@ $____ constant s\"buf  ( -- c-addr )
 \ as the index and the second data stack item as the limit. The
 \ index and limit can be signed or unsigned. Anything already on
 \ the return stack becomes unavailable until the loop parameters
-\ are discarded. An ambiguous condition exists if the index and
-\ limit are not of the same type.
+\ are discarded.
+
+\ An ambiguous condition exists if the index and limit are not
+\ of the same type.
 
 
 : loop  ( Compi: do-sys -- )
@@ -1947,9 +2059,10 @@ $____ constant s\"buf  ( -- c-addr )
 \ Runtime: Add one to the loop index. If the loop index is then
 \ equal to the loop limit, discard the loop parameters and con-
 \ tinue execution immediately following the loop. Otherwise,
-\ continue execution at the beginning of the loop. An ambiguous
-\ condition exists if the runtime semantics execute when the
-\ loop parameters are unavailable.
+\ continue execution at the beginning of the loop.
+
+\ An ambiguous condition exists if the runtime semantics execute
+\ when the loop parameters are unavailable.
 
 
 : +loop  ( Compi: do-sys -- )
@@ -1967,9 +2080,10 @@ $____ constant s\"buf  ( -- c-addr )
 \ cross the boundary between the loop index minus one and the
 \ loop limit, continue execution at the beginning of the loop.
 \ Otherwise, discard the loop parameters and continue execution
-\ immediately following the loop. An ambiguous condition exists
-\ if the runtime semantics execute when the loop parameters are
-\ unavailable.
+\ immediately following the loop.
+
+\ An ambiguous condition exists if the runtime semantics execute
+\ when the loop parameters are unavailable.
 
 
 : i  ( Compi: -- ) ( Exe: R:loop-sys -- n|u R:loop-sys )
@@ -1981,6 +2095,7 @@ $____ constant s\"buf  ( -- c-addr )
 
 \ Execution: Put a copy of the current (innermost) loop index
 \ onto the data stack. The loop index can be signed or unsigned.
+
 \ An ambiguous condition exists if the loop parameters are un-
 \ available.
 
@@ -2005,10 +2120,11 @@ $____ constant s\"buf  ( -- c-addr )
 
 \ Compilation: Compile the following runtime semantics.
 
-\ Execution: Discard the current loop parameters. An ambiguous
-\ condition exists if they are unavailable. Continue execution
-\ immediately following the innermost syntactically enclosing
-\ DO...LOOP or DO...+LOOP.
+\ Execution: Discard the current loop parameters. Continue exe-
+\ cution immediately following the innermost syntactically en-
+\ closing DO...LOOP or DO...+LOOP.
+
+\ An ambiguous condition exists if they are unavailable.
 
 
 : unloop  ( Compi: -- ) ( R:loop-sys -- R: )  something ;
@@ -2019,8 +2135,10 @@ $____ constant s\"buf  ( -- c-addr )
 
 \ Execution: Discard the loop parameters for the current nesting
 \ level. An UNLOOP is required for each nesting level before the
-\ definition may be EXITed. An ambiguous condition exists if the
-\ loop parameters are unavailable.
+\ definition may be EXITed.
+
+\ An ambiguous condition exists if the loop parameters are un-
+\ available.
 
 
 : exit  ( Compi: -- ) ( Exe: R:nest-sys -- R: )  something ;
@@ -2040,8 +2158,10 @@ $____ constant s\"buf  ( -- c-addr )
 \ Interpretation: Undefined
 
 \ Compilation: Compile the execution semantics of the current
-\ definition. An ambiguous condition exists if RECURSE appears
-\ in a definition after DOES>.
+\ definition.
+
+\ An ambiguous condition exists if RECURSE appears in a defini-
+\ tion after DOES>.
 
 
 
@@ -2077,8 +2197,10 @@ $____ constant s\"buf  ( -- c-addr )
 \ the index and the second data stack item as the limit, then
 \ continue executing immediately following ?DO. Anything already
 \ on the return stack becomes unavailable until the loop parame-
-\ ters are discarded. An ambiguous condition exists if the index
-\ and limit are not of the same type.
+\ ters are discarded.
+
+\ An ambiguous condition exists if the index and limit are not
+\ of the same type.
 
 
 : case  ( Compi: -- case-sys ) ( Run: -- )  something ;
