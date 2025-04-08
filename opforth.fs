@@ -948,14 +948,20 @@ synonym c! !  ( char c-addr -- )
 \ the integers can be signed or unsigned.
 
 
-: move  ( addr1 addr2 u -- )  something ;
+: move  ( addr1 addr2 u -- )
+  >r 2dup u<
+  if
+    r> move>
+  else
+    r> 0 ?do over i + au@ over i + au! loop 2drop
+  then ;
 
 \ If u is greater than zero, write a copy of the u consecutive
 \ address units of memory starting at addr1 to the u consecutive
-\ address units starting at addr2. The u characters of memory
-\ starting at addr2 will contain exactly what the u characters
-\ of memory starting at addr1 contained before the move, even if
-\ the memory regions overlap.
+\ address units starting at addr2. After MOVE is executed, the u
+\ characters of memory starting at addr2 will contain exactly
+\ what the u characters of memory starting at addr1 contained
+\ before MOVE was executed.
 
 \ In Opforth, one address unit is the size of one character.
 \ This implementation of MOVE is compatible with Forth systems
@@ -1052,10 +1058,13 @@ synonym au!'  ( x addr1 -- addr2 )
 \ If x is a graphic character, display x.
 
 
-: type  ( c-addr u -- )  something ;
+: type  ( c-addr u -- )
+  dup 0>= and 0
+  ?do dup c@ emit char+ loop
+  drop ;
 
-\ If u is greater than zero, display the string with starting
-\ address c-addr and length u.
+\ If u is greater than zero, display the string that has ad-
+\ ress c-addr and length u.
 
 
 : cr  ( -- )  something ;
@@ -1085,13 +1094,14 @@ $0020 constant bl  ( -- char )
 \ Core-Ext Text Display
 
 
-: .(  ( 'ccc<right-paren>' -- )  something ; immediate
+: .(  ( 'ccc<right-paren>' -- )
+  [char] " parse type ; immediate
 
 \ Parse ccc delimited by ) (right parenthesis). Display ccc.
 
 
 
-\ Core Digit String
+\ Core Numeric String
 
 : .  ( n -- )  something ;
 
