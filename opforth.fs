@@ -35,8 +35,10 @@
 \ over     x1 x2 -- x1 x2 x1
 \ rot      x1 x2 x3 -- x2 x3 x1
 \ ?dup     x -- x x | 0
-\ 2drop    x1 x2 --
-\ 2dup     x1 x2 -- x1 x2 x1 x2
+\ 2drop    Inter: x1 x2 --
+\          Compi: --  Run: x1 x2 --
+\ 2dup     Inter: x1 x2 -- x1 x2 x1 x2
+\          Compi: --  Run: x1 x2 -- x1 x2 x1 x2
 \ 2swap    x1 x2 x3 x4 -- x3 x4 x1 x2
 \ 2over    x1 x2 x3 x4 -- x1 x2 x3 x4 x1 x2
 \ >r       Compi: --  Exe: x R: -- R:x
@@ -157,7 +159,8 @@
 
 \ Core Text Display
 
-\ ."        'ccc<quote>' --  Run: --
+\ ."        Inter: 'ccc<quote>' --
+\           Compi: 'ccc<quote>' --  Run: --
 \ emit      x --
 \ type      c-addr u --
 \ cr        --
@@ -196,7 +199,8 @@
 
 \ Core Text Input
 
-\ (         'ccc<right-paren>' --  Run: --
+\ (         Inter: 'ccc<right-paren>' --
+\           Compi: 'ccc<right-paren>' --  Run: --
 \ source    -- c-addr u
 \ >in       -- a-addr
 \ key       -- char
@@ -259,7 +263,8 @@
 \ literal     Compi: x --  Run: -- x
 \ [char]      Compi: '<spaces>name' --  Run: -- char
 \ [']         Compi: '<spaces>name' --  Run: -- xt
-\ s"          Compi: 'ccc<quote>' --  Run: -- c-addr u
+\ s"          Inter: 'ccc<quote>' -- c-addr u
+\             Compi: 'ccc<quote>' --  Run: -- c-addr u
 
 
 \ Core-Ext Compiler
@@ -268,6 +273,12 @@
 \ c"           Compi: 'ccc<quote>' --  Run: -- c-addr
 \ compile,     Compi: --  Exe: xt --
 \ [compile]    Compi: '<spaces>name' --
+
+
+\ Opforth Compiler
+
+\ s"buf     -- c-addr
+\ s\"buf    -- c-addr
 
 
 \ Core Definition
@@ -374,7 +385,7 @@ $0005 opcode ?dup  ( x -- x x | 0 )
 \ Duplicate the top stack item if it is nonzero.
 
 
-: 2drop  ( x1 x2 -- )  drop drop ;
+: 2drop  ( Inter: x1 x2 -- )  drop drop ;
 
 |: 2drop  ( Compi: -- ) ( Run: x1 x2 -- )
   postpone drop  postpone drop ;| immediate
@@ -382,7 +393,7 @@ $0005 opcode ?dup  ( x -- x x | 0 )
 \ Remove the top two stack items.
 
 
-: 2dup  ( x1 x2 -- x1 x2 x1 x2 )  over over ;
+: 2dup  ( Inter: x1 x2 -- x1 x2 x1 x2 )  over over ;
 
 |: 2dup  ( Compi: -- ) ( Run: x1 x2 -- x1 x2 x1 x2 )
   postpone over  postpone over ;| immediate
@@ -911,16 +922,13 @@ synonym c! !  ( char c-addr -- )
 
 
 : fill  ( c-addr u char -- )
-  -rot 0
-  ?do                  ( char c-addr )
-    2dup i + !
-  loop
-  2drop ;
+  -rot 0 ?do 2dup c! char+ loop 2drop ;
 
 \ If u is greater than zero, write char to each of the u consec-
-\ utive characters beginning at memory address c-addr. Because
-\ Opforth characters and cells are the same size, this is equi-
-\ valent to writing char to u consecutive cells.
+\ utive characters beginning at memory address c-addr. Opforth
+\ characters and cells are the same size. This implementation of
+\ FILL is compatible with Forth systems that use different char-
+\ acter sizes.
 
 
 
@@ -955,7 +963,10 @@ $____ opcode tuck!  ( x a-addr -- a-addr )
 \ Core Text Display
 
 
-: ."  ( 'ccc<quote>' -- )  ( Run: -- )  something ;
+: ."  ( Inter: 'ccc<quote>' -- )  [char] " parse type ;
+
+|: ."  ( Compi: 'ccc<quote>' -- ) ( Run: -- )
+  [char] " parse  postpone sliteral  type ;| immediate
 
 \ Interpretation: Parse ccc delimited by " (double-quote). Dis-
 \ play ccc.
@@ -1137,8 +1148,10 @@ variable base  ( -- a-addr )  decimal
 \ Core Text Input
 
 
-: (  ( 'ccc<right-paren>' -- ) ( Run: -- )
-  something ; immediate
+: (  ( Inter: 'ccc<right-paren>' -- )  [char] ) parse ;
+
+|: (  ( Compi: 'ccc<right-paren>' -- ) ( Run: -- )
+  [char] )  postpone parse ;| immediate
 
 \ Parse ccc delimited by ) (right parenthesis). This causes the
 \ outer interpreter to skip past the text enclosed in the paren-
@@ -1499,10 +1512,15 @@ variable state  ( -- a-addr )  false state !
 \ lation state.
 
 
-: s"  ( Compi: 'ccc<quote>' -- ) ( Run: -- c-addr u )
-  something ;
+: s"  ( Inter: 'ccc<quote>' -- c-addr u )
+  [char] " parse 2dup s"buf swap cmove ;
 
-\ Interpretation: Undefined
+|: s"  ( Compi: 'ccc<quote>' -- ) ( Run: -- c-addr u )
+  [char] " parse  postpone sliteral ;| immediate
+
+\ Interpretation: Parse ccc delimited by " (double-quote). Store
+\ the resulting string in a transient buffer. c-addr is string
+\ address, and u is the string length.
 
 \ Compilation: Parse ccc delimited by " (double-quote). Compile
 \ the following runtime semantics.
@@ -1589,6 +1607,19 @@ variable state  ( -- a-addr )  false state !
 
 \ Note: This word is obsolescent and is included for compatibil-
 \ ity with existing Forth code.
+
+
+
+\ Opforth Compiler
+
+$____ constant s"buf  ( -- c-addr )
+
+\ c-addr is the address of the buffer used by S".
+
+
+$____ constant s\"buf  ( -- c-addr )
+
+\ c-addr is the address of the buffer used by S\".
 
 
 
