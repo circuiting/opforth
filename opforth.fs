@@ -386,6 +386,11 @@
 \ evaluate    i*x c-addr u -- j*x
 
 
+\ String
+
+\ sliteral    Compi: c-addr1 u --  Run: -- c-addr2 u
+
+
 
 \ Core Stack
 
@@ -1064,7 +1069,9 @@ synonym c! !  ( char c-addr -- )
   if
     r> move>
   else
-    r> 0 ?do over i + c@ over i + c! loop 2drop
+    r> 0
+    ?do over i + c@ over i + c! loop
+    2drop
   then ;
 
 \ If u is greater than zero, write a copy of the u consecutive
@@ -1357,7 +1364,7 @@ variable base  ( -- a-addr )  decimal
 \ buffer.
 
 
-variable >in  ( -- a-addr )  $____ >in !
+variable >in  ( -- a-addr )  0 >in !
 
 \ a-addr is the address of a cell containing the offset in char-
 \ acters from the start of the input buffer to the start of the
@@ -1385,7 +1392,7 @@ variable >in  ( -- a-addr )  $____ >in !
 \ than +32767.
 
 
-: char  ( '<spaces>name' -- char )  bl word char+ c@ ;
+: char  ( '<spaces>name' -- char )  parse-name drop c@ ;
 
 \ Skip leading spaces and parse name delimited by a space. Put
 \ the first character of name on the stack.
@@ -1543,7 +1550,7 @@ $____ opcode execute  ( i*x xt -- j*x )
 \ xt.
 
 
-: '  ( '<spaces>name' -- xt )  something ;
+: '  ( '<spaces>name' -- xt )  parse-name find-name ;
 
 \ Skip leading spaces and parse name delimited by a space. Find
 \ name and put the corresponding execution token on the stack.
@@ -1705,7 +1712,7 @@ variable state  ( -- a-addr )  false state !
 
 
 : postpone  ( Compi: '<spaces>name' -- )
-  parse-name ['] ; immediate compile-only
+  ' , ; immediate compile-only
 
 \ Skip leading spaces and parse name delimited by a space. Find
 \ name in the dictionary. Compile the compilation semantics of
@@ -1725,7 +1732,7 @@ variable state  ( -- a-addr )  false state !
 
 
 : [char]  ( Compi: '<spaces>name' -- ) ( Run: -- char )
-  something ;
+  parse-name drop c@ literal ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -1736,7 +1743,8 @@ variable state  ( -- a-addr )  false state !
 \ stack.
 
 
-: [']  ( Compi: '<spaces>name' -- ) ( Run: -- xt )  something ;
+: [']  ( Compi: '<spaces>name' -- ) ( Run: -- xt )
+  ' literal ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -1813,7 +1821,11 @@ variable state  ( -- a-addr )  false state !
 \ \\                backslash itself           5c
 
 
-: c"  ( Compi: 'ccc<quote>' -- ) ( Run: -- c-addr )  something ;
+: c"  ( Compi: 'ccc<quote>' -- ) ( Run: -- c-addr )
+  [char] " parse
+  ( c-addr1 u )
+
+; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -1825,7 +1837,8 @@ variable state  ( -- a-addr )  false state !
 \ string.
 
 
-: compile,  ( Compi: -- ) ( Exe: xt -- )  something ;
+: compile,  ( Compi: -- ) ( Exe: xt -- )
+  postpone ,  ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -1857,8 +1870,7 @@ variable state  ( -- a-addr )  false state !
 $____ opcode lit  ( -- x )
 
 \ Put x, the contents of the next consecutive cell, onto the
-\ stack. Continue execution at the next consecutive address af-
-\ ter the cell containing x.
+\ stack.
 
 
 variable dp  ( -- a-addr )  $____ dp !
@@ -2454,3 +2466,23 @@ $____ constant s\"buff  ( -- c-addr )
 \ and interpret. When the parse area is empty, restore the prior
 \ input source specification. Other stack effects are due to the
 \ words EVALUATEd.
+
+
+
+\ String
+
+
+: sliteral  ( Compi: c-addr1 u -- ) ( Run: -- c-addr2 u )
+  postpone branch            ( c-addr1 u )
+  here -rot 1 cells allot    ( a-addr c-addr1 u )
+  here swap dup chars allot  ( a-addr c-addr1 c-addr2 u )
+  2dup 2>r cmove             ( a-addr R:c-addr2 R:u )
+  here ! 2r> 2literal ; immediate compile-only
+
+\ Interpretation: Undefined
+
+\ Compilation: Compile the string with address c-addr1 and
+\ length u, and compile the runtime semantics below.
+
+\ Runtime: c-addr2 is the address of the compiled string, and
+\ u is the string length.
