@@ -57,7 +57,7 @@
 \ 2r@     Compi: --  Exe: R:x1 R:x2 -- x1 x2 R:x1 R:x2
 
 
-\ Opforth Stack
+\ Helper Stack
 
 \ -rot    x1 x2 x3 -- x3 x1 x2
 \ sp@     -- u
@@ -109,7 +109,7 @@
 \ within    n1 n2 n3 | u1 u2 u3 -- flag
 
 
-\ Opforth Number Test
+\ Helper Number Test
 
 \ 0<=    n -- flag
 \ 0>=    n -- flag
@@ -133,7 +133,7 @@
 \ false    -- false
 
 
-\ Opforth Bitwise Logic
+\ Helper Bitwise Logic
 
 \ u2/    x1 -- x2
 
@@ -168,7 +168,7 @@
 \ pad      -- c-addr
 
 
-\ Opforth Memory
+\ Helper Memory
 
 \ tuck!  ( x a-addr -- a-addr )
 \ !'     ( x a-addr1 -- a-addr2 )
@@ -238,6 +238,12 @@
 \ refill           -- flag
 
 
+\ Helper Text Input
+
+\ textinbuff     ( -- c-addr )
+\ #textinbuff    ( -- u )
+
+
 \ Core Query
 
 \ depth           -- +n
@@ -293,11 +299,11 @@
 \ [compile]    Compi: '<spaces>name' --
 
 
-\ Opforth Compiler
+\ Helper Compiler
 
-\ dp        -- a-addr
-\ s"buf     -- c-addr
-\ s\"buf    -- c-addr
+\ dp         -- a-addr
+\ s"buff     -- c-addr
+\ s\"buff    -- c-addr
 
 
 \ Core Definition
@@ -365,7 +371,8 @@
 
 \ quit        R:i*x -- R:
 \ abort       i*x R:j*x -- R:
-\ abort"      Compi: 'ccc<quote>' --  Run: i*x x1 R:j*x -- |i*x R:|j*x
+\ abort"      Compi: 'ccc<quote>' --
+\             Run: i*x x1 R:j*x -- |i*x R:|j*x
 \ evaluate    i*x c-addr u -- j*x
 
 
@@ -534,7 +541,7 @@ $____ opcode tuck  ( x1 x2 -- x2 x1 x2 )
 
 
 
-\ Opforth Stack
+\ Helper Stack
 
 
 $____ opcode -rot  ( x1 x2 x3 -- x3 x1 x2)
@@ -787,7 +794,8 @@ $____ opcode u>  ( u1 u2 -- flag )
 \ false.
 
 
-: within  ( n1 n2 n3 | u1 u2 u3 -- flag )  something ;
+: within  ( n1 n2 n3 | u1 u2 u3 -- flag )
+  third u> >r u>= r> and ;
 
 \ flag is true if either of the following is true:
 
@@ -802,7 +810,7 @@ $____ opcode u>  ( u1 u2 -- flag )
 
 
 
-\ Opforth Number Test
+\ Helper Number Test
 
 
 $____ opcode 0<=  ( n -- flag )
@@ -885,7 +893,7 @@ $____ opcode false  ( -- false )
 
 
 
-\ Opforth Bitwise Logic
+\ Helper Bitwise Logic
 
 $____ opcode u2/  ( x1 -- x2 )
 
@@ -1065,7 +1073,7 @@ $____ constant pad  ( -- c-addr )
 
 
 
-\ Opforth Memory
+\ Helper Memory
 
 
 $____ opcode tuck!  ( x a-addr -- a-addr )
@@ -1306,10 +1314,11 @@ variable base  ( -- a-addr )  decimal
 \ theses.
 
 
-: source  ( -- c-addr u )  something ;
+: source  ( -- c-addr u )  textinbuff #textinbuff ;
 
-\ c-addr is the address of the input buffer. u is the number of
-\ characters in the input buffer.
+\ c-addr is the address of the text input buffer used by the
+\ Forth outer interpreter. u is the number of characters in the
+\ buffer.
 
 
 variable >in  ( -- a-addr )  $____ >in !
@@ -1423,6 +1432,22 @@ variable >in  ( -- a-addr )  $____ >in !
 
 \ When the input source is a string via EVALUATE, return false
 \ and perform no other action.
+
+
+
+\ Helper Text Input
+
+
+$____ constant textinbuff  ( -- c-addr )
+
+\ c-addr is the address of the text input buffer used by the
+\ Forth outer interpreter.
+
+
+0 value #textinbuff  ( -- u )
+
+\ u is the number of characters in the text input buffer used by
+\ the Forth outer interpreter.
 
 
 
@@ -1616,7 +1641,7 @@ synonym c, ,  ( char -- )
 \ addresses.
 
 
-: here  ( -- addr )  something ;
+: here  ( -- addr )  dp @ ;
 
 \ addr is the dictionary pointer.
 
@@ -1687,7 +1712,7 @@ variable state  ( -- a-addr )  false state !
 
 
 : s"  ( Inter: 'ccc<quote>' -- c-addr u )
-  [char] " parse 2dup s"buf swap cmove ;
+  [char] " parse 2dup s"buff swap cmove ;
 
 |: s"  ( Compi: 'ccc<quote>' -- ) ( Run: -- c-addr u )
   [char] " parse  postpone sliteral ;| immediate
@@ -1785,7 +1810,7 @@ variable state  ( -- a-addr )  false state !
 
 
 
-\ Opforth Compiler
+\ Helper Compiler
 
 
 variable dp  ( -- a-addr )  $____ dp !
@@ -1794,12 +1819,12 @@ variable dp  ( -- a-addr )  $____ dp !
 \ pointer.
 
 
-$____ constant s"buf  ( -- c-addr )
+$____ constant s"buff  ( -- c-addr )
 
 \ c-addr is the address of the buffer used by S".
 
 
-$____ constant s\"buf  ( -- c-addr )
+$____ constant s\"buff  ( -- c-addr )
 
 \ c-addr is the address of the buffer used by S\".
 
