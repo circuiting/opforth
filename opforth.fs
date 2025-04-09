@@ -60,10 +60,12 @@
 \ Helper Stack
 
 \ -rot    x1 x2 x3 -- x3 x1 x2
-\ sp@     -- u
-\ rp@     -- u
-\ sp!     i*x u -- j*x
-\ rp!     u R:i*x -- R:j*x
+\ sp0     -- +n
+\ rp0     -- +n
+\ sp@     -- +n
+\ rp@     -- +n
+\ sp!     i*x +n -- j*x
+\ rp!     +n R:i*x -- R:j*x
 
 
 \ Core Arithmetic
@@ -113,6 +115,8 @@
 
 \ 0<=    n -- flag
 \ 0>=    n -- flag
+\ u<=    u1 u2 -- flag
+\ u>=    u1 u2 -- flag
 
 
 \ Core Bitwise Logic
@@ -301,6 +305,7 @@
 
 \ Helper Compiler
 
+\ lit        -- x
 \ dp         -- a-addr
 \ s"buff     -- c-addr
 \ s\"buff    -- c-addr
@@ -331,6 +336,11 @@
 \            Compi: '<spaces>name' --
 \ defer      '<spaces>name' --  Exe: i*x -- j*x
 \ marker     '<spaces>name' --  Exe: --
+
+
+\ Helper Definition
+
+\ compile-only    --
 
 
 \ Core Control Flow
@@ -544,30 +554,43 @@ $____ opcode tuck  ( x1 x2 -- x2 x1 x2 )
 \ Helper Stack
 
 
-$____ opcode -rot  ( x1 x2 x3 -- x3 x1 x2)
+$____ opcode -rot  ( x1 x2 x3 -- x3 x1 x2 )
 
 \ Rotate the top three stack items to put the top item in the
 \ third position.
 
 
-$____ opcode sp@  ( -- u )
+$____ value sp0  ( -- +n )
 
-\ u is the data stack pointer before u was placed on the stack.
-
-
-$____ opcode rp@  ( -- u )
-
-\ u is the return stack pointer.
+\ +n is the number contained in the data stack pointer when the
+\ data stack is empty.
 
 
-$____ opcode sp!  ( i*x u -- j*x )
+$____ value rp0  ( -- +n )
 
-\ Set the data stack pointer to u.
+\ +n is the number contained in the return stack pointer when
+\ the return stack is empty.
 
 
-$____ opcode rp!  ( u R:i*x -- R:j*x )
+$____ opcode sp@  ( -- +n )
 
-\ Set the return stack pointer to u.
+\ +n is the number contained in the data stack pointer before +n
+\ was placed on the data stack.
+
+
+$____ opcode rp@  ( -- +n )
+
+\ +n is the number contained in the return stack pointer.
+
+
+$____ opcode sp!  ( i*x +n -- j*x )
+
+\ Set the data stack pointer to +n.
+
+
+$____ opcode rp!  ( +n R:i*x -- R:j*x )
+
+\ Set the return stack pointer to +n.
 
 
 
@@ -628,7 +651,7 @@ $____ opcode s>d  ( n -- d )
 
 : um*  ( u1 u2 -- ud )  something ;
 
-\ Multiply u1 by u2. ud is the double-cell product. All values
+\ Multiply u1 by u2. ud is the double-cell product. All integers
 \ and arithmetic are unsigned.
 
 
@@ -679,7 +702,7 @@ $____ opcode s>d  ( n -- d )
 : um/mod  ( ud u1 -- u2 u3 )  something ;
 
 \ Divide ud by u1. u2 is the remainder and u3 is the quotient.
-\ All values and arithmetic are unsigned.
+\ All integers and arithmetic are unsigned.
 
 \ An ambiguous condition exists if u1 is zero or if u3 is out-
 \ side the range of a single-cell unsigned integer.
@@ -825,6 +848,18 @@ $____ opcode 0>=  ( n -- flag )
 \ flag is false.
 
 
+$____ opcode u<=  ( u1 u2 -- flag )
+
+\ If u1 is less than or equal to u2, flag is true. Otherwise
+\ flag is false.
+
+
+$____ opcode u>=  ( u1 u2 -- flag )
+
+\ If u1 is greater than or equal to u2, flag is true. Otherwise
+\ flag is false.
+
+
 
 \ Core Bitwise Logic
 
@@ -894,6 +929,7 @@ $____ opcode false  ( -- false )
 
 
 \ Helper Bitwise Logic
+
 
 $____ opcode u2/  ( x1 -- x2 )
 
@@ -1375,8 +1411,8 @@ variable >in  ( -- a-addr )  $____ >in !
 : \  ( 'ccc<eol>' -- ) ( Run: -- )  something ;
 
 \ Parse the remainder of the parse area. This causes the outer
-\ interpreter to skip past the text that begins with \ and ends
-\ at the end of the line.
+\ interpreter to skip past all the text from the backslash to
+\ the end of the line.
 
 
 : parse  ( 'ccc<char>' char -- c-addr u )  something ;
@@ -1454,9 +1490,9 @@ $____ constant textinbuff  ( -- c-addr )
 \ Core Query
 
 
-: depth  ( -- +n )  something ;
+: depth  ( -- +n )  sp0 sp@ - ;
 
-\ +n is the number of single-cell values contained in the data
+\ +n is the number of single-cell items contained in the data
 \ stack before +n was placed on the stack.
 
 
@@ -1488,17 +1524,20 @@ $____ constant textinbuff  ( -- c-addr )
 \ Core-Ext Query
 
 
-: unused  ( -- u )  something ;
+: unused  ( -- u )  dpmax dp @ - ;
 
 \ u is the number of address units remaining in the space ad-
 \ dressed by HERE.
+
+\ In Opforth, there is no distinction between characters and
+\ address units.
 
 
 
 \ Core Execution Token
 
 
-: execute  ( i*x xt -- j*x )  something ;
+$____ opcode execute  ( i*x xt -- j*x )
 
 \ Remove xt from the stack and execute the word corresponding to
 \ xt.
@@ -1518,7 +1557,7 @@ $____ constant textinbuff  ( -- c-addr )
 \ c-addr and zero. If the definition is found, return the corre-
 \ sponding execution token. If the definition is immediate, also
 \ return 1. Otherwise, also return -1. For a given string, the
-\ values returned by FIND while compiling may differ from those
+\ results returned by FIND while compiling may differ from those
 \ returned while not compiling.
 
 
@@ -1665,7 +1704,8 @@ variable state  ( -- a-addr )  false state !
 \ :NONAME, [ (left-bracket), ] (right-bracket).
 
 
-: postpone  ( Compi: '<spaces>name' -- )  something ;
+: postpone  ( Compi: '<spaces>name' -- )
+  parse-name ['] ; immediate compile-only
 
 \ Skip leading spaces and parse name delimited by a space. Find
 \ name in the dictionary. Compile the compilation semantics of
@@ -1674,7 +1714,8 @@ variable state  ( -- a-addr )  false state !
 \ An ambiguous condition exists if name is not found.
 
 
-: literal  ( Compi: x -- ) ( Run: -- x )  something ;
+: literal  ( Compi: x -- ) ( Run: -- x )
+  postpone lit  , ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -1811,6 +1852,13 @@ variable state  ( -- a-addr )  false state !
 
 
 \ Helper Compiler
+
+
+$____ opcode lit  ( -- x )
+
+\ Put x, the contents of the next consecutive cell, onto the
+\ stack. Continue execution at the next consecutive address af-
+\ ter the cell containing x.
 
 
 variable dp  ( -- a-addr )  $____ dp !
@@ -2037,6 +2085,18 @@ $____ constant s\"buff  ( -- c-addr )
 \ refer to deleted definitions or deallocated data space is not
 \ necessarily provided. No other contextual information (such as
 \ the base of the number system) is affected.
+
+
+
+\ Helper Compiler
+
+
+: compile-only  ( -- )  something ;
+
+\ Make the most recent definition a compile-only word, which is
+\ a word that will cause the outer interpreter to abort and dis-
+\ play an error message if an attempt is made to execute the
+\ word in interpretation state.
 
 
 
