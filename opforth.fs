@@ -388,11 +388,21 @@
 
 \ String
 
-\ sliteral    Compi: c-addr1 u --  Run: -- c-addr2 u
+\ cmove         c-addr1 c-addr2 u --
+\ cmove>        c-addr1 c-addr2 u --
+\ blank         c-addr u --
+\ sliteral      Compi: c-addr1 u --  Run: -- c-addr2 u
+\ /string       c-addr1 u1 n2 -- c-addr2 u2
+\ -trailing     c-addr u1 -- c-addr u2
+\ compare       c-addr1 u1 c-addr2 u2 -- n
+\ search        c-addr1 u1 c-addr2 u2 -- c-addr3 u3 flag
+\ replaces      c-addr1 u1 c-addr2 u2 --
+\ unescape      c-addr1 u1 c-addr2 -- c-addr2 u2
+\ substitute    c-addr1 u1 c-addr2 u2 -- c-addr3 u3 n
 
 
 
-\ Core Stack
+\ Core Stack Words
 
 
 $____ opcode drop  ( x -- )
@@ -488,7 +498,7 @@ $____ opcode r@  ( Compi: -- ) ( Exe: R:x -- x R:x )
 
 
 
-\ Core-Ext Stack
+\ Core-Ext Stack Words
 
 
 $____ opcode nip  ( x1 x2 -- x2 )
@@ -556,7 +566,7 @@ $____ opcode tuck  ( x1 x2 -- x2 x1 x2 )
 
 
 
-\ Helper Stack
+\ Helper Stack Words
 
 
 $____ opcode -rot  ( x1 x2 x3 -- x3 x1 x2 )
@@ -599,7 +609,7 @@ $____ opcode rp!  ( +n R:i*x -- R:j*x )
 
 
 
-\ Core Arithmetic
+\ Core Arithmetic Words
 
 
 $____ opcode +  ( n1|u1 n2|u2 -- n3|u3 )
@@ -735,7 +745,7 @@ $____ opcode s>d  ( n -- d )
 
 
 
-\ Core Number Test
+\ Core Number Test Words
 
 
 $____ opcode 0=  ( x -- flag )
@@ -795,7 +805,7 @@ $____ opcode u<  ( u1 u2 -- flag )
 
 
 
-\ Core-Ext Number Test
+\ Core-Ext Number Test Words
 
 
 $____ opcode 0<>  ( x -- flag )
@@ -838,7 +848,7 @@ $____ opcode u>  ( u1 u2 -- flag )
 
 
 
-\ Helper Number Test
+\ Helper Number Test Words
 
 
 $____ opcode 0<=  ( n -- flag )
@@ -866,7 +876,7 @@ $____ opcode u>=  ( u1 u2 -- flag )
 
 
 
-\ Core Bitwise Logic
+\ Core Bitwise Logic Words
 
 
 $____ opcode invert  ( x1 -- x2 )
@@ -917,7 +927,7 @@ $____ opcode 2/  ( x1 -- x2 )
 
 
 
-\ Core-Ext Bitwise Logic
+\ Core-Ext Bitwise Logic Words
 
 
 $____ opcode true  ( -- true )
@@ -933,7 +943,7 @@ $____ opcode false  ( -- false )
 
 
 
-\ Helper Bitwise Logic
+\ Helper Bitwise Logic Words
 
 
 $____ opcode u2/  ( x1 -- x2 )
@@ -944,7 +954,7 @@ $____ opcode u2/  ( x1 -- x2 )
 
 
 
-\ Core Address Math
+\ Core Address Math Words
 
 
 : cells  ( n1 -- n2 )  ; immediate
@@ -1010,7 +1020,7 @@ synonym char+ 1+  ( c-addr1 -- c-addr2 )
 
 
 
-\ Core Memory
+\ Core Memory Words
 
 
 $____ opcode @  ( a-addr -- x )
@@ -1095,7 +1105,7 @@ synonym c! !  ( char c-addr -- )
 
 
 
-\ Core-Ext Memory
+\ Core-Ext Memory Words
 
 
 : erase  ( addr u -- )  0 ?do 0 swap c!' loop drop ;
@@ -1116,7 +1126,7 @@ $____ constant pad  ( -- c-addr )
 
 
 
-\ Helper Memory
+\ Helper Memory Words
 
 
 $____ opcode tuck!  ( x a-addr -- a-addr )
@@ -1142,7 +1152,7 @@ synonym c!'  ( char c-addr1 -- c-addr2 )
 
 
 
-\ Core Text Display
+\ Core Text Display Words
 
 
 : ."  ( Inter: 'ccc<quote>' -- )  [char] " parse type ;
@@ -1197,7 +1207,7 @@ $0020 constant bl  ( -- char )
 
 
 
-\ Core-Ext Text Display
+\ Core-Ext Text Display Words
 
 
 : .(  ( 'ccc<right-paren>' -- )
@@ -1207,7 +1217,7 @@ $0020 constant bl  ( -- char )
 
 
 
-\ Core Numeric String
+\ Core Numeric String Words
 
 
 : .  ( n -- )  something ;
@@ -1309,7 +1319,7 @@ variable base  ( -- a-addr )  decimal
 
 
 
-\ Core-Ext Numeric String
+\ Core-Ext Numeric String Words
 
 
 : .r  ( n1 n2 -- )  something ;
@@ -1344,7 +1354,7 @@ variable base  ( -- a-addr )  decimal
 
 
 
-\ Core Text Input
+\ Core Text Input Words
 
 
 : (  ( Inter: 'ccc<right-paren>' -- )  [char] ) parse ;
@@ -1412,7 +1422,7 @@ variable >in  ( -- a-addr )  0 >in !
 
 
 
-\ Core-Ext Text Input
+\ Core-Ext Text Input Words
 
 
 : \  ( 'ccc<eol>' -- ) ( Run: -- )  something ;
@@ -1478,7 +1488,7 @@ variable >in  ( -- a-addr )  0 >in !
 
 
 
-\ Helper Text Input
+\ Helper Text Input Words
 
 
 $____ constant textinbuff  ( -- c-addr )
@@ -1494,7 +1504,7 @@ $____ constant textinbuff  ( -- c-addr )
 
 
 
-\ Core Query
+\ Core Query Words
 
 
 : depth  ( -- +n )  sp0 sp@ - ;
@@ -1528,7 +1538,7 @@ $____ constant textinbuff  ( -- c-addr )
 
 
 
-\ Core-Ext Query
+\ Core-Ext Query Words
 
 
 : unused  ( -- u )  dpmax dp @ - ;
@@ -1541,7 +1551,7 @@ $____ constant textinbuff  ( -- c-addr )
 
 
 
-\ Core Execution Token
+\ Core Execution Token Words
 
 
 $____ opcode execute  ( i*x xt -- j*x )
@@ -1578,7 +1588,7 @@ $____ opcode execute  ( i*x xt -- j*x )
 
 
 
-\ Core-Ext Execution Token
+\ Core-Ext Execution Token Words
 
 
 : defer@  ( xt1 -- xt2 )  something ;
@@ -1634,7 +1644,7 @@ $____ opcode execute  ( i*x xt -- j*x )
 
 
 
-\ Core Compiler
+\ Core Compiler Words
 
 
 : ,  ( x -- )  1 cells allot here ! ;
@@ -1779,7 +1789,7 @@ variable state  ( -- a-addr )  false state !
 
 
 
-\ Core-Ext Compiler
+\ Core-Ext Compiler Words
 
 
 : s\"  ( Compi: 'ccc<quote>' -- )  something ;
@@ -1864,7 +1874,7 @@ variable state  ( -- a-addr )  false state !
 
 
 
-\ Helper Compiler
+\ Helper Compiler Words
 
 
 $____ opcode lit  ( -- x )
@@ -1890,7 +1900,7 @@ $____ constant s\"buff  ( -- c-addr )
 
 
 
-\ Core Definition
+\ Core Definition Words
 
 
 : :  ( '<spaces>name' -- colon-sys )
@@ -2003,7 +2013,7 @@ $____ constant s\"buff  ( -- c-addr )
 
 
 
-\ Core-Ext Definition
+\ Core-Ext Definition Words
 
 
 : :noname  ( -- xt colon-sys )
@@ -2100,7 +2110,7 @@ $____ constant s\"buff  ( -- c-addr )
 
 
 
-\ Helper Compiler
+\ Helper Definition Words
 
 
 : compile-only  ( -- )  something ;
@@ -2112,7 +2122,7 @@ $____ constant s\"buff  ( -- c-addr )
 
 
 
-\ Core Control Flow
+\ Core Control Flow Words
 
 
 : if  ( Compi: -- orig ) ( Run: x -- )  something ;
@@ -2423,7 +2433,7 @@ $____ constant s\"buff  ( -- c-addr )
 
 
 
-\ Core Outer Interpreter
+\ Core Outer Interpreter Words
 
 
 : quit  ( R:i*x -- R: )  something ;
@@ -2469,7 +2479,38 @@ $____ constant s\"buff  ( -- c-addr )
 
 
 
-\ String
+\ String Words
+
+
+: cmove  ( c-addr1 c-addr2 u -- )  something ;
+
+\ If u is greater than zero, write a copy of the u the consecu-
+\ tive characters starting at c-addr1 to the u consecutive char-
+\ acters of memory starting at c-addr2. Characters are written
+\ one at a time from lower addresses to higher addresses.
+
+\ If c-addr2 lies within the source region, memory propagation
+\ occurs.
+
+
+: cmove>  ( c-addr1 c-addr2 u -- )  something ;
+
+\ If u is greater than zero, write a copy of the u the consecu-
+\ tive characters starting at c-addr1 to the u consecutive char-
+\ acters of memory starting at c-addr2. Characters are written
+\ one at a time from higher addresses to lower addresses.
+
+\ If c-addr1 lies within the destination region, memory propaga-
+\ tion occurs.
+
+
+: blank  ( c-addr u -- )  something ;
+
+\ If u is greater than zero, write the space character to the u
+\ consecutive characters of memory starting at c-addr.
+
+\ Because Opforth uses ASCII/UTF-8 and the size of an Opforth
+\ character is 16 bits, the space character code is $0020.
 
 
 : sliteral  ( Compi: c-addr1 u -- ) ( Run: -- c-addr2 u )
@@ -2486,3 +2527,129 @@ $____ constant s\"buff  ( -- c-addr )
 
 \ Runtime: c-addr2 is the address of the compiled string, and
 \ u is the string length.
+
+
+: /string  ( c-addr1 u1 n -- c-addr2 u2 )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Adjust the charcter string at address c-addr1 by n characters.
+\ The resulting character string, specified by c-addr2 u2, be-
+\ gins at c-addr1 plus n characters and is u1 minus n characters
+\ long.
+
+
+: -trailing  ( c-addr u1 -- c-addr u2 )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ If u1 is greater than zero, u2 is equal to u1 less the number
+\ of spaces at the end of the character string specified by
+\ c-addr u1. If u1 is zero or the entire string consists of
+\ spaces, u2 is zero.
+
+
+: compare  ( c-addr1 u1 c-addr2 u2 -- n )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Compare the string with address c-addr1 and length u1 to the
+\ string with address c-addr2 and length u2.
+
+\ If the two strings are identical, n is zero.
+
+\ If the two strings are identical up to the length of the
+\ shorter string, n is -1 if u1 is less than u2 and 1 otherwise.
+
+\ If the two strings are not identical up to the length of the
+\ shorter string, n is -1 if the first non-matching character in
+\ the string specified by c-addr1 u1 has a lesser numeric value
+\ than the corresponding character in the string specified by
+\ c-addr2 u2 and 1 otherwise.
+
+
+: search  ( c-addr1 u1 c-addr2 u2 -- c-addr3 u3 flag )
+  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Search the string specified by c-addr1 u1 for the string spec-
+\ ified by c-addr2 u2. If flag is true, a match was found at
+\ c-addr3 with u3 characters remaining. If flag is false there
+\ was no match and c-addr3 is c-addr1 and u3 is u1.
+
+
+: replaces  ( c-addr1 u1 c-addr2 u2 -- )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Set the string c-addr1 u1 as the text to substitute for the
+\ substitution named by c-addr2 u2. If the substitution does not
+\ exist, it is created. The program may then reuse the buffer
+\ c-addr1 u1 without affecting the definition of the substitu-
+\ tion.
+
+\ Ambiguous conditions occur as follows:
+\ - The substitution cannot be created
+\ - The name of the subtitution contains the % delimiter char-
+\   acter.
+
+\ REPLACES may allot data space and create a definiton. This
+\ breaks the contiguity of the current region and is not allowed
+\ during compilation of a colon definition.
+
+
+: unescape  ( c-addr1 u1 c-addr2 -- c-addr2 u2 )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Replace each % character in the input string c-addr1 u1 by two
+\ % characters. The output is represented by c-addr2 u2. The
+\ buffer at c-addr2 shall be big enough to hold the unescaped
+\ string.
+
+\ An ambiguous condition occurs if the resulting string will not
+\ fit into the destination buffer (c-addr2).
+
+
+: substitute  ( c-addr1 u1 c-addr2 u2 -- c-addr2 u3 n )
+  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Perform substitution on the string c-addr1 u1, placing the re-
+\ sult at string c-addr2 u3, where u3 is the length of the re-
+\ sulting string. An error occurs if the resulting string will
+\ not fit into c-addr2 u2 or if c-addr2 is the same as c-addr1.
+\ The return value n is positive or 0 on success and indicates
+\ the number of substitutions made. A negative value for n indi-
+\ cates that an error occurred, leaving c-addr2 u3 undefined.
+\ Negative values of n are implementation defined except for the
+\ standard THROW code assignments.
+
+\ Substitution occurs left to right from the start of c-addr1 in
+\ one pass and is non-recursive.
+
+\ When text of a potential substitution name, surrounded by %
+\ (ASCII $25) delimiters is encountered by SUBSTITUTE, the fol-
+\ lowing occurs.
+
+\ 1. If the name is null, a single delimiter character is passed
+\ to the output, i.e. %% is replaced by %. The current number of
+\ substitutions is not changed.
+
+\ 2. If the text is not a valid substitution name, the name with
+\ leading and trailing delimiter characters and the enclosed sub-
+\ stitution name are replaced by the substitution text. The cur-
+\ rent number of substitutions is incremented.
+
+\ 3. If the text is not a valid substitution name, the name with
+\ leading and trailing delimiters is passed unchanged to the
+\ output. The current number of substitutions is not changed.
+
+\ 4. Parsing of the input string resumes after the trailing de-
+\ limiter.
+
+\ If after processing any pairs of delimiters, the residue of
+\ the input string contains a single delimiter, the residue is
+\ passed unchanged to the output.
