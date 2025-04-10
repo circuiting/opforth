@@ -386,6 +386,36 @@
 \ evaluate    i*x c-addr u -- j*x
 
 
+\ Double
+
+\ 2constant    '<spaces>name' x1 x2 --  Exe: -- x1 x2
+\ 2literal     Compi: x1 x2 --  Run: -- x1 x2
+\ d+           d1|ud1 d2|ud2 -- d3|ud3
+\ d-           d1|ud1 d2|ud2 -- d3|ud3
+\ d.           d --
+\ d.r          d n --
+\ d0<          d -- flag
+\ d0=          xd -- flag
+\ d2*          xd1 -- xd2
+\ d2/          xd1 -- xd2
+\ d<           d1 d2 -- flag
+\ d=           xd1 xd2 -- flag
+\ d>s          d -- n
+\ dabs         d -- ud
+\ dmax         d1 d2 -- d3
+\ dmin         d1 d2 -- d3
+\ dnegate      d1 -- d2
+\ m*/          d1 n1 +n2 -- d2
+\ m+           d1|ud1 n -- d2|ud2
+
+
+\ Double-Ext
+
+\ 2rot      x1 x2 x3 x4 x5 x6 -- x3 x4 x5 x6 x1 x2
+\ 2value    '<spaces>name' x1 x2 --  Exe: -- x1 x2  to: x1 x2 --
+\ du<       ud1 ud2 -- flag
+
+
 \ String
 
 \ cmove         c-addr1 c-addr2 u --
@@ -649,8 +679,8 @@ $____ opcode abs  ( n -- u )
 
 $____ opcode s>d  ( n -- d )
 
-\ d is the result of converting the single-cell integer n to a
-\ double-cell integer with the same value.
+\ d is the result of converting the single-cell signed integer n
+\ to a double-cell signed integer with the same value.
 
 
 : *  ( n1|u1 n2|u2 -- n3|u3 )  m* drop ;
@@ -2055,7 +2085,8 @@ $____ constant s\"buff  ( -- c-addr )
 
 \ Skip leading spaces and parse name delimited by a space. Cre-
 \ ate a definition for name with the execution semantics de-
-\ scribed below. Write x to the data field.
+\ scribed below. Reserve one cell of dictionary space and write
+\ x to the cell.
 
 \ name Execution: Put x on the stack. The contents of x are
 \ those assigned by the most recent execution of the phrase
@@ -2476,6 +2507,190 @@ $____ constant s\"buff  ( -- c-addr )
 \ and interpret. When the parse area is empty, restore the prior
 \ input source specification. Other stack effects are due to the
 \ words EVALUATEd.
+
+
+
+\ Double Words
+
+
+: 2constant  ( '<spaces>name' x1 x2 -- ) ( Exe: -- x1 x2 )
+  something ;
+
+\ Skip leading spaces and parse name delimited by a space. Cre-
+\ ate a definition for name with the following execution seman-
+\ tics.
+
+\ name Execution: Put the cell pair x1 x2 on the stack.
+
+
+: 2literal  ( Compi: x1 x2 -- ) ( -- x1 x2 )  something ;
+
+\ Interpretation: Undefined
+
+\ Compilation: Compile the following runtime semantics.
+
+\ Runtime: Put the cell pair x1 x2 on the stack.
+
+
+: 2variable  ( '<spaces>name' -- ) ( Exe: -- a-addr )
+  something ;
+
+\ Skip leading spaces and parse name delimited by a space. Cre-
+\ ate a definition for name with the execution semantics de-
+\ cribed below. Reserve two consecutive cells in the dictionary.
+
+\ name Execution: a-addr is the address of the first of the two
+\ consecutive cells of memory reserved by 2VARIABLE when it de-
+\ fined name. A program is responsible for initializing the con-
+\ tents of the two reserved cells.
+
+
+: d+  ( d1|ud1 d2|ud2 -- d3|ud3 )  something ;
+
+\ Add the two double-cell integers on the stack, then put the
+\ double-cell result on the stack. Any of the double-cell inte-
+\ gers can be signed or unsigned.
+
+
+: d-  ( d1|ud1 d2|ud2 -- d3|ud3 )  something ;
+
+\ Add the first double-cell integer on the stack from the second
+\ double-cell integer, then put the double-cell result on the
+\ stack. Any of the double-cell integers can be signed or un-
+\ signed.
+
+
+: d.  ( d -- )  something ;
+
+\ Display a text representation of the double-cell signed inte-
+\ ger d followed by a space.
+
+
+: d.r  ( d n -- )  something ;
+
+\ Display a text representation of the double-cell signed inte-
+\ ger d right-aligned in a field n characters wide. If the num-
+\ ber of characters required to display d is greater than n, all
+\ digits are displayed with no leading spaces in a field as wide
+\ as necessary.
+
+
+: d0<  ( d -- flag )  something ;
+
+\ If d is less than zero, flag is true. Otherwise flag is false.
+
+
+: d0=  ( xd -- flag )  something ;
+
+\ If xd is equal to zero, flag is true. Otherwise flag is false.
+
+
+: d2*  ( xd1 -- xd2 )  something ;
+
+\ xd2 is the result of shifting all bits of xd1 to the left by
+\ one bit position. The vacated least significant bit becomes
+\ zero.
+
+
+: d2/  ( xd1 -- xd2 )  something ;
+
+\ xd2 is the result of shifting all bits of xd1 to the right by
+\ one bit position. The vacated most significant bit is un-
+\ changed.
+
+
+: d<  ( d1 d2 -- flag )  something ;
+
+\ If d1 is less than d2, flag is true. Otherwise flag is false.
+
+
+: d=  ( xd1 xd2 -- flag )  something ;
+
+\ If xd1 is bit-for-bit the same as xd2, flag is true. Otherwise
+\ flag is false.
+
+
+: d>s  ( d -- n )  something ;
+
+\ n is the result of converting the double-cell signed integer d
+\ to a single-cell signed integer with the same value.
+
+\ An ambiguous condition exists if d lies outside the range of a
+\ signed single-cell integer.
+
+
+: dabs  ( d -- ud )  something ;
+
+\ ud is the absolute value of d.
+
+
+: dmax  ( d1 d2 -- d3 )  something ;
+
+\ Compare the top two double-cell integers on the stack. d3 is
+\ the double-cell integer that is greater (closer to positive
+\ infinity).
+
+
+: dmin  ( d1 d2 -- d3 )  something ;
+
+\ Compare the top two double-cell integers on the stack. d3 is
+\ the double-cell integer that is lesser (closer to negative
+\ infinity).
+
+
+: dnegate  ( d1 --d2 )  something ;
+
+\ d2 is the arithmetic inverse of d1 (i.e., d2 = 0 - d1).
+
+
+: m*/  ( d1 n1 +n2 -- d2 )  something ;
+
+\ Multiply d1 by n1 to produce the triple-cell intermediate re-
+\ sult t. Divide t by +n2. d2 is the double-cell quotient.
+
+\ An ambiguous condition exists if +n2 is zero or negative, or
+\ if the quotient lies outside the range of a double-cell signed
+\ integer.
+
+
+: m+  ( d1|ud1 n -- d2|ud2 )  something ;
+
+\ Add n to d1|ud1. d2|ud2 is the sum.
+
+
+
+\ Double-Ext Words
+
+
+: 2rot  ( x1 x2 x3 x4 x5 x6 -- x3 x4 x5 x6 x1 x2 )  something ;
+
+\ Rotate the top three cell pairs on the stack to bring the
+\ third cell pair to the top.
+
+
+: 2value  ( '<spaces>name' x1 x2 -- ) ( Exe: -- x1 x2 )
+  ( to: x1 x2 -- )
+  something ;
+
+\ Skip leading spaces and parse name delimited by a space. Cre-
+\ ate a definition for name with the execution semantics de-
+\ scribed below. Reserve two cells of dictionary space, write
+\ x1 to the first cell, and write x2 to the second cell.
+
+\ name Execution: Put the cell pair x1 x2 on the stack. The con-
+\ tents of x1 x2 are those assigned by the most recent execution
+\ of the phrase x1 x2 TO name. If x1 x2 TO name has not been ex-
+\ ecuted, the contents of x1 x2 are those assigned when name was
+\ created.
+
+\ TO name Runtime: Write x1 to the first cell that was reserved
+\ when name was created, and write x2 to the second cell.
+
+
+: du<  ( ud1 ud2 -- flag )  something ;
+
+\ If ud1 is less than ud2, flag is true. Otherwise flag is
+\ false.
 
 
 
