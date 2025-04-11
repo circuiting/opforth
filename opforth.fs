@@ -424,6 +424,11 @@
 \ 2value    '<spaces>name' x1 x2 --  Exe: -- x1 x2  to: x1 x2 --
 
 
+\ Helper Double
+
+\ m-    d1|ud1 n -- d2|ud2
+
+
 \ String
 
 \ cmove         c-addr1 c-addr2 u --
@@ -2600,38 +2605,38 @@ $____ constant s\"buff  ( -- c-addr )
 \ Double Words
 
 
-: m+  ( d1|ud1 n -- d2|ud2 )  something ;
+$____ opcode m+  ( d1|ud1 n -- d2|ud2 )
 
 \ Add a single-cell signed integer to a double-cell integer to
 \ produce a double-cell result. Either or both of the double-
 \ cell numbers may be signed or unsigned.
 
 
-: d+  ( d1|ud1 d2|ud2 -- d3|ud3 )  something ;
+: d+  ( d1|ud1 d2|ud2 -- d3|ud3 )  >r m+ r> + ;
 
 \ Add the top two double-cell integers on the stack to produce a
 \ double-cell result. Any of the numbers may be signed or un-
 \ signed.
 
 
-: d-  ( d1|ud1 d2|ud2 -- d3|ud3 )  something ;
+: d-  ( d1|ud1 d2|ud2 -- d3|ud3 )  >r m- r> - ;
 
 \ Subtract the first double-cell integer on the stack from the
 \ second double-cell integer to produce a double-cell result.
 \ Any of the numbers may be signed or unsigned.
 
 
-: dnegate  ( d1 --d2 )  something ;
+: dnegate  ( d1 -- d2 )  0 -rot 0 -rot d- ;
 
 \ d2 is the arithmetic inverse of d1 (i.e., d2 = 0 - d1).
 
 
-: dabs  ( d -- ud )  something ;
+: dabs  ( d -- ud )  dup 0< if dnegate then ;
 
 \ ud is the absolute value of d.
 
 
-: d>s  ( d -- n )  something ;
+synonym d>s drop
 
 \ n is the result of converting the double-cell signed integer d
 \ to a single-cell signed integer with the same numeric value.
@@ -2779,6 +2784,17 @@ $____ constant s\"buff  ( -- c-addr )
 
 \ TO name Runtime: Write x1 to the first cell that was reserved
 \ when name was created, and write x2 to the second cell.
+
+
+
+\ Helper Double Words
+
+
+$____ opcode m-  ( d1|ud1 n -- d2|ud2 )
+
+\ Subtract single-cell signed integer from a double-cell integer
+\ to produce a double-cell result. Either or both of the double-
+\ cell numbers may be signed or unsigned.
 
 
 
