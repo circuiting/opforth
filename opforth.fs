@@ -174,9 +174,10 @@
 
 \ Helper Memory
 
-\ tuck!  ( x a-addr -- a-addr )
-\ !'     ( x a-addr1 -- a-addr2 )
-\ c!'    ( char c-addr1 -- c-addr2 )
+\ tuck!    x a-addr -- a-addr
+\ !'       x a-addr1 -- a-addr2
+\ c!'      char c-addr1 -- c-addr2
+\ move>    addr1 addr2 u --
 
 
 \ Core Text Display
@@ -244,8 +245,8 @@
 
 \ Helper Text Input
 
-\ textinbuff     ( -- c-addr )
-\ #textinbuff    ( -- u )
+\ textinbuff     -- c-addr
+\ #textinbuff    -- u
 
 
 \ Core Query
@@ -386,34 +387,41 @@
 \ evaluate    i*x c-addr u -- j*x
 
 
+\ Exception
+
+\ catch    i*x xt -- j*x 0 | i*x n
+\ throw    k*x n -- k*x | i*x n
+
+
 \ Double
 
-\ 2constant    '<spaces>name' x1 x2 --  Exe: -- x1 x2
-\ 2literal     Compi: x1 x2 --  Run: -- x1 x2
+\ m+           d1|ud1 n -- d2|ud2
 \ d+           d1|ud1 d2|ud2 -- d3|ud3
 \ d-           d1|ud1 d2|ud2 -- d3|ud3
-\ d.           d --
-\ d.r          d n --
-\ d0<          d -- flag
-\ d0=          xd -- flag
-\ d2*          xd1 -- xd2
-\ d2/          xd1 -- xd2
-\ d<           d1 d2 -- flag
-\ d=           xd1 xd2 -- flag
-\ d>s          d -- n
+\ dnegate      d1 -- d2
 \ dabs         d -- ud
+\ d>s          d -- n
+\ m*/          d1 n1 +n2 -- d2
+\ d0=          xd -- flag
+\ d0<          d -- flag
+\ d=           xd1 xd2 -- flag
+\ d<           d1 d2 -- flag
 \ dmax         d1 d2 -- d3
 \ dmin         d1 d2 -- d3
-\ dnegate      d1 -- d2
-\ m*/          d1 n1 +n2 -- d2
-\ m+           d1|ud1 n -- d2|ud2
+\ d2*          xd1 -- xd2
+\ d2/          xd1 -- xd2
+\ d.           d --
+\ d.r          d n --
+\ 2literal     Compi: x1 x2 --  Run: -- x1 x2
+\ 2constant    '<spaces>name' x1 x2 --  Exe: -- x1 x2
+\ 2variable    '<spaces>name' --  Exe: -- a-addr
 
 
 \ Double-Ext
 
 \ 2rot      x1 x2 x3 x4 x5 x6 -- x3 x4 x5 x6 x1 x2
-\ 2value    '<spaces>name' x1 x2 --  Exe: -- x1 x2  to: x1 x2 --
 \ du<       ud1 ud2 -- flag
+\ 2value    '<spaces>name' x1 x2 --  Exe: -- x1 x2  to: x1 x2 --
 
 
 \ String
@@ -426,9 +434,20 @@
 \ -trailing     c-addr u1 -- c-addr u2
 \ compare       c-addr1 u1 c-addr2 u2 -- n
 \ search        c-addr1 u1 c-addr2 u2 -- c-addr3 u3 flag
+
+
+\ String-Ext
+
 \ replaces      c-addr1 u1 c-addr2 u2 --
 \ unescape      c-addr1 u1 c-addr2 -- c-addr2 u2
 \ substitute    c-addr1 u1 c-addr2 u2 -- c-addr3 u3 n
+
+
+\ Facility
+
+\ page     --
+\ at-xy    u1 u2 --
+\ key?     -- flag
 
 
 
@@ -644,27 +663,26 @@ $____ opcode rp!  ( +n R:i*x -- R:j*x )
 
 $____ opcode +  ( n1|u1 n2|u2 -- n3|u3 )
 
-\ Add the top two stack items, then put the sum on the stack.
-\ Any of the integers can be signed or unsigned.
+\ Add the top two integers on the stack. Any of the numbers may
+\ be signed or unsigned.
 
 
 $____ opcode -  ( n1|u1 n2|u2 -- n3|u3 )
 
-\ Subtract the top stack item from the second stack item, then
-\ put the difference on the stack. Any of the integers can be
-\ signed or unsigned.
+\ Subtract the top integer on the stack from the second integer.
+\ Any of the numbers may be signed or unsigned.
 
 
 $____ opcode 1+  ( n1|u1 -- n2|u2 )
 
-\ n2 is the result of incrementing n1 by one. The integers can
-\ be signed or unsigned.
+\ n2 is the result of incrementing n1 by one. The numbers may be
+\ signed or unsigned.
 
 
 $____ opcode 1-  ( nu1 -- nu2 )
 
-\ n2 is the result of decrementing n1 by one. The integers can
-\ be signed or unsigned.
+\ n2 is the result of decrementing n1 by one. The numbers may be
+\ signed or unsigned.
 
 
 $____ opcode negate  ( n1 -- n2 )
@@ -680,23 +698,24 @@ $____ opcode abs  ( n -- u )
 $____ opcode s>d  ( n -- d )
 
 \ d is the result of converting the single-cell signed integer n
-\ to a double-cell signed integer with the same value.
+\ to a double-cell signed integer with the same numeric value.
 
 
 : *  ( n1|u1 n2|u2 -- n3|u3 )  m* drop ;
 
-\ Multiply n1 by n2. n3 is the single-cell product. Any of the
-\ integers can be signed or unsigned.
+\ Multiply the top two integers on the stack. Any of the numbers
+\ may be signed or unsigned.
 
 
 : m*  ( n1 n2 -- d )  something ;
 
-\ Multiply n1 by n2. d is the double-cell product.
+\ Multiply n1 by n2. d is the double-cell product. All numbers
+\ and arithmetic are signed.
 
 
 : um*  ( u1 u2 -- ud )  something ;
 
-\ Multiply u1 by u2. ud is the double-cell product. All integers
+\ Multiply u1 by u2. ud is the double-cell product. All numbers
 \ and arithmetic are unsigned.
 
 
@@ -1114,12 +1133,12 @@ synonym c! !  ( char c-addr -- )
     2drop
   then ;
 
-\ If u is greater than zero, write a copy of the u consecutive
-\ address units of memory starting at addr1 to the u consecutive
-\ address units starting at addr2. After MOVE is executed, the u
-\ address units of memory starting at addr2 contain exactly what
-\ the u address units of memory starting at addr1 contained be-
-\ fore MOVE was executed.
+\ If u is greater than zero, copy the contents of the u consecu-
+\ tive address units of memory starting at addr1 to the u con-
+\ secutive address units of memory starting at addr2. After MOVE
+\ is executed, the u address units of memory starting at addr2
+\ contain exactly what the u address units of memory starting at
+\ addr1 contained before MOVE was executed.
 
 \ In Opforth, there is no distinction between characters and ad-
 \ dress units. This implementation of MOVE is incompatible with
@@ -1172,13 +1191,30 @@ $____ opcode !'  ( x a-addr1 -- a-addr2 )
 \ one cell.
 
 
-synonym c!'  ( char c-addr1 -- c-addr2 )
+synonym c!' !'  ( char c-addr1 -- c-addr2 )
 
 \ Write char to memory address c-addr1. x is removed from the
 \ stack, and c-addr2 is the result of incrementing c-addr1 by
 \ one character.
 
 \ In Opforth, the characters and cells are the same size.
+
+
+synonym move> cmove>  ( c-addr1 c-addr2 u -- )
+
+\ If u is greater than zero, copy the contents of the u the con-
+\ secutive address units of memory starting at addr1 to the u
+\ consecutive address units of memory starting at addr2. Charac-
+\ ters are written one at a time from higher addresses to lower
+\ addresses.
+
+\ If addr1 lies within the destination region, memory propaga-
+\ tion occurs.
+
+\ In Opforth, there is no distinction between characters and ad-
+\ dress units. This implementation of MOVE> is incompatible with
+\ Forth systems that have a character size of greater than one
+\ address unit.
 
 
 
@@ -1413,7 +1449,7 @@ variable >in  ( -- a-addr )  0 >in !
 
 : key  ( -- char )  something ;
 
-\ Receive one character char from the user input device. Key-
+\ Receive one character char from the text input device. Key-
 \ board events that do not correspond to characters in the char-
 \ acter set are discarded until a valid character is received,
 \ and those events are subsequently unavailable.
@@ -1421,7 +1457,7 @@ variable >in  ( -- a-addr )  0 >in !
 
 : accept  ( c-addr +n1 -- +n2 )  something ;
 
-\ Receive a string of at most +n1 characters from the user input
+\ Receive a string of at most +n1 characters from the text input
 \ device, write the string to the memory region with starting
 \ address c-addr, and display graphic characters as they are re-
 \ ceived. Input terminates when a line terminator character is
@@ -1506,7 +1542,7 @@ variable >in  ( -- a-addr )  0 >in !
 
 \ Attempt to fill the input buffer from the input source.
 
-\ When the input source is the user input device, attempt to re-
+\ When the input source is the text input device, attempt to re-
 \ ceive input into the terminal input buffer. If successful,
 \ make the result the input buffer, set >IN to zero, and return
 \ a true flag. Receipt of a line containing no characters is
@@ -1838,9 +1874,7 @@ variable state  ( -- a-addr )  false state !
 \ appended to the compiled string. If the character is \ (back-
 \ slash), it is processed by parsing and substituting one or
 \ more characters according to the table below. The character
-\ after the backslash is case sensitive. Opforth translates \n
-\ to the ASCII line feed code, but other Forth systems may
-\ translate it differently.
+\ after the backslash is case sensitive.
 
 \ Characters        Meaning                    ASCII Code (Hex)
 
@@ -1859,6 +1893,9 @@ variable state  ( -- a-addr )  false state !
 \ \"                double quote               22
 \ \x<digit><digit>  ASCII character by code    <digit><digit>
 \ \\                backslash itself           5c
+
+\ Opforth translates \n to the ASCII line feed code, but other
+\ Forth systems may translate it differently.
 
 
 : c"  ( Compi: 'ccc<quote>' -- ) ( Run: -- c-addr )
@@ -1894,7 +1931,7 @@ variable state  ( -- a-addr )  false state !
 
 \ Compilation: Skip leading spaces and parse name delimited by a
 \ space. Find name in the dictionary. If name has other than de-
-\ fault compilation semantics, compile the compilation seman-
+\ fault compilation semantics, compile the compilation seman
 \ tics. Otherwise, compile the execution semantics of name.
 
 \ An ambiguous condition exists if name is not found.
@@ -2072,8 +2109,8 @@ $____ constant s\"buff  ( -- c-addr )
 \ ate a definition for name with the execution semantics de-
 \ scribed below. Reserve u address units at an aligned address.
 \ The area reserved by the Opforth implementation of BUFFER: is
-\ contiguous with the rest of the dictionary. The ANS Forth
-\ standard does not require the reserved area to be contiguous.
+\ contiguous with the rest of the dictionary. Standard Forth
+\ does not require the reserved area to be contiguous.
 
 \ name Execution: a-addr is the address of the space reserved by
 \ BUFFER: when it defined name. A program is responsible for
@@ -2471,6 +2508,7 @@ $____ constant s\"buff  ( -- c-addr )
 
 \ Empty the return stack, store zero in SOURCE-ID, make the user
 \ input device the input source, and enter interpretation state.
+
 \ Do not display a message. Repeat the following:
 \ - Accept a line from the input source into the input buffer,
 \   set >IN to zero, and interpret.
@@ -2480,9 +2518,7 @@ $____ constant s\"buff  ( -- c-addr )
 
 : abort  ( i*x R:j*x -- )  something ;
 
-\ Empty the data stack and perform the function of QUIT, which
-\ includes emptying the return stack, without displaying a mes-
-\ sage.
+\ Perform the function of -1 THROW.
 
 
 : abort"  ( Compi: 'ccc<quote>' -- )
@@ -2495,8 +2531,8 @@ $____ constant s\"buff  ( -- c-addr )
 \ the following runtime semantics.
 
 \ Runtime: Remove x1 from the stack. If any bit of x1 is non-
-\ zero, display ccc and perform an abort sequence that includes
-\ the function of ABORT.
+\ zero, perform the function of -2 THROW and display ccc if
+\ there is no exception frame on the return stack
 
 
 : evaluate  ( i*x c-addr u -- j*x )  something ;
@@ -2510,54 +2546,157 @@ $____ constant s\"buff  ( -- c-addr )
 
 
 
+\ Exception
+
+
+: catch  ( i*x xt -- j*x 0 | i*x n )  something ;
+
+\ Standard Forth description (slightly modified):
+
+\ Push an exception frame on the return stack and then execute
+\ the execution token xt (as with EXECUTE) in such a way that
+\ control can be transferred to a point just after CATCH if
+\ THROW is executed during the execution of xt.
+
+\ If the execution of xt completes normally (i.e. the exception
+\ frame pushed by this CATCH is not popped by an execution of
+\ THROW) pop the exception frame and return zero on top of the
+\ data stack, above whatever stack items would have been re-
+\ turned by xt EXECUTE. Otherwise, the remainder of the execu-
+\ tion semantics are given by THROW.
+
+
+: throw  ( k*x n -- k*x | i*x n )  something ;
+
+\ Standard Forth description (slightly modified):
+
+\ If any bits of n are nonzero, pop the topmost exception frame
+\ from the return stack along with everything on the return
+\ stack above that frame. Restore the input source specification
+\ in use before the corresponding CATCH and adjust the depths of
+\ the data stack and return stack so that they are the same as
+\ the depths saved in the exception frame (i is the same number
+\ as the i in the input arguments to the corresponding CATCH),
+\ put n on top of the data stack, and transfer control to the
+\ point just after the CATCH that pushed that exception frame.
+
+\ If the top of the stack is nonzero and there is no exception
+\ frame on the return stack, the behavior is as follows:
+
+\ If n is -1, perform the function of ABORT (the version of
+\ ABORT in the core wordset). Display no message.
+
+\ If n is -2, perform the function of ABORT" (the version of
+\ ABORT" in the core wordset). Display the characters ccc asso-
+\ ciated with the ABORT" that generated the THROW.
+
+\ Otherwise, the system may display a message giving information
+\ about the condition associated with the THROW code n. Subse-
+\ quently, the system shall perform the function of ABORT (the
+\ version of ABORT in the core wordset).
+
+
+
 \ Double Words
 
 
-: 2constant  ( '<spaces>name' x1 x2 -- ) ( Exe: -- x1 x2 )
-  something ;
+: m+  ( d1|ud1 n -- d2|ud2 )  something ;
 
-\ Skip leading spaces and parse name delimited by a space. Cre-
-\ ate a definition for name with the following execution seman-
-\ tics.
-
-\ name Execution: Put the cell pair x1 x2 on the stack.
-
-
-: 2literal  ( Compi: x1 x2 -- ) ( -- x1 x2 )  something ;
-
-\ Interpretation: Undefined
-
-\ Compilation: Compile the following runtime semantics.
-
-\ Runtime: Put the cell pair x1 x2 on the stack.
-
-
-: 2variable  ( '<spaces>name' -- ) ( Exe: -- a-addr )
-  something ;
-
-\ Skip leading spaces and parse name delimited by a space. Cre-
-\ ate a definition for name with the execution semantics de-
-\ cribed below. Reserve two consecutive cells in the dictionary.
-
-\ name Execution: a-addr is the address of the first of the two
-\ consecutive cells of memory reserved by 2VARIABLE when it de-
-\ fined name. A program is responsible for initializing the con-
-\ tents of the two reserved cells.
+\ Add a single-cell signed integer to a double-cell integer to
+\ produce a double-cell result. Either or both of the double-
+\ cell numbers may be signed or unsigned.
 
 
 : d+  ( d1|ud1 d2|ud2 -- d3|ud3 )  something ;
 
-\ Add the two double-cell integers on the stack, then put the
-\ double-cell result on the stack. Any of the double-cell inte-
-\ gers can be signed or unsigned.
+\ Add the top two double-cell integers on the stack to produce a
+\ double-cell result. Any of the numbers may be signed or un-
+\ signed.
 
 
 : d-  ( d1|ud1 d2|ud2 -- d3|ud3 )  something ;
 
-\ Add the first double-cell integer on the stack from the second
-\ double-cell integer, then put the double-cell result on the
-\ stack. Any of the double-cell integers can be signed or un-
-\ signed.
+\ Subtract the first double-cell integer on the stack from the
+\ second double-cell integer to produce a double-cell result.
+\ Any of the numbers may be signed or unsigned.
+
+
+: dnegate  ( d1 --d2 )  something ;
+
+\ d2 is the arithmetic inverse of d1 (i.e., d2 = 0 - d1).
+
+
+: dabs  ( d -- ud )  something ;
+
+\ ud is the absolute value of d.
+
+
+: d>s  ( d -- n )  something ;
+
+\ n is the result of converting the double-cell signed integer d
+\ to a single-cell signed integer with the same numeric value.
+
+\ An ambiguous condition exists if d lies outside the range of a
+\ single-cell signed integer.
+
+
+: m*/  ( d1 n1 +n2 -- d2 )  something ;
+
+\ Multiply d1 by n1 to produce the triple-cell intermediate re-
+\ sult t. Divide t by +n2. d2 is the double-cell quotient.
+
+\ An ambiguous condition exists if +n2 is zero or negative, or
+\ if the quotient lies outside the range of a double-cell signed
+\ integer.
+
+
+: d0=  ( xd -- flag )  something ;
+
+\ If xd is equal to zero, flag is true. Otherwise flag is false.
+
+
+: d0<  ( d -- flag )  something ;
+
+\ If d is less than zero, flag is true. Otherwise flag is false.
+
+
+: d=  ( xd1 xd2 -- flag )  something ;
+
+\ If xd1 is bit-for-bit the same as xd2, flag is true. Otherwise
+\ flag is false.
+
+
+: d<  ( d1 d2 -- flag )  something ;
+
+\ If d1 is less than d2, flag is true. Otherwise flag is false.
+
+
+: dmax  ( d1 d2 -- d3 )  something ;
+
+\ Compare the top two double-cell integers on the stack. d3 is
+\ the double-cell integer that is greater (closer to positive
+\ infinity).
+
+
+: dmin  ( d1 d2 -- d3 )  something ;
+
+\ Compare the top two double-cell integers on the stack. d3 is
+\ the double-cell integer that is lesser (closer to negative
+\ infinity).
+
+
+: d2*  ( xd1 -- xd2 )  something ;
+
+\ xd2 is the result of shifting all bits of xd1 to the left by
+\ one bit position. The vacated least significant bit becomes
+\ zero.
+
+
+: d2/  ( xd1 -- xd2 )  something ;
+
+\ xd2 is the result of shifting all bits of xd1 to the right by
+\ one bit position. The vacated most significant bit is un-
+\ changed.
 
 
 : d.  ( d -- )  something ;
@@ -2575,87 +2714,36 @@ $____ constant s\"buff  ( -- c-addr )
 \ as necessary.
 
 
-: d0<  ( d -- flag )  something ;
+: 2literal  ( Compi: x1 x2 -- ) ( -- x1 x2 )  something ;
 
-\ If d is less than zero, flag is true. Otherwise flag is false.
+\ Interpretation: Undefined
 
+\ Compilation: Compile the following runtime semantics.
 
-: d0=  ( xd -- flag )  something ;
-
-\ If xd is equal to zero, flag is true. Otherwise flag is false.
-
-
-: d2*  ( xd1 -- xd2 )  something ;
-
-\ xd2 is the result of shifting all bits of xd1 to the left by
-\ one bit position. The vacated least significant bit becomes
-\ zero.
+\ Runtime: Put the cell pair x1 x2 on the stack.
 
 
-: d2/  ( xd1 -- xd2 )  something ;
+: 2constant  ( '<spaces>name' x1 x2 -- ) ( Exe: -- x1 x2 )
+  something ;
 
-\ xd2 is the result of shifting all bits of xd1 to the right by
-\ one bit position. The vacated most significant bit is un-
-\ changed.
+\ Skip leading spaces and parse name delimited by a space. Cre-
+\ ate a definition for name with the following execution seman-
+\ tics.
 
-
-: d<  ( d1 d2 -- flag )  something ;
-
-\ If d1 is less than d2, flag is true. Otherwise flag is false.
+\ name Execution: Put the cell pair x1 x2 on the stack.
 
 
-: d=  ( xd1 xd2 -- flag )  something ;
+: 2variable  ( '<spaces>name' -- ) ( Exe: -- a-addr )
+  something ;
 
-\ If xd1 is bit-for-bit the same as xd2, flag is true. Otherwise
-\ flag is false.
+\ Skip leading spaces and parse name delimited by a space. Cre-
+\ ate a definition for name with the execution semantics de-
+\ cribed below. Reserve two consecutive cells in the dictionary.
 
-
-: d>s  ( d -- n )  something ;
-
-\ n is the result of converting the double-cell signed integer d
-\ to a single-cell signed integer with the same value.
-
-\ An ambiguous condition exists if d lies outside the range of a
-\ signed single-cell integer.
-
-
-: dabs  ( d -- ud )  something ;
-
-\ ud is the absolute value of d.
-
-
-: dmax  ( d1 d2 -- d3 )  something ;
-
-\ Compare the top two double-cell integers on the stack. d3 is
-\ the double-cell integer that is greater (closer to positive
-\ infinity).
-
-
-: dmin  ( d1 d2 -- d3 )  something ;
-
-\ Compare the top two double-cell integers on the stack. d3 is
-\ the double-cell integer that is lesser (closer to negative
-\ infinity).
-
-
-: dnegate  ( d1 --d2 )  something ;
-
-\ d2 is the arithmetic inverse of d1 (i.e., d2 = 0 - d1).
-
-
-: m*/  ( d1 n1 +n2 -- d2 )  something ;
-
-\ Multiply d1 by n1 to produce the triple-cell intermediate re-
-\ sult t. Divide t by +n2. d2 is the double-cell quotient.
-
-\ An ambiguous condition exists if +n2 is zero or negative, or
-\ if the quotient lies outside the range of a double-cell signed
-\ integer.
-
-
-: m+  ( d1|ud1 n -- d2|ud2 )  something ;
-
-\ Add n to d1|ud1. d2|ud2 is the sum.
+\ name Execution: a-addr is the address of the first of the two
+\ consecutive cells of memory reserved by 2VARIABLE when it de-
+\ fined name. A program is responsible for initializing the con-
+\ tents of the two reserved cells.
 
 
 
@@ -2666,6 +2754,12 @@ $____ constant s\"buff  ( -- c-addr )
 
 \ Rotate the top three cell pairs on the stack to bring the
 \ third cell pair to the top.
+
+
+: du<  ( ud1 ud2 -- flag )  something ;
+
+\ If ud1 is less than ud2, flag is true. Otherwise flag is
+\ false.
 
 
 : 2value  ( '<spaces>name' x1 x2 -- ) ( Exe: -- x1 x2 )
@@ -2687,22 +2781,16 @@ $____ constant s\"buff  ( -- c-addr )
 \ when name was created, and write x2 to the second cell.
 
 
-: du<  ( ud1 ud2 -- flag )  something ;
-
-\ If ud1 is less than ud2, flag is true. Otherwise flag is
-\ false.
-
-
 
 \ String Words
 
 
 : cmove  ( c-addr1 c-addr2 u -- )  something ;
 
-\ If u is greater than zero, write a copy of the u the consecu-
-\ tive characters starting at c-addr1 to the u consecutive char-
-\ acters of memory starting at c-addr2. Characters are written
-\ one at a time from lower addresses to higher addresses.
+\ If u is greater than zero, copy the contents of the u the con-
+\ secutive characters starting at c-addr1 to the u consecutive
+\ characters of memory starting at c-addr2. Characters are writ-
+\ ten one at a time from lower addresses to higher addresses.
 
 \ If c-addr2 lies within the source region, memory propagation
 \ occurs.
@@ -2710,10 +2798,10 @@ $____ constant s\"buff  ( -- c-addr )
 
 : cmove>  ( c-addr1 c-addr2 u -- )  something ;
 
-\ If u is greater than zero, write a copy of the u the consecu-
-\ tive characters starting at c-addr1 to the u consecutive char-
-\ acters of memory starting at c-addr2. Characters are written
-\ one at a time from higher addresses to lower addresses.
+\ If u is greater than zero, copy the contents the u the consec-
+\ utive characters starting at c-addr1 to the u consecutive
+\ characters of memory starting at c-addr2. Characters are writ-
+\ ten one at a time from higher addresses to lower addresses.
 
 \ If c-addr1 lies within the destination region, memory propaga-
 \ tion occurs.
@@ -2794,6 +2882,10 @@ $____ constant s\"buff  ( -- c-addr )
 \ was no match and c-addr3 is c-addr1 and u3 is u1.
 
 
+
+\ String-Ext Words
+
+
 : replaces  ( c-addr1 u1 c-addr2 u2 -- )  something ;
 
 \ Standard Forth description (to be revised):
@@ -2868,3 +2960,39 @@ $____ constant s\"buff  ( -- c-addr )
 \ If after processing any pairs of delimiters, the residue of
 \ the input string contains a single delimiter, the residue is
 \ passed unchanged to the output.
+
+
+
+\ Facility Words
+
+
+: page  ( -- )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Move to another page for output. The actual function depends
+\ on the display device. On a terminal, PAGE clears the screen
+\ and resets the cursor position to the upper left corner. On a
+\ printer, PAGE performs a form feed.
+
+
+: at-xy  ( u1 u2 -- )  something ;
+
+\ Move the text cursor to column u1, row u2 of the display de-
+\ vice. Column 0, row 0 is the upper left corner.
+
+\ An ambiguous condition exists if the operation cannot be per-
+\ formed by the display device.
+
+
+: key?  ( -- flag )  something ;
+
+\ If a character is available, flag is true. Otherwise flag is
+\ false. If non-character keyboard events are available before
+\ the first valid character, the events are discarded and subse-
+\ quently unavailable. The character will be returned by the
+\ next execution of KEY.
+
+\ After KEY? returns with a value of true, subsequent executions
+\ of KEY? prior to the execution of KEY or EKEY also return true
+\ without discarding keyboard events.
