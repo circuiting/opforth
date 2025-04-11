@@ -117,6 +117,7 @@
 \ 0>=    n -- flag
 \ u<=    u1 u2 -- flag
 \ u>=    u1 u2 -- flag
+\ odd    n|u -- flag
 
 
 \ Core Bitwise Logic
@@ -927,6 +928,12 @@ $____ opcode u>=  ( u1 u2 -- flag )
 
 \ If u1 is greater than or equal to u2, flag is true. Otherwise
 \ flag is false.
+
+
+$____ opcode odd  ( n|u -- flag )
+
+\ If the least significant bit of the top stack item is 1, flag
+\ is true. Otherwise flag is false.
 
 
 
@@ -2636,7 +2643,7 @@ $____ opcode m+  ( d1|ud1 n -- d2|ud2 )
 \ ud is the absolute value of d.
 
 
-synonym d>s drop
+synonym d>s drop  ( d -- n )
 
 \ n is the result of converting the double-cell signed integer d
 \ to a single-cell signed integer with the same numeric value.
@@ -2655,49 +2662,51 @@ synonym d>s drop
 \ integer.
 
 
-: d0=  ( xd -- flag )  something ;
+: d0=  ( xd -- flag )  0= swap 0= and ;
 
 \ If xd is equal to zero, flag is true. Otherwise flag is false.
 
 
-: d0<  ( d -- flag )  something ;
+: d0<  ( d -- flag )  0< nip ;
 
 \ If d is less than zero, flag is true. Otherwise flag is false.
 
 
-: d=  ( xd1 xd2 -- flag )  something ;
+: d=  ( xd1 xd2 -- flag )  rot = -rot = and ;
 
 \ If xd1 is bit-for-bit the same as xd2, flag is true. Otherwise
 \ flag is false.
 
 
-: d<  ( d1 d2 -- flag )  something ;
+: d<  ( d1 d2 -- flag )  d- d0< ;
 
 \ If d1 is less than d2, flag is true. Otherwise flag is false.
 
 
-: dmax  ( d1 d2 -- d3 )  something ;
+: dmax  ( d1 d2 -- d3 )
+  2over 2over d< if 2nip else 2drop then ;
 
 \ Compare the top two double-cell integers on the stack. d3 is
 \ the double-cell integer that is greater (closer to positive
 \ infinity).
 
 
-: dmin  ( d1 d2 -- d3 )  something ;
+: dmin  ( d1 d2 -- d3 )
+  2over 2over d< if 2drop else 2nip then ;
 
 \ Compare the top two double-cell integers on the stack. d3 is
 \ the double-cell integer that is lesser (closer to negative
 \ infinity).
 
 
-: d2*  ( xd1 -- xd2 )  something ;
+: d2*  ( xd1 -- xd2 )  2* over 0< 1 and or swap 2* swap ;
 
 \ xd2 is the result of shifting all bits of xd1 to the left by
 \ one bit position. The vacated least significant bit becomes
 \ zero.
 
 
-: d2/  ( xd1 -- xd2 )  something ;
+: d2/  ( xd1 -- xd2 )  dup odd $8000 and rot u2/ or swap 2/ ;
 
 \ xd2 is the result of shifting all bits of xd1 to the right by
 \ one bit position. The vacated most significant bit is un-
