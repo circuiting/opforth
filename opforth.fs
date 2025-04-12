@@ -184,7 +184,6 @@
 \ tuck!    x a-addr -- a-addr
 \ !'       x a-addr1 -- a-addr2
 \ c!'      char c-addr1 -- c-addr2
-\ move>    addr1 addr2 u --
 
 
 \ Core Text Display
@@ -1163,14 +1162,7 @@ synonym c!  ( char c-addr -- )  !
 
 
 : move  ( addr1 addr2 u -- )
-  >r 2dup u<
-  if
-    r> move>
-  else
-    r> 0
-    ?do over i + c@ over i + c! loop
-    2drop
-  then ;
+  >r 2dup u< if r> cmove> else r> cmove then ;
 
 \ If u is greater than zero, copy the contents of the u consecu-
 \ tive address units of memory starting at addr1 to the u con-
@@ -1237,23 +1229,6 @@ synonym c!'  ( char c-addr1 -- c-addr2 )  !'
 \ one character.
 
 \ In Opforth, the characters and cells are the same size.
-
-
-synonym move>  ( c-addr1 c-addr2 u -- )  cmove>
-
-\ If u is greater than zero, copy the contents of the u the con-
-\ secutive address units of memory starting at addr1 to the u
-\ consecutive address units of memory starting at addr2. Charac-
-\ ters are written one at a time from higher addresses to lower
-\ addresses.
-
-\ If addr1 lies within the destination region, memory propaga-
-\ tion occurs.
-
-\ In Opforth, there is no distinction between address units and
-\ characters. This implementation of MOVE> is incompatible with
-\ Forth systems that have a character size of greater than one
-\ address unit.
 
 
 
@@ -2883,7 +2858,12 @@ $____ opcode m-  ( d1|ud1 n -- d2|ud2 )
 \ String Words
 
 
-: cmove  ( c-addr1 c-addr2 u -- )  something ;
+: cmove  ( c-addr1 c-addr2 u -- )
+  0 ?do
+    over c@ over c!
+    swap char+ swap char+
+  loop
+  2drop ;
 
 \ If u is greater than zero, copy the contents of the u the con-
 \ secutive characters starting at c-addr1 to the u consecutive
@@ -2894,7 +2874,13 @@ $____ opcode m-  ( d1|ud1 n -- d2|ud2 )
 \ occurs.
 
 
-: cmove>  ( c-addr1 c-addr2 u -- )  something ;
+: cmove>  ( c-addr1 c-addr2 u -- )
+  tuck + -rot tuck + -rot
+  0 ?do
+    over c@ over c!
+    swap char- swap char-
+  loop
+  2drop ;
 
 \ If u is greater than zero, copy the contents the u the consec-
 \ utive characters starting at c-addr1 to the u consecutive
@@ -2905,7 +2891,10 @@ $____ opcode m-  ( d1|ud1 n -- d2|ud2 )
 \ tion occurs.
 
 
-: blank  ( c-addr u -- )  something ;
+: blank  ( c-addr u -- )
+  $0020 -rot
+  0 ?do over swap c!' loop
+  2drop ;
 
 \ If u is greater than zero, write the space character to the u
 \ consecutive characters of memory starting at c-addr.
@@ -2919,7 +2908,8 @@ $____ opcode m-  ( d1|ud1 n -- d2|ud2 )
   here -rot 1 cells allot    ( a-addr c-addr1 u )
   here swap dup chars allot  ( a-addr c-addr1 c-addr2 u )
   2dup 2>r cmove             ( a-addr R:c-addr2 R:u )
-  here ! 2r> 2literal ; immediate compile-only
+  here ! 2r>                 ( c-addr2 u )
+  2literal ; immediate compile-only
 
 \ Interpretation: Undefined
 
