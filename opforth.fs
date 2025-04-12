@@ -59,13 +59,14 @@
 
 \ Helper Stack
 
-\ -rot    x1 x2 x3 -- x3 x1 x2
-\ sp0     -- +n
-\ rp0     -- +n
-\ sp@     -- +n
-\ rp@     -- +n
-\ sp!     i*x +n -- j*x
-\ rp!     +n R:i*x -- R:j*x
+\ -rot     x1 x2 x3 -- x3 x1 x2
+\ third    x1 x2 x3 -- x1 x2 x3 x1
+\ sp0      -- +n
+\ rp0      -- +n
+\ sp@      -- +n
+\ rp@      -- +n
+\ sp!      i*x +n -- j*x
+\ rp!      +n R:i*x -- R:j*x
 
 
 \ Core Arithmetic
@@ -151,6 +152,11 @@
 \ char+      c-addr1 -- c-addr2
 \ aligned    addr -- a-addr
 \ count      c-addr1 -- c-addr2 u
+
+
+\ Helper Address Math
+
+\ cell    -- n
 
 
 \ Core Memory
@@ -308,6 +314,8 @@
 \ Helper Compiler
 
 \ lit        -- x
+\ pc         -- a-addr
+\ 2,         x1 x2 --
 \ dp         -- a-addr
 \ s"buff     -- c-addr
 \ s\"buff    -- c-addr
@@ -628,6 +636,11 @@ $____ opcode -rot  ( x1 x2 x3 -- x3 x1 x2 )
 
 \ Rotate the top three stack items to put the top item in the
 \ third position.
+
+
+: third  ( x1 x2 x3 -- x1 x2 x3 x1 )  >r over r> swap ;
+
+\ Put a copy of the third stack item on top of the stack.
 
 
 $____ value sp0  ( -- +n )
@@ -1022,21 +1035,18 @@ $____ opcode u2/  ( x1 -- x2 )
 
 \ n2 is the size in address units of n1 cells.
 
-\ In Opforth, the size of a cell is the same as the size of a
-\ character. CELLS is used for compatibility with Forth systems
-\ that have a cell size of greater than one character.
-
-\ Standard Forth allows the size of a character to be greater
-\ than one address unit. In Opforth, there is no distinction
-\ between characters and address units.
+\ In Opforth, the size of a cell is one address unit, and there
+\ is no distinction between address units and characters. CELLS
+\ is used for compatibility with Forth systems that have a cell
+\ size of greater than one address unit.
 
 
 : chars  ( n1 -- n2 )  ; immediate
 
 \ n2 is the size in address units of n1 characters.
 
-\ In Opforth, there is no distinction between characters and ad-
-\ dress units. CHARS is used for compatibility with Forth sys-
+\ In Opforth, there is no distinction between address units and
+\ characters. CHARS is used for compatibility with Forth sys-
 \ tems that have a character size of greater than one address
 \ unit.
 
@@ -1046,9 +1056,10 @@ synonym cell+ 1+  ( a-addr1 -- a-addr2 )
 \ a-addr2 is the result of incrementing a-addr1 by the size of
 \ one cell in address units.
 
-\ In Opforth, characters and cells are the same size. CELL+ is
-\ used for compatibility with Forth systems that have a cell
-\ size of greater than one character.
+\ In Opforth, characters and cells are the same size, and there
+\ is no distinction between address units and characters. CELL+
+\ is used for compatibility with Forth systems that have a cell
+\ size of greater than one address unit.
 
 
 synonym char+ 1+  ( c-addr1 -- c-addr2 )
@@ -1056,10 +1067,9 @@ synonym char+ 1+  ( c-addr1 -- c-addr2 )
 \ c-addr2 is the result of incrementing c-addr1 by the size of
 \ one character in address units.
 
-\ In Opforth, there is no distinction between characters and ad-
-\ dress units. CHAR+ is used for compatibility with Forth sys-
-\ tems that have a character size of greater than one address
-\ unit.
+\ In Opforth, there is no distinction between address units and
+\ characters. CHAR+ is used for compatibility with Forth systems
+\ that have a character size of greater than one address unit.
 
 
 : aligned  ( addr -- a-addr )  ; immediate
@@ -1078,6 +1088,18 @@ synonym char+ 1+  ( c-addr1 -- c-addr2 )
 \ counted string representation. c-addr2 is the location of the
 \ first character after the count character, and u is the string
 \ length excluding the count character.
+
+
+
+\ Helper Address Math Words
+
+
+synonym cell 1  ( -- n )
+
+\ n is the size of a cell in address units.
+
+\ In Opforth, the size of a cell is one address unit, and there
+\ is no distinction between address units and characters.
 
 
 
@@ -1152,8 +1174,8 @@ synonym c! !  ( char c-addr -- )
 \ contain exactly what the u address units of memory starting at
 \ addr1 contained before MOVE was executed.
 
-\ In Opforth, there is no distinction between characters and ad-
-\ dress units. This implementation of MOVE is incompatible with
+\ In Opforth, there is no distinction between address units and
+\ characters. This implementation of MOVE is incompatible with
 \ Forth systems that have a character size of greater than one
 \ address unit.
 
@@ -1174,8 +1196,8 @@ synonym c! !  ( char c-addr -- )
 \ If u is greater than zero, clear all bits of the u consecutive
 \ address units of memory starting at address addr.
 
-\ In Opforth, there is no distinction between characters and ad-
-\ dress units. This implementation of ERASE is incompatible with
+\ In Opforth, there is no distinction between address units and
+\ characters. This implementation of ERASE is incompatible with
 \ Forth systems that have a character size of greater than one
 \ address unit.
 
@@ -1223,8 +1245,8 @@ synonym move> cmove>  ( c-addr1 c-addr2 u -- )
 \ If addr1 lies within the destination region, memory propaga-
 \ tion occurs.
 
-\ In Opforth, there is no distinction between characters and ad-
-\ dress units. This implementation of MOVE> is incompatible with
+\ In Opforth, there is no distinction between address units and
+\ characters. This implementation of MOVE> is incompatible with
 \ Forth systems that have a character size of greater than one
 \ address unit.
 
@@ -1624,8 +1646,8 @@ $____ constant textinbuff  ( -- c-addr )
 \ u is the number of address units remaining in the space ad-
 \ dressed by HERE.
 
-\ In Opforth, there is no distinction between characters and
-\ address units.
+\ In Opforth, there is no distinction between address units and
+\ characters.
 
 
 
@@ -1958,8 +1980,29 @@ variable state  ( -- a-addr )  false state !
 
 $____ opcode lit  ( -- x )
 
-\ Put x, the contents of the next consecutive cell, onto the
-\ stack.
+\ Put x, the contents of the next consecutive cell of memory,
+\ onto the stack.
+
+
+: 2,  ( x1 x2 -- )  swap , , ;
+
+\ Reserve two cells of dictionary space. Store x1 to the first
+\ cell, and store x2 to the second cell. If the dictionary
+\ pointer is aligned when 2, begins execution, it will remain
+\ aligned when 2, finishes execution.
+
+\ In Opforth, all addresses are aligned addresses. This imple-
+\ mentation of 2, is compatible with Forth systems that may have
+\ non-aligned addresses.
+
+\ An ambiguous condition exists if the dictionary pointer is not
+\ aligned prior to the execution of 2,.
+
+
+
+$____ opcode pc  ( -- a-addr )
+
+\ a-addr is the address of the next consecutive cell of memory.
 
 
 variable dp  ( -- a-addr )  $____ dp !
@@ -2025,7 +2068,8 @@ $____ constant s\"buff  ( -- c-addr )
 \ does not have a name or if it was defined by SYNONYM.
 
 
-: constant  ( '<spaces>name' x -- ) ( Exe: -- x )  something ;
+: constant  ( '<spaces>name' x -- ) ( Exe: -- x )
+  create , does> @ ;
 
 \ Skip leading spaces and parse name delimited by a space. Cre-
 \ ate a definition for name with the following execution seman-
@@ -2034,7 +2078,8 @@ $____ constant s\"buff  ( -- c-addr )
 \ name Execution: Put x on the stack.
 
 
-: variable  ( '<spaces>name' -- ) ( Exe: -- a-addr ) something ;
+: variable  ( '<spaces>name' -- ) ( Exe: -- a-addr )
+  create cell allot ;
 
 \ Skip leading spaces and parse name delimited by a space. Cre-
 \ ate a definition for name with the following execution seman-
@@ -2045,7 +2090,8 @@ $____ constant s\"buff  ( -- c-addr )
 \ reserved cell.
 
 
-: create  ( '<spaces>name' -- ) ( Exe: -- a-addr )  something ;
+: create  ( '<spaces>name' -- ) ( Exe: -- a-addr )
+  parse-name header, align postpone pc ;
 
 \ Skip leading spaces and parse name delimited by a space. Cre-
 \ ate a definition for name with the execution semantics de-
@@ -2130,7 +2176,7 @@ $____ constant s\"buff  ( -- c-addr )
 
 
 : value  ( '<spaces>name' x -- ) ( Exe: -- x ) ( to: x -- )
-  something ;
+  create , does> @ ;
 
 \ Skip leading spaces and parse name delimited by a space. Cre-
 \ ate a definition for name with the execution semantics de-
@@ -2678,13 +2724,20 @@ synonym d>s drop  ( d -- n )
 \ flag is false.
 
 
-: d<  ( d1 d2 -- flag )  d- d0< ;
+: d<  ( d1 d2 -- flag )
+  third over 0<
+  if
+    0< if du< 0= else false then
+  else
+    0< if du< else true then
+  then ;
 
 \ If d1 is less than d2, flag is true. Otherwise flag is false.
 
 
 : dmax  ( d1 d2 -- d3 )
-  2over 2over d< if 2nip else 2drop then ;
+  2over 2over d<
+  if 2nip else 2drop then ;
 
 \ Compare the top two double-cell integers on the stack. d3 is
 \ the double-cell integer that is greater (closer to positive
@@ -2692,7 +2745,8 @@ synonym d>s drop  ( d -- n )
 
 
 : dmin  ( d1 d2 -- d3 )
-  2over 2over d< if 2drop else 2nip then ;
+  2over 2over d<
+  if 2drop else 2nip then ;
 
 \ Compare the top two double-cell integers on the stack. d3 is
 \ the double-cell integer that is lesser (closer to negative
@@ -2728,7 +2782,8 @@ synonym d>s drop  ( d -- n )
 \ as necessary.
 
 
-: 2literal  ( Compi: x1 x2 -- ) ( -- x1 x2 )  something ;
+: 2literal  ( Compi: x1 x2 -- ) ( -- x1 x2 )
+  swap literal literal ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2738,7 +2793,7 @@ synonym d>s drop  ( d -- n )
 
 
 : 2constant  ( '<spaces>name' x1 x2 -- ) ( Exe: -- x1 x2 )
-  something ;
+  create 2, does> 2@ ;
 
 \ Skip leading spaces and parse name delimited by a space. Cre-
 \ ate a definition for name with the following execution seman-
@@ -2748,7 +2803,7 @@ synonym d>s drop  ( d -- n )
 
 
 : 2variable  ( '<spaces>name' -- ) ( Exe: -- a-addr )
-  something ;
+  create 2 cells allot ;
 
 \ Skip leading spaces and parse name delimited by a space. Cre-
 \ ate a definition for name with the execution semantics de-
@@ -2770,7 +2825,7 @@ synonym d>s drop  ( d -- n )
 \ third cell pair to the top.
 
 
-: du<  ( ud1 ud2 -- flag )  something ;
+: du<  ( ud1 ud2 -- flag )  d0 d0< ;
 
 \ If ud1 is less than ud2, flag is true. Otherwise flag is
 \ false.
