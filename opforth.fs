@@ -204,6 +204,11 @@
 \ .(    'ccc<right-paren>' --
 
 
+\ Helper Text Display
+
+\ textcursor    -- a-addr
+
+
 \ Core Numeric String
 
 \ .          n --
@@ -287,11 +292,11 @@
 
 \ Core Compiler
 
+\ here        -- addr
 \ ,           x --
 \ c,          char --
 \ allot       n --
 \ align       --
-\ here        -- addr
 \ [           --
 \ ]           --
 \ state       -- a-addr
@@ -315,8 +320,8 @@
 
 \ lit        -- x
 \ pc         -- a-addr
-\ 2,         x1 x2 --
 \ dp         -- a-addr
+\ 2,         x1 x2 --
 \ s"buff     -- c-addr
 \ s\"buff    -- c-addr
 
@@ -1051,7 +1056,7 @@ $____ opcode u2/  ( x1 -- x2 )
 \ unit.
 
 
-synonym cell+ 1+  ( a-addr1 -- a-addr2 )
+synonym cell+  ( a-addr1 -- a-addr2 )  1+
 
 \ a-addr2 is the result of incrementing a-addr1 by the size of
 \ one cell in address units.
@@ -1062,7 +1067,7 @@ synonym cell+ 1+  ( a-addr1 -- a-addr2 )
 \ size of greater than one address unit.
 
 
-synonym char+ 1+  ( c-addr1 -- c-addr2 )
+synonym char+  ( c-addr1 -- c-addr2 )  1+
 
 \ c-addr2 is the result of incrementing c-addr1 by the size of
 \ one character in address units.
@@ -1094,7 +1099,7 @@ synonym char+ 1+  ( c-addr1 -- c-addr2 )
 \ Helper Address Math Words
 
 
-synonym cell 1  ( -- n )
+synonym cell  ( -- n )  1
 
 \ n is the size of a cell in address units.
 
@@ -1121,7 +1126,7 @@ $____ opcode @  ( a-addr -- x )
 \ removed.
 
 
-synonym c@ @  ( c-addr -- char )
+synonym c@  ( c-addr -- char )  @
 
 \ Read the character located at memory address c-addr and put
 \ the character on the stack.
@@ -1129,7 +1134,7 @@ synonym c@ @  ( c-addr -- char )
 \ In Opforth, characters and cells are the same size.
 
 
-synonym c! !  ( char c-addr -- )
+synonym c!  ( char c-addr -- )  !
 
 \ Write char to memory address c-addr.
 
@@ -1225,7 +1230,7 @@ $____ opcode !'  ( x a-addr1 -- a-addr2 )
 \ one cell.
 
 
-synonym c!' !'  ( char c-addr1 -- c-addr2 )
+synonym c!'  ( char c-addr1 -- c-addr2 )  !'
 
 \ Write char to memory address c-addr1. x is removed from the
 \ stack, and c-addr2 is the result of incrementing c-addr1 by
@@ -1234,7 +1239,7 @@ synonym c!' !'  ( char c-addr1 -- c-addr2 )
 \ In Opforth, the characters and cells are the same size.
 
 
-synonym move> cmove>  ( c-addr1 c-addr2 u -- )
+synonym move>  ( c-addr1 c-addr2 u -- )  cmove>
 
 \ If u is greater than zero, copy the contents of the u the con-
 \ secutive address units of memory starting at addr1 to the u
@@ -1283,7 +1288,7 @@ synonym move> cmove>  ( c-addr1 c-addr2 u -- )
 \ ress c-addr and length u.
 
 
-: cr  ( -- )  something ;
+: cr  ( -- )  0 textcursor ! ;
 
 \ Position the text cursor at the beginning of the next line.
 
@@ -1314,6 +1319,19 @@ $0020 constant bl  ( -- char )
   [char] " parse type ; immediate
 
 \ Parse ccc delimited by ) (right parenthesis). Display ccc.
+
+
+
+\ Helper Text Display Words
+
+
+2variable textcursor  ( -- a-addr )  0. textcursor 2!
+
+\ a-addr is the address of a cell containing the column (y coor-
+\ dinate) of the text cursor. The next consecutive cell after
+\ a-addr contains the row (x coordinate). The next character to
+\ be displayed will be displayed at these coordinates. Column
+\ zero, row zero is the upper left corner of the display device.
 
 
 
@@ -1747,6 +1765,11 @@ $____ opcode execute  ( i*x xt -- j*x )
 \ Core Compiler Words
 
 
+: here  ( -- addr )  dp @ ;
+
+\ addr is the dictionary pointer.
+
+
 : ,  ( x -- )  1 cells allot here ! ;
 
 \ Reserve one cell of dictionary space and store x in the cell.
@@ -1761,7 +1784,7 @@ $____ opcode execute  ( i*x xt -- j*x )
 \ aligned prior to the execution of ,.
 
 
-synonym c, ,  ( char -- )
+synonym c,  ( char -- )  ,
 
 \ Reserve space for one character in the dictionary and store
 \ char in the space. If the dictionary pointer is character-
@@ -1795,11 +1818,6 @@ synonym c, ,  ( char -- )
 \ In Opforth, all addresses are aligned addresses. ALIGN is used
 \ for compatibility with Forth systems that may have non-aligned
 \ addresses.
-
-
-: here  ( -- addr )  dp @ ;
-
-\ addr is the dictionary pointer.
 
 
 : [  ( -- )  false state ! ; immediate
@@ -1984,6 +2002,11 @@ $____ opcode lit  ( -- x )
 \ onto the stack.
 
 
+$____ opcode pc  ( -- a-addr )
+
+\ a-addr is the address of the next consecutive cell of memory.
+
+
 : 2,  ( x1 x2 -- )  swap , , ;
 
 \ Reserve two cells of dictionary space. Store x1 to the first
@@ -1997,12 +2020,6 @@ $____ opcode lit  ( -- x )
 
 \ An ambiguous condition exists if the dictionary pointer is not
 \ aligned prior to the execution of 2,.
-
-
-
-$____ opcode pc  ( -- a-addr )
-
-\ a-addr is the address of the next consecutive cell of memory.
 
 
 variable dp  ( -- a-addr )  $____ dp !
@@ -2161,11 +2178,12 @@ $____ constant s\"buff  ( -- c-addr )
 
 
 : buffer:  ( '<spaces>name' u -- ) ( Exe: -- a-addr )
-  something ;
+  create cells allot ;
 
 \ Skip leading spaces and parse name delimited by a space. Cre-
 \ ate a definition for name with the execution semantics de-
 \ scribed below. Reserve u address units at an aligned address.
+
 \ The area reserved by the Opforth implementation of BUFFER: is
 \ contiguous with the rest of the dictionary. Standard Forth
 \ does not require the reserved area to be contiguous.
@@ -2689,7 +2707,7 @@ $____ opcode m+  ( d1|ud1 n -- d2|ud2 )
 \ ud is the absolute value of d.
 
 
-synonym d>s drop  ( d -- n )
+synonym d>s  ( d -- n )  drop
 
 \ n is the result of converting the double-cell signed integer d
 \ to a single-cell signed integer with the same numeric value.
@@ -2833,7 +2851,7 @@ synonym d>s drop  ( d -- n )
 
 : 2value  ( '<spaces>name' x1 x2 -- ) ( Exe: -- x1 x2 )
   ( to: x1 x2 -- )
-  something ;
+  create 2, does> 2@ ;
 
 \ Skip leading spaces and parse name delimited by a space. Cre-
 \ ate a definition for name with the execution semantics de-
@@ -3056,7 +3074,7 @@ $____ opcode m-  ( d1|ud1 n -- d2|ud2 )
 \ printer, PAGE performs a form feed.
 
 
-: at-xy  ( u1 u2 -- )  something ;
+: at-xy  ( u1 u2 -- )  swap textcursor 2! ;
 
 \ Move the text cursor to column u1, row u2 of the display de-
 \ vice. Column 0, row 0 is the upper left corner.
