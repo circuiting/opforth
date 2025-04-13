@@ -156,7 +156,8 @@
 
 \ Helper Address Math
 
-\ cell    -- n
+\ cell     -- n
+\ cell-    a-addr1 -- a-addr2
 
 
 \ Core Memory
@@ -182,8 +183,14 @@
 \ Helper Memory
 
 \ tuck!    x a-addr -- a-addr
-\ !'       x a-addr1 -- a-addr2
-\ c!'      char c-addr1 -- c-addr2
+\ @+       a-addr1 -- a-addr2 x
+\ !+       x a-addr1 -- a-addr2
+\ @-       a-addr1 -- a-addr2 x
+\ !-       x a-addr1 -- a-addr2
+\ c@+      c-addr1 -- c-addr2 char
+\ c!+      char c-addr1 -- c-addr2
+\ c@-      c-addr1 -- c-addr2 char
+\ c!-      char c-addr1 -- c-addr2
 
 
 \ Core Text Display
@@ -1106,6 +1113,17 @@ synonym cell  ( -- n )  1
 \ is no distinction between address units and characters.
 
 
+synonym cell-  ( a-addr1 -- a-addr2 )  1-
+
+\ a-addr2 is the result of decrementing a-addr1 by the size of
+\ one cell in address units.
+
+\ In Opforth, characters and cells are the same size, and there
+\ is no distinction between address units and characters. CELL+
+\ is used for compatibility with Forth systems that have a cell
+\ size of greater than one address unit.
+
+
 
 \ Core Memory Words
 
@@ -1113,7 +1131,7 @@ synonym cell  ( -- n )  1
 $____ opcode @  ( a-addr -- x )
 
 \ Read the cell located at memory address a-addr and put the
-\ cell on the stack.
+\ cell on the stack in place of a-addr.
 
 
 : !  ( Inter: x a-addr -- )  tuck! drop ;
@@ -1128,7 +1146,7 @@ $____ opcode @  ( a-addr -- x )
 synonym c@  ( c-addr -- char )  @
 
 \ Read the character located at memory address c-addr and put
-\ the character on the stack.
+\ the character on the stack in place of c-addr.
 
 \ In Opforth, characters and cells are the same size.
 
@@ -1162,7 +1180,7 @@ synonym c!  ( char c-addr -- )  !
 
 
 : move  ( addr1 addr2 u -- )
-  >r 2dup u< if r> cmove> else r> cmove then ;
+  third third u< if cmove> else cmove then ;
 
 \ If u is greater than zero, copy the contents of the u consecu-
 \ tive address units of memory starting at addr1 to the u con-
@@ -1178,7 +1196,11 @@ synonym c!  ( char c-addr -- )  !
 
 
 : fill  ( c-addr u char -- )
-  -rot 0 ?do 2dup c! char+ loop 2drop ;
+  -rot             ( char c-addr u )
+  0 ?do            ( char c-addr )
+    over swap c!+  ( char c-addr+i+1 )
+  loop             ( char c-addr+u )
+  2drop ;
 
 \ If u is greater than zero, write char to each of the u consec-
 \ utive characters of memory beginning at address c-addr.
@@ -1188,7 +1210,7 @@ synonym c!  ( char c-addr -- )  !
 \ Core-Ext Memory Words
 
 
-: erase  ( addr u -- )  0 ?do 0 swap c!' loop drop ;
+: erase  ( addr u -- )  0 ?do 0 swap c!+ loop drop ;
 
 \ If u is greater than zero, clear all bits of the u consecutive
 \ address units of memory starting at address addr.
@@ -1215,17 +1237,51 @@ $____ opcode tuck!  ( x a-addr -- a-addr )
 \ but a-addr remains.
 
 
-$____ opcode !'  ( x a-addr1 -- a-addr2 )
+$____ opcode @+  ( a-addr1 -- a-addr2 x )
+
+\ Read the cell located at memory address a-addr1 and put the
+\ cell on the stack. a-addr2 is the result of incrementing
+\ a-addr1 by one cell.
+
+
+$____ opcode !+  ( x a-addr1 -- a-addr2 )
 
 \ Write x to memory address a-addr1. x is removed from the
 \ stack, and a-addr2 is the result of incrementing a-addr1 by
 \ one cell.
 
 
-synonym c!'  ( char c-addr1 -- c-addr2 )  !'
+synonym c@+  ( c-addr1 -- c-addr2 char )  @+
+
+\ Read the character located at memory address c-addr and put
+\ the character on the stack. c-addr2 is the result of incre-
+\ menting c-addr1 by one cell.
+
+\ In Opforth, the characters and cells are the same size.
+
+
+synonym c!+  ( char c-addr1 -- c-addr2 )  !+
 
 \ Write char to memory address c-addr1. x is removed from the
 \ stack, and c-addr2 is the result of incrementing c-addr1 by
+\ one character.
+
+\ In Opforth, the characters and cells are the same size.
+
+
+synonym c@-  ( c-addr1 -- c-addr2 char )  @-
+
+\ Read the character located at memory address c-addr and put
+\ the character on the stack. c-addr2 is the result of decre-
+\ menting c-addr1 by one cell.
+
+\ In Opforth, the characters and cells are the same size.
+
+
+synonym c!-  ( char c-addr1 -- c-addr2 )  !-
+
+\ Write char to memory address c-addr1. x is removed from the
+\ stack, and c-addr2 is the result of decrementing c-addr1 by
 \ one character.
 
 \ In Opforth, the characters and cells are the same size.
@@ -2859,10 +2915,10 @@ $____ opcode m-  ( d1|ud1 n -- d2|ud2 )
 
 
 : cmove  ( c-addr1 c-addr2 u -- )
-  0 ?do
-    over c@ over c!
-    swap char+ swap char+
-  loop
+  0 ?do       ( c-addr1 c-addr2 )
+    swap c@+  ( c-addr2+i c-addr1+i+1 char )
+    rot c!+   ( c-addr1+i+1 c-addr2+i+1 )
+  loop        ( c-addr1+u c-addr2+u )
   2drop ;
 
 \ If u is greater than zero, copy the contents of the u the con-
@@ -2876,10 +2932,10 @@ $____ opcode m-  ( d1|ud1 n -- d2|ud2 )
 
 : cmove>  ( c-addr1 c-addr2 u -- )
   tuck + -rot tuck + -rot
-  0 ?do
-    over c@ over c!
-    swap char- swap char-
-  loop
+  0 ?do       ( c-addr1 c-addr2 )
+    swap c@-  ( c-addr2+i c-addr1+i+1 char )
+    rot c!-   ( c-addr1+i+1 c-addr2+i+1 )
+  loop        ( c-addr1+u c-addr2+u )
   2drop ;
 
 \ If u is greater than zero, copy the contents the u the consec-
@@ -2893,7 +2949,7 @@ $____ opcode m-  ( d1|ud1 n -- d2|ud2 )
 
 : blank  ( c-addr u -- )
   $0020 -rot
-  0 ?do over swap c!' loop
+  0 ?do over swap c!+ loop
   2drop ;
 
 \ If u is greater than zero, write the space character to the u
