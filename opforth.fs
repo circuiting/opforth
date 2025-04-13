@@ -91,6 +91,11 @@
 \ */mod     n1 n2 n3 -- n4 n5
 
 
+\ Helper Arithmetic
+
+\ ud/mod    ud1 u1 -- ud2 u2
+
+
 \ Core Number Test
 
 \ 0=     x -- flag
@@ -238,6 +243,11 @@
 \ hex      --
 
 
+\ Helper Numeric String
+
+\ holdptr    -- c-addr
+
+
 \ Core Text Input
 
 \ (         Inter: 'ccc<right-paren>' --
@@ -327,6 +337,7 @@
 \ lit        -- x
 \ pc         -- a-addr
 \ dp         -- a-addr
+\ dpmax      -- a-addr
 \ 2,         x1 x2 --
 \ s"buff     -- c-addr
 \ s\"buff    -- c-addr
@@ -422,8 +433,10 @@
 \ dabs         d -- ud
 \ d>s          d -- n
 \ m*/          d1 n1 +n2 -- d2
-\ d0=          xd -- flag
-\ d0<          d -- flag
+\ d0=          Inter: xd -- flag
+\              Compi: --  Run: xd -- flag
+\ d0<          Inter: d -- flag
+\              Compi: --  Run: d -- flag
 \ d=           xd1 xd2 -- flag
 \ d<           d1 d2 -- flag
 \ dmax         d1 d2 -- d3
@@ -821,6 +834,18 @@ $____ opcode s>d  ( n -- d )
 
 \ An ambiguous condition exists if n3 is zero or if n5 is out-
 \ side the range of a single-cell signed integer.
+
+
+
+\ Helper Arithmetic Words
+
+
+: ud/mod  ( ud1 u1 -- u2 ud2 )
+  >r 0 r@ um/mod r> swap >r
+  um/mod r> ;
+
+\ Divide ud1 by u1. u2 is the remainder and ud2 is the quotient.
+\ All integers and arithmetic are unsigned.
 
 
 
@@ -1381,12 +1406,13 @@ $0020 constant bl  ( -- char )
 \ lowed by a space.
 
 
-: <#  ( -- )  something ;
+: <#  ( -- )  holdbuff to holdptr ;
 
-\ Start a number-to-string conversion.
+\ Start a number-to-string conversion. The closing delimiter for
+\ the conversion expression is #>.
 
 
-: #>  ( xd -- c-addr u )  something ;
+: #>  ( xd -- c-addr u )  2drop holdbuff dup holdptr - ;
 
 \ Finish a number-to-string conversion by dropping xd and making
 \ the string available. c-addr is the starting address of the
@@ -1394,7 +1420,10 @@ $0020 constant bl  ( -- char )
 \ characters within the string.
 
 
-: #  ( ud1 -- ud2 )  something ;
+: #  ( ud1 -- ud2 )
+  base @ ud/mod rot dup 9 u>
+  [ char A char 9 1+ - ] literal and +
+  '0' + hold ;
 
 \ As part of a <# #> delimited number-to-string conversion, con-
 \ vert one digit of ud1 using the following method. Divide ud1
@@ -1407,7 +1436,7 @@ $0020 constant bl  ( -- char )
 \ <# #> delimited conversion.
 
 
-: #s  ( ud1 -- ud2 )  something ;
+: #s  ( ud1 -- ud2 )  begin # 2dup or 0= until ;
 
 \ As part of a <# #> delimited number-to-string conversion, con-
 \ vert all digits of ud1 and prepend the digits to the string
@@ -1417,7 +1446,7 @@ $0020 constant bl  ( -- char )
 \ <# #> delimited conversion.
 
 
-: hold  ( char -- )  something ;
+: hold  ( char -- )  holdptr tuck c! char- to holdptr ;
 
 \ As part of a <# #> delimited number-to-string conversion, pre-
 \ pend char to the string being built.
@@ -1426,7 +1455,7 @@ $0020 constant bl  ( -- char )
 \ <# #> delimited conversion.
 
 
-: sign  ( n -- )  something ;
+: sign  ( n -- )  0< if '-' hold then ;
 
 \ As part of a <# #> delimited number-to-string conversion, put
 \ a minus sign at the beginning of the string being built if n
@@ -1503,6 +1532,27 @@ variable base  ( -- a-addr )  decimal
 
 
 
+\ Helper Numeric String Words
+
+
+$____ value holdptr  ( -- c-addr )
+
+\ c-addr is the address of the character in front of the string
+\ being built by a <# #> delimited number conversion expression.
+\ The next character prepended to the string (e.g. by HOLD) will
+\ be written to c-addr.
+
+
+$____ constant holdbuff  ( -- c-addr )
+
+\ c-addr is the highest address in the buffer that is used by
+\ <# #> delimited number-to-string conversion expressions to
+\ hold the string being built. holdptr is set to holdbuff when
+\ a conversion is started, and holdptr is decremented as char-
+\ acters are prepended to the string.
+
+
+
 \ Core Text Input Words
 
 
@@ -1517,7 +1567,7 @@ variable base  ( -- a-addr )  decimal
 
 
 : source  ( -- c-addr u )  textinbuff #textinbuff ;
-
+v
 \ c-addr is the address of the text input buffer used by the
 \ Forth outer interpreter. u is the number of characters in the
 \ buffer.
@@ -2059,6 +2109,12 @@ variable dp  ( -- a-addr )  $____ dp !
 \ pointer.
 
 
+$____ value dpmax  ( -- a-addr )
+
+\ a-addr is the highest address that is usable by the dictionary
+\ pointer.
+
+
 $____ constant s"buff  ( -- c-addr )
 
 \ c-addr is the address of the buffer used by S".
@@ -2127,7 +2183,7 @@ $____ constant s\"buff  ( -- c-addr )
 
 
 : variable  ( '<spaces>name' -- ) ( Exe: -- a-addr )
-  create cell allot ;
+  create 0 , ;
 
 \ Skip leading spaces and parse name delimited by a space. Cre-
 \ ate a definition for name with the following execution seman-
@@ -2442,8 +2498,8 @@ $____ constant s\"buff  ( -- c-addr )
 \ when the loop parameters are unavailable.
 
 
-: i  ( Compi: -- ) ( Exe: R:loop-sys -- n|u R:loop-sys )
-  something ;
+synonym i  ( Compi: -- ) ( Exe: R:loop-sys -- n|u R:loop-sys )
+  r@
 
 \ Interpretation: Undefined
 
@@ -2456,9 +2512,9 @@ $____ constant s\"buff  ( -- c-addr )
 \ available.
 
 
-: j  ( Compi: -- ) ( Exe: R:loop-sys1 R:loop-sys2
-                          -- n|u R:loop-sys1 R:loop-sys2 )
-  something ;
+$____ opcode j  ( Compi: -- ) ( Exe: R:loop-sys1 R:loop-sys2 --
+  n|u R:loop-sys1 R:loop-sys2 )
+  compile-only
 
 \ Interpretation: Undefined
 
@@ -2497,7 +2553,8 @@ $____ constant s\"buff  ( -- c-addr )
 \ available.
 
 
-: exit  ( Compi: -- ) ( Exe: R:nest-sys -- R: )  something ;
+$____ opcode exit  ( Compi: -- ) ( Exe: R:nest-sys -- R: )
+  compile-only
 
 \ Interpretation: Undefined
 
@@ -2757,12 +2814,18 @@ synonym d>s  ( d -- n )  drop
 \ integer.
 
 
-: d0=  ( xd -- flag )  0= swap 0= and ;
+: d0=  ( Inter: xd -- flag )  or 0= ;
+
+|: d0=  ( Compi: -- ) ( Run: xd -- flag )
+  postpone or  postpone 0= ;| immediate
 
 \ If xd is equal to zero, flag is true. Otherwise flag is false.
 
 
-: d0<  ( d -- flag )  0< nip ;
+: d0<  ( Inter: d -- flag )  0< nip ;
+
+|: d0<  ( Compi: -- ) ( Run: d -- flag )
+  postpone 0<  postpone nip ;| immediate
 
 \ If d is less than zero, flag is true. Otherwise flag is false.
 
@@ -2785,8 +2848,7 @@ synonym d>s  ( d -- n )  drop
 
 
 : dmax  ( d1 d2 -- d3 )
-  2over 2over d<
-  if 2nip else 2drop then ;
+  2over 2over d< if 2nip else 2drop then ;
 
 \ Compare the top two double-cell integers on the stack. d3 is
 \ the double-cell integer that is greater (closer to positive
@@ -2794,8 +2856,7 @@ synonym d>s  ( d -- n )  drop
 
 
 : dmin  ( d1 d2 -- d3 )
-  2over 2over d<
-  if 2drop else 2nip then ;
+  2over 2over d< if 2drop else 2nip then ;
 
 \ Compare the top two double-cell integers on the stack. d3 is
 \ the double-cell integer that is lesser (closer to negative
@@ -2852,7 +2913,7 @@ synonym d>s  ( d -- n )  drop
 
 
 : 2variable  ( '<spaces>name' -- ) ( Exe: -- a-addr )
-  create 2 cells allot ;
+  create 0. 2, ;
 
 \ Skip leading spaces and parse name delimited by a space. Cre-
 \ ate a definition for name with the execution semantics de-
@@ -2868,7 +2929,8 @@ synonym d>s  ( d -- n )  drop
 \ Double-Ext Words
 
 
-: 2rot  ( x1 x2 x3 x4 x5 x6 -- x3 x4 x5 x6 x1 x2 )  something ;
+: 2rot  ( x1 x2 x3 x4 x5 x6 -- x3 x4 x5 x6 x1 x2 )
+  2>r 2swap 2r> 2swap ;
 
 \ Rotate the top three cell pairs on the stack to bring the
 \ third cell pair to the top.
@@ -2948,9 +3010,7 @@ $____ opcode m-  ( d1|ud1 n -- d2|ud2 )
 
 
 : blank  ( c-addr u -- )
-  $0020 -rot
-  0 ?do over swap c!+ loop
-  2drop ;
+  $0020 -rot 0 ?do over swap c!+ loop 2drop ;
 
 \ If u is greater than zero, write the space character to the u
 \ consecutive characters of memory starting at c-addr.
