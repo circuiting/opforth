@@ -245,7 +245,8 @@
 
 \ Helper Numeric String
 
-\ holdptr    -- c-addr
+\ holdptr     -- c-addr
+\ holdbuff    -- c-addr
 
 
 \ Core Text Input
@@ -459,7 +460,8 @@
 
 \ Helper Double
 
-\ m-    d1|ud1 n -- d2|ud2
+\ m-      d1|ud1 n -- d2|ud2
+\ ud.r    ud n --
 
 
 \ String
@@ -1500,7 +1502,7 @@ variable base  ( -- a-addr )  decimal
 \ Core-Ext Numeric String Words
 
 
-: .r  ( n1 n2 -- )  something ;
+: .r  ( n1 n2 -- )  >r s>d r> d.r ;
 
 \ Display a text representation of n1 right-aligned in a field
 \ n2 characters wide. If the number of characters required to
@@ -1508,15 +1510,15 @@ variable base  ( -- a-addr )  decimal
 \ no leading spaces in a field as wide as necessary.
 
 
-: u.r  ( u n -- )  something ;
+: u.r  ( u n -- )  0 swap ud.r ;
 
 \ Display a text representation of u right-aligned in a field n
 \ characters wide. If the number of characters required to dis-
-\ play n1 is greater than n2, all digits are displayed with no
+\ play u is greater than n, all digits are displayed with no
 \ leading spaces in a field as wide as necessary.
 
 
-: holds  ( c-addr u -- )  something ;
+: holds  ( c-addr u -- )  holdptr over - swap cmove ;
 
 \ As part of a <# #> delimited number-to-string conversion, pre-
 \ pend the string represented by c-addr u to the string being
@@ -1567,7 +1569,7 @@ $____ constant holdbuff  ( -- c-addr )
 
 
 : source  ( -- c-addr u )  textinbuff #textinbuff ;
-v
+
 \ c-addr is the address of the text input buffer used by the
 \ Forth outer interpreter. u is the number of characters in the
 \ buffer.
@@ -2877,13 +2879,16 @@ synonym d>s  ( d -- n )  drop
 \ changed.
 
 
-: d.  ( d -- )  something ;
+: d.  ( d -- )  0 d.r space ;
 
 \ Display a text representation of the double-cell signed inte-
 \ ger d followed by a space.
 
 
-: d.r  ( d n -- )  something ;
+: d.r  ( d n -- )
+  >r tuck dabs             ( n1 ud R:n )
+  <# #s rot sign #>        ( c-addr u R:n )
+  r> over - spaces type ;
 
 \ Display a text representation of the double-cell signed inte-
 \ ger d right-aligned in a field n characters wide. If the num-
@@ -2970,6 +2975,14 @@ $____ opcode m-  ( d1|ud1 n -- d2|ud2 )
 \ Subtract single-cell signed integer from a double-cell integer
 \ to produce a double-cell result. Either or both of the double-
 \ cell numbers may be signed or unsigned.
+
+
+: ud.r  ( ud n -- )  >r <# #s #> r> over - spaces type ;
+
+\ Display a text representation of ud right-aligned in a field n
+\ characters wide. If the number of characters required to dis-
+\ play ud is greater than n, all digits are displayed with no
+\ leading spaces in a field as wide as necessary.
 
 
 
