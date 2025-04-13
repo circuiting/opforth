@@ -379,8 +379,8 @@
 \ Core Control Flow
 
 \ if         Compi: -- orig  Run: x --
-\ else       Compi: orig1 -- orig2  Run: --
 \ then       Compi: orig --  Run: --
+\ else       Compi: orig1 -- orig2  Run: --
 \ begin      Compi: -- dest  Run: --
 \ until      Compi: dest --  Run: x --
 \ while      Compi: dest -- orig dest  Run: x --
@@ -1321,7 +1321,7 @@ synonym c!-  ( char c-addr1 -- c-addr2 )  !-
 : ."  ( Inter: 'ccc<quote>' -- )  [char] " parse type ;
 
 |: ."  ( Compi: 'ccc<quote>' -- ) ( Run: -- )
-  [char] " parse  postpone sliteral  type ;| immediate
+  [char] " parse postpone sliteral type ;| immediate
 
 \ Interpretation: Parse ccc delimited by " (double-quote). Dis-
 \ play ccc.
@@ -1561,7 +1561,7 @@ $____ constant holdbuff  ( -- c-addr )
 : (  ( Inter: 'ccc<right-paren>' -- )  [char] ) parse ;
 
 |: (  ( Compi: 'ccc<right-paren>' -- ) ( Run: -- )
-  [char] )  postpone parse ;| immediate
+  [char] ) postpone parse ;| immediate
 
 \ Parse ccc delimited by ) (right parenthesis). This causes the
 \ outer interpreter to skip past the text enclosed in the paren-
@@ -1933,7 +1933,7 @@ variable state  ( -- a-addr )  false state !
 
 
 : literal  ( Compi: x -- ) ( Run: -- x )
-  postpone lit  , ; immediate compile-only
+  postpone lit , ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -1975,7 +1975,7 @@ variable state  ( -- a-addr )  false state !
   [char] " parse 2dup s"buff swap cmove ;
 
 |: s"  ( Compi: 'ccc<quote>' -- ) ( Run: -- c-addr u )
-  [char] " parse  postpone sliteral ;| immediate
+  [char] " parse postpone sliteral ;| immediate
 
 \ Interpretation: Parse ccc delimited by " (double-quote). Store
 \ the resulting string in a transient buffer. c-addr is string
@@ -2050,7 +2050,7 @@ variable state  ( -- a-addr )  false state !
 
 
 : compile,  ( Compi: -- ) ( Exe: xt -- )
-  postpone ,  ; immediate compile-only
+  postpone , ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2358,7 +2358,8 @@ $____ constant s\"buff  ( -- c-addr )
 \ Core Control Flow Words
 
 
-: if  ( Compi: -- orig ) ( Run: x -- )  something ;
+: if  ( Compi: -- orig ) ( Run: x -- )
+  postpone ?branch here 0 , ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2371,7 +2372,20 @@ $____ constant s\"buff  ( -- c-addr )
 \ location specified by the resolution of orig.
 
 
-: else  ( Compi: orig1 -- orig2 ) ( Run: -- )  something ;
+: then  ( Compi: orig -- ) ( Run: -- )
+  here swap ! ; immediate compile-only
+
+\ Interpretation: Undefined
+
+\ Compilation: Compile the runtime semantics described below.
+\ Resolve the forward reference orig using the location of the
+\ compiled runtime semantics.
+
+\ Runtime: Continue execution.
+
+
+: else  ( Compi: orig1 -- orig2 ) ( Run: -- )
+  then postpone branch here 0 , ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2385,18 +2399,8 @@ $____ constant s\"buff  ( -- c-addr )
 \ olution of orig2.
 
 
-: then  ( Compi: orig -- ) ( Run: -- )  something ;
-
-\ Interpretation: Undefined
-
-\ Compilation: Compile the runtime semantics described below.
-\ Resolve the forward reference orig using the location of the
-\ compiled runtime semantics.
-
-\ Runtime: Continue execution.
-
-
-: begin  ( Compi: -- dest ) ( Run: -- )  something ;
+: begin  ( Compi: -- dest ) ( Run: -- )
+  here ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2406,7 +2410,8 @@ $____ constant s\"buff  ( -- c-addr )
 \ Runtime: Continue execution.
 
 
-: until  ( Compi: dest -- ) ( Run: x -- )  something ;
+: until  ( Compi: dest -- ) ( Run: x -- )
+  postpone ?branch , ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2417,7 +2422,8 @@ $____ constant s\"buff  ( -- c-addr )
 \ location specified by dest.
 
 
-: while  ( Compi: dest -- orig dest ) ( Run: x -- )  something ;
+: while  ( Compi: dest -- orig dest ) ( Run: x -- )
+  if swap ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2430,12 +2436,15 @@ $____ constant s\"buff  ( -- c-addr )
 \ location specified by the resolution of orig.
 
 
-: repeat  ( COmpi: orig dest -- ) ( Run: -- )  something ;
+: repeat  ( Compi: orig dest -- ) ( Run: -- )
+  again then ; immediate compile-only
 
 \ Interpretation: Undefined
 
-\ Compilation: Put orig, the location of a new unresolved for-
-\ ward reference, onto the stack.
+\ Compilation: Compile the runtime semantics described below and
+\ resolve the backward reference dest. Resolve the forward ref-
+\ erence orig using the location following the compiled runtime
+\ semantics.
 
 \ Runtime: Continue execution at the location given by dest.
 
@@ -2583,7 +2592,8 @@ $____ opcode exit  ( Compi: -- ) ( Exe: R:nest-sys -- R: )
 \ Core-Ext Control Flow
 
 
-: again  ( Compi: dest -- ) ( Run: -- )  something ;
+: again  ( Compi: dest -- ) ( Run: -- )
+  postpone branch , ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -3034,7 +3044,7 @@ $____ opcode m-  ( d1|ud1 n -- d2|ud2 )
 
 : sliteral  ( Compi: c-addr1 u -- ) ( Run: -- c-addr2 u )
   postpone branch            ( c-addr1 u )
-  here -rot 1 cells allot    ( a-addr c-addr1 u )
+  here -rot 0 ,              ( a-addr c-addr1 u )
   here swap dup chars allot  ( a-addr c-addr1 c-addr2 u )
   2dup 2>r cmove             ( a-addr R:c-addr2 R:u )
   here ! 2r>                 ( c-addr2 u )
