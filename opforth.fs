@@ -94,6 +94,8 @@
 \ Helper Arithmetic
 
 \ ud/mod    ud1 u1 -- ud2 u2
+\ r>+       n1|u1 R:n2|u2 -- n3|u3 R:
+\ r>1+      R:n1|u1 -- n2|u2 R:
 
 
 \ Core Number Test
@@ -408,6 +410,13 @@
 \ of         Compi: -- of-sys  Run: x1 x2 -- |x1
 \ endof      Compi: case-sys1 of-sys -- case-sys2  Run: --
 \ endcase    Compi: case-sys --  Run: x --
+
+
+\ Helper Control Flow
+
+\ branch     Compi: --  Exe: --
+\ ?branch    Compi: --  Exe: x --
+\ ?loop      Compi: --  Exe: R:n|u -- |loop-sys
 
 
 \ Core Outer Interpreter
@@ -848,6 +857,20 @@ $____ opcode s>d  ( n -- d )
 
 \ Divide ud1 by u1. u2 is the remainder and ud2 is the quotient.
 \ All integers and arithmetic are unsigned.
+
+
+$____ opcode r>+  ( n1|u1 R:n2|u2 -- n3|u3 R: )
+  compile-only
+
+\ Remove the top return stack item and add it to the top data
+\ stack item. Any of the numbers may be signed or unsigned.
+
+
+$____ opcode r>1+  ( R:n1|u1 -- n2|u2 R: )
+  compile-only
+
+\ Transfer the top return stack item to the data stack, and in-
+\ crement it by one. The number may be signed or unsigned.
 
 
 
@@ -2385,7 +2408,8 @@ $____ constant s\"buff  ( -- c-addr )
 
 
 : else  ( Compi: orig1 -- orig2 ) ( Run: -- )
-  then postpone branch here 0 , ; immediate compile-only
+  postpone then  postpone branch here
+  0 , ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2423,7 +2447,7 @@ $____ constant s\"buff  ( -- c-addr )
 
 
 : while  ( Compi: dest -- orig dest ) ( Run: x -- )
-  if swap ; immediate compile-only
+  postpone if  swap ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2437,7 +2461,7 @@ $____ constant s\"buff  ( -- c-addr )
 
 
 : repeat  ( Compi: orig dest -- ) ( Run: -- )
-  again then ; immediate compile-only
+  postpone again  postpone then ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2450,7 +2474,7 @@ $____ constant s\"buff  ( -- c-addr )
 
 
 : do  ( -- do-sys ) ( Run: n1 n2 R: | u1 u2 R: -- R:loop-sys )
-  something ;
+  0 postpone 2>r here ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2470,7 +2494,8 @@ $____ constant s\"buff  ( -- c-addr )
 
 : loop  ( Compi: do-sys -- )
   ( Run: R:loop-sys1 -- R:|loop-sys2 )
-  something ;
+  postpone r>1+  postpone ?loop ,
+  dup if here swap ! else drop then ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2490,7 +2515,8 @@ $____ constant s\"buff  ( -- c-addr )
 
 : +loop  ( Compi: do-sys -- )
   ( Run: n R:loop-sys1 -- |loop-sys2 )
-  something ;
+  postpone r>+  postpone ?loop ,
+  dup if here swap ! else drop then ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2607,7 +2633,8 @@ $____ opcode exit  ( Compi: -- ) ( Exe: R:nest-sys -- R: )
 
 : ?do  ( Compi: -- do-sys )
   ( Run: n1 n2 R: | u1 u2 R: -- R:loop-sys )
-  something ;
+  postpone 2dup  postpone =  postpone if
+  postpone 2>r here ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2674,6 +2701,38 @@ $____ opcode exit  ( Compi: -- ) ( Exe: R:nest-sys -- R: )
 \ pile the following runtime semantics.
 
 \ Runtime: Discard the case selector x and continue execution.
+
+
+
+\ Helper Control Flow Words
+
+
+$____ opcode branch  ( Compi: -- ) ( Exe: -- )
+  compile-only
+
+\ Continue execution at the address contained in the next con-
+\ secutive cell after the BRANCH opcode.
+
+
+$____ opcode ?branch  ( Compi: -- ) ( Exe: x -- )
+  compile-only
+
+\ If all bits of x are zero, continue execution at the address
+\ contained in the next consecutive cell after the ?BRANCH op-
+\ code. Otherwise, continue execution in line.
+
+
+$____ opcode ?loop  ( Compi: -- )
+  ( Exe: n1 R:n2 | u1 R:u2 -- |loop-sys )
+  compile-only
+
+\ Prototype (to be revised):
+
+\ If the top data stack item is greater than the top return
+\ stack item, discard the loop parameters and continue execution
+\ in line. Otherwise, transfer the top data stack item to the
+\ return stack and continue execution at the address contained
+\ in the next consecutive program cell.
 
 
 
