@@ -414,6 +414,7 @@
 
 \ Helper Control Flow
 
+\ nop        Compi: --  Exe: --
 \ branch     Compi: --  Exe: --
 \ ?branch    Compi: --  Exe: x --
 \ ?loop      Compi: --  Exe: R:n|u -- |loop-sys
@@ -2698,6 +2699,12 @@ $____ opcode exit  ( Compi: -- ) ( Exe: R:nest-sys -- R: )
 
 
 \ Helper Control Flow Words
+
+
+$____ opcode nop  ( Compi: -- ) ( Exe: -- )
+  compile-only
+
+\ Do nothing (i.e. no operation).
 
 
 $____ opcode branch  ( Compi: -- ) ( Exe: -- )
