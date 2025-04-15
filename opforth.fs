@@ -729,14 +729,14 @@ $____ opcode -  ( n1|u1 n2|u2 -- n3|u3 )
 
 $____ opcode 1+  ( n1|u1 -- n2|u2 )
 
-\ n2 is the result of incrementing n1 by one. The numbers may be
+\ Add one to the number on top of the stack. The number may be
 \ signed or unsigned.
 
 
 $____ opcode 1-  ( nu1 -- nu2 )
 
-\ n2 is the result of decrementing n1 by one. The numbers may be
-\ signed or unsigned.
+\ Subtract one from the number on top of the stack. The number
+\ may be signed or unsigned.
 
 
 $____ opcode negate  ( n1 -- n2 )
@@ -2723,17 +2723,14 @@ $____ opcode ?branch  ( Compi: -- ) ( Exe: x -- )
 
 
 $____ opcode ?loop  ( Compi: -- )
-  ( Exe: n1 R:n2 | u1 R:u2 -- |loop-sys )
+  ( Exe: n1 R:n2|u -- |loop-sys )
   compile-only
 
 \ Prototype (to be revised):
 
-\ If the top data stack item is greater than the top return
-\ stack item, discard the loop parameters and continue execution
-\ in line. Otherwise, transfer the top data stack item to the
-\ return stack and continue execution at the address contained
-\ in the next consecutive program cell.
+\ Compilation: Compile the execution semantics below.
 
+\ Execution: ?
 
 
 \ Core Outer Interpreter Words
