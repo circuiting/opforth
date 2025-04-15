@@ -869,8 +869,8 @@ $____ opcode r>+  ( n1|u1 R:n2|u2 -- n3|u3 R: )
 $____ opcode r>1+  ( R:n1|u1 -- n2|u2 R: )
   compile-only
 
-\ Transfer the top return stack item to the data stack, and in-
-\ crement it by one. The number may be signed or unsigned.
+\ Remove the top data stack item, add one to it, and put the re-
+\ sult on the data stack. The number may be signed or unsigned.
 
 
 
@@ -1114,8 +1114,8 @@ $____ opcode u2/  ( x1 -- x2 )
 
 synonym cell+  ( a-addr1 -- a-addr2 )  1+
 
-\ a-addr2 is the result of incrementing a-addr1 by the size of
-\ one cell in address units.
+\ Add the size of one cell in address units to the top stack
+\ item.
 
 \ In Opforth, characters and cells are the same size, and there
 \ is no distinction between address units and characters. CELL+
@@ -1125,8 +1125,8 @@ synonym cell+  ( a-addr1 -- a-addr2 )  1+
 
 synonym char+  ( c-addr1 -- c-addr2 )  1+
 
-\ c-addr2 is the result of incrementing c-addr1 by the size of
-\ one character in address units.
+\ Add the size of one character in address units to the top
+\ stack item.
 
 \ In Opforth, there is no distinction between address units and
 \ characters. CHAR+ is used for compatibility with Forth systems
@@ -1165,8 +1165,8 @@ synonym cell  ( -- n )  1
 
 synonym cell-  ( a-addr1 -- a-addr2 )  1-
 
-\ a-addr2 is the result of decrementing a-addr1 by the size of
-\ one cell in address units.
+\ Subtract the size of one cell in address units from the top
+\ stack item.
 
 \ In Opforth, characters and cells are the same size, and there
 \ is no distinction between address units and characters. CELL+
@@ -1289,52 +1289,46 @@ $____ opcode tuck!  ( x a-addr -- a-addr )
 
 $____ opcode @+  ( a-addr1 -- a-addr2 x )
 
-\ Read the cell located at memory address a-addr1 and put the
-\ cell on the stack. a-addr2 is the result of incrementing
-\ a-addr1 by one cell.
+\ Read the cell located at a-addr1, add one to a-addr1, and put
+\ the cell on top of the stack.
 
 
 $____ opcode !+  ( x a-addr1 -- a-addr2 )
 
-\ Write x to memory address a-addr1. x is removed from the
-\ stack, and a-addr2 is the result of incrementing a-addr1 by
-\ one cell.
+\ Write x to memory address a-addr1. Add one to a-addr1 and put
+\ the result on top of the stack.
 
 
 synonym c@+  ( c-addr1 -- c-addr2 char )  @+
 
-\ Read the character located at memory address c-addr and put
-\ the character on the stack. c-addr2 is the result of incre-
-\ menting c-addr1 by one cell.
+\ Read the character located at a-addr1, add one to a-addr1, and
+\ put the character on top of the stack.
 
-\ In Opforth, the characters and cells are the same size.
+\ In Opforth, characters and cells are the same size.
 
 
 synonym c!+  ( char c-addr1 -- c-addr2 )  !+
 
-\ Write char to memory address c-addr1. x is removed from the
-\ stack, and c-addr2 is the result of incrementing c-addr1 by
-\ one character.
+\ Write char to memory address c-addr1. Add one to c-addr1 and
+\ put the result on top of the stack.
 
-\ In Opforth, the characters and cells are the same size.
+\ In Opforth, characters and cells are the same size.
 
 
 synonym c@-  ( c-addr1 -- c-addr2 char )  @-
 
-\ Read the character located at memory address c-addr and put
-\ the character on the stack. c-addr2 is the result of decre-
-\ menting c-addr1 by one cell.
+\ Read the character located at c-addr1, subtract one from
+\ c-addr1, and put the character on top of the stack.
 
-\ In Opforth, the characters and cells are the same size.
+\ In Opforth, characters and cells are the same size.
 
 
 synonym c!-  ( char c-addr1 -- c-addr2 )  !-
 
-\ Write char to memory address c-addr1. x is removed from the
-\ stack, and c-addr2 is the result of decrementing c-addr1 by
-\ one character.
+\ Write char to memory addres c-addr1. Subtract one from
+\ c-addr1 and put the result on top of the stack.
 
-\ In Opforth, the characters and cells are the same size.
+\ In Opforth, characters and cells are the same size.
 
 
 
@@ -1573,8 +1567,7 @@ $____ constant holdbuff  ( -- c-addr )
 \ c-addr is the highest address in the buffer that is used by
 \ <# #> delimited number-to-string conversion expressions to
 \ hold the string being built. holdptr is set to holdbuff when
-\ a conversion is started, and holdptr is decremented as char-
-\ acters are prepended to the string.
+\ a conversion is started.
 
 
 
