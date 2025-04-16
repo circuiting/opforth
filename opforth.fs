@@ -621,7 +621,10 @@ $____ opcode tuck  ( x1 x2 -- x2 x1 x2 )
 
 
 : roll  ( xu xu-1...x0 u -- xu-1...x0 xu )
-  dup if swap >r 1- recurse r> swap exit then drop ;
+  dup if
+    swap >r 1- recurse
+    r> swap exit
+  then drop ;
 
 \ Remove u and rotate the top u+1 stack items to bring xu to the
 \ top.
@@ -1626,7 +1629,11 @@ variable >in  ( -- a-addr )  0 >in !
 \ the first character of name on the stack.
 
 
-: word  ( '<chars>ccc<char>' char -- c-addr )  something ;
+: word  ( '<chars>ccc<char>' char -- c-addr )
+  ( skip-delimiters )
+  parse
+  dup s"buff tuck c!
+  char+ swap cmove  ;
 
 \ Skip leading delimiters and parse ccc delimited by char. Write
 \ the parsed word to a dedicated buffer as a counted string, and
@@ -2055,11 +2062,7 @@ variable state  ( -- a-addr )  false state !
 
 
 : c"  ( Compi: 'ccc<quote>' -- ) ( Run: -- c-addr )
-  [char] " parse
-  dup s"buff tuck c!
-  char+ swap cmove ;
-
-; immediate compile-only
+  [char] " word ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2174,7 +2177,7 @@ $____ constant s\"buff  ( -- c-addr )
 
 
 : ;  ( Compi: colon-sys -- ) ( Run: R:nest-sys -- R: )
-  something ;
+  postpone exit  findable drop [ ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2374,6 +2377,13 @@ $____ constant s\"buff  ( -- c-addr )
 \ a word that will cause the outer interpreter to abort and dis-
 \ play an error message if an attempt is made to execute the
 \ word in interpretation state.
+
+
+: header,  ( c-addr u -- )
+  dup , string, ( something ) ;
+
+\ Compile a dictionary header for a new dictionary definition
+\ using the name with address c-addr and length u.
 
 
 
