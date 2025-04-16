@@ -1340,7 +1340,7 @@ synonym c!-  ( char c-addr1 -- c-addr2 )  !-
 
 |: ."  ( Compi: 'ccc<quote>' -- ) ( Run: -- )
   [char] " parse postpone sliteral type ;| immediate
-
+n
 \ Interpretation: Parse ccc delimited by " (double-quote). Dis-
 \ play ccc.
 
@@ -1796,10 +1796,13 @@ $____ opcode execute  ( i*x xt -- j*x )
 \ returned while not compiling.
 
 
-: >body  ( xt -- a-addr )  something ;
+: >body  ( xt -- a-addr )  ; immediate
 
 \ a-addr is the address of the data field of the definition with
 \ execution token xt.
+
+\ In Opforth, the contents of an execution token are the address
+\ of the data field.
 
 \ An ambiguous condition exists if xt is not the execution token
 \ of a word defined by CREATE.
@@ -1989,7 +1992,8 @@ variable state  ( -- a-addr )  false state !
 
 
 : s"  ( Inter: 'ccc<quote>' -- c-addr u )
-  [char] " parse 2dup s"buff swap cmove ;
+  [char] " parse
+  2dup s"buff swap cmove ;
 
 |: s"  ( Compi: 'ccc<quote>' -- ) ( Run: -- c-addr u )
   [char] " parse postpone sliteral ;| immediate
@@ -2052,7 +2056,8 @@ variable state  ( -- a-addr )  false state !
 
 : c"  ( Compi: 'ccc<quote>' -- ) ( Run: -- c-addr )
   [char] " parse
-  ( c-addr1 u )
+  dup s"buff tuck c!
+  char+ swap cmove ;
 
 ; immediate compile-only
 
