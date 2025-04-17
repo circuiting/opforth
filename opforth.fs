@@ -376,6 +376,8 @@
 \ Helper Definition
 
 \ compile-only    --
+\ header,         c-addr u --
+\ findable        --
 
 
 \ Core Control Flow
@@ -2386,6 +2388,12 @@ $____ constant s\"buff  ( -- c-addr )
 \ using the name with address c-addr and length u.
 
 
+: findable  ( -- )  something ;
+
+\ Put the most recent definition at the front of the search or-
+\ der.
+
+
 
 \ Core Control Flow Words
 
@@ -2664,7 +2672,8 @@ $____ opcode exit  ( Compi: -- ) ( Exe: R:nest-sys -- R: )
 \ of the same type.
 
 
-: case  ( Compi: -- case-sys ) ( Run: -- )  something ;
+: case  ( Compi: -- case-sys ) ( Run: -- )
+  here ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2674,7 +2683,9 @@ $____ opcode exit  ( Compi: -- ) ( Exe: R:nest-sys -- R: )
 \ Runtime: Continue execution.
 
 
-: of  ( Compi: -- of-sys ) ( Run: x1 x2 -- |x1 )  something ;
+: of  ( Compi: -- of-sys ) ( Run: x1 x2 -- |x1 )
+  postpone over  postpone =  postpone ?branch  here 0 ,
+  postpone drop ; immediate compile-only
 
 \ Interpretation: Undefined
 
