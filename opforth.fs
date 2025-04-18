@@ -2674,7 +2674,7 @@ $____ opcode exit  ( Compi: -- ) ( Exe: R:nest-sys -- R: )
 
 
 : case  ( Compi: -- case-sys ) ( Run: -- )
-  here ; immediate compile-only
+  0 ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2702,7 +2702,8 @@ $____ opcode exit  ( Compi: -- ) ( Exe: R:nest-sys -- R: )
 
 
 : endof  ( Compi: case-sys1 of-sys -- case-sys2 ) ( Run: -- )
-  something ;
+  postpone branch  here rot ,
+  here rot ! ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2712,8 +2713,17 @@ $____ opcode exit  ( Compi: -- ) ( Exe: R:nest-sys -- R: )
 \ mantics described below. Replace case-sys1 with case-sys2,
 \ which will be resolved by ENDCASE.
 
+\ Runtime: Continue execution at the location specified by the
+\ consumer of case-sys2.
 
-: endcase  ( Compi: case-sys -- ) ( Run: x -- )  something ;
+
+: endcase  ( Compi: case-sys -- ) ( Run: x -- )
+  here >r
+  begin
+    dup while
+    dup @ r@ rot !
+  repeat
+  drop rdrop postpone drop ; immediate compile-only
 
 \ Interpretation: Undefined
 
