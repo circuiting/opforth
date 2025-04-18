@@ -2532,7 +2532,8 @@ $____ constant s\"buff  ( -- c-addr )
 
 : +loop  ( Compi: do-sys -- )
   ( Run: n R:loop-sys1 -- |loop-sys2 )
-  postpone r>+  postpone ?loop ,
+  postpone r@+  postpone r>  postpone r@  postpone third
+  postpone >r  postpone within  postpone 0=  postpone ?branch ,
   dup if here swap ! else drop then ; immediate compile-only
 
 \ Interpretation: Undefined
@@ -2749,14 +2750,20 @@ $____ opcode ?branch  ( Compi: -- ) ( Exe: x -- )
 
 
 $____ opcode ?loop  ( Compi: -- )
-  ( Exe: n1 R:n2|u -- |loop-sys )
+  ( Exe: n1 R:n2|u -- | R:n2|u R:n1 )
   compile-only
 
-\ Prototype (to be revised):
+\ Interpretation: Undefined
 
 \ Compilation: Compile the execution semantics below.
 
-\ Execution: ?
+\ Execution: If the top data stack item n1 is less than the top
+\ return stack item, transfer n1 to the return stack and contin-
+\ ue execution at the address contained in the next consecutive
+\ cell after the ?LOOP opcode. Otherwise, remove both the top
+\ data stack item and the top return stack item, and then con-
+\ tinue execution in line.
+
 
 
 \ Core Outer Interpreter Words
