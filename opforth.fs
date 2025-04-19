@@ -278,6 +278,8 @@
 
 \ textinbuff     -- c-addr
 \ #textinbuff    -- u
+\ isspace?       char -- flag
+\ isnotspace?    char -- flag
 
 
 \ Core Query
@@ -1345,7 +1347,7 @@ synonym c!-  ( char c-addr1 -- c-addr2 )  !-
 
 |: ."  ( Compi: 'ccc<quote>' -- ) ( Run: -- )
   [char] " parse postpone sliteral type ;| immediate
-n
+
 \ Interpretation: Parse ccc delimited by " (double-quote). Dis-
 \ play ccc.
 
@@ -1419,13 +1421,13 @@ $0020 constant bl  ( -- char )
 \ Core Numeric String Words
 
 
-: .  ( n -- )  something ;
+: .  ( n -- )  s>d d. ;
 
 \ Display a text representation of the integer n followed by a
 \ space.
 
 
-: u.  ( u -- )  something ;
+: u.  ( u -- )  0 ud. ;
 
 \ Display a text representation of the unsigned integer u fol-
 \ lowed by a space.
@@ -1667,7 +1669,12 @@ variable >in  ( -- a-addr )  0 >in !
 \ string has zero length.
 
 
-: parse-name  ( '<spaces>name<space>' -- c-addr u )  something ;
+: parse-name  ( '<spaces>name<space>' -- c-addr u )
+  source >in @ /string
+  ['] isspace? xt-skip over >r
+  ['] isnotspace? xt-skip
+  2dup 1 min + source drop - >in !
+  drop r> tuck - ;
 
 \ Skip leading spaces and parse name delimited by a space.
 \ c-addr is the address of the parsed string within the input
@@ -1728,6 +1735,18 @@ $____ constant textinbuff  ( -- c-addr )
 
 \ u is the number of characters in the text input buffer used by
 \ the Forth outer interpreter.
+
+
+: isspace?  ( char -- flag )  bl 1+ u< ;
+
+\ If char is the space character, flag is true. Otherwise flag
+\ is false.
+
+
+: isnotspace?  ( char -- flag )  isspace? 0= ;
+
+\ If char is the space character, flag is false. Otherwise flag
+\ is true.
 
 
 
