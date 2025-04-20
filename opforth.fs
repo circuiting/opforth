@@ -281,6 +281,7 @@
 \ textindev       -- a-addr
 \ invalidchar?    char -- flag
 \ space?          char -- flag
+\ xt-skip         addr1 n1 xt -- addr2 n2
 
 
 \ Core Query
@@ -1663,7 +1664,9 @@ variable >in  ( -- a-addr )  0 >in !
 \ the end of the line.
 
 
-: parse  ( 'ccc<char>' char -- c-addr u )  something ;
+: parse  ( 'ccc<char>' char -- c-addr u )
+  source >in @ /string rot
+  :noname literal = ; xt-skip ;
 
 \ Parse ccc delimited by the delimiter char. c-addr is the ad-
 \ dress of the parsed string within the input buffer, and u is
@@ -1745,7 +1748,8 @@ $____ constant textindev  ( -- c-addr )
 \ cally a keybord or a serial port.
 
 
-: invalidchar?  ( char -- flag )  something ;
+: invalidchar?  ( char -- flag )
+  bl s" MAX_CHAR" environment? within ;
 
 \ If char is a valid character in the character set, flag is
 \ true. Otherwise flag is false.
@@ -1753,8 +1757,23 @@ $____ constant textindev  ( -- c-addr )
 
 : space?  ( char -- flag )  bl 1+ u< ;
 
-\ If char is the space character, flag is true. Otherwise flag
-\ is false.
+\ If char has a character code less than or equal to that of the
+\ space character, flag is true. Otherwise flag is false.
+
+
+: xt-skip  ( c-addr1 n1 xt -- c-addr2 n2 )
+  >r
+  begin
+    dup while
+    over c@ r@ execute while
+    1 /string
+  repeat then
+  r> drop ;
+
+\ Adjust the string with address c-addr1 and length n1 by skip-
+\ ping all leading characters satisfying xt ( char -- flag ).
+\ c-addr2 is the address of the first character that causes xt
+\ to return a false flag.
 
 
 
