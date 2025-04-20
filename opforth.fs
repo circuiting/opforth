@@ -282,6 +282,8 @@
 \ invalidchar?    char -- flag
 \ space?          char -- flag
 \ xt-skip         addr1 n1 xt -- addr2 n2
+\ parse-area      -- c-addr u
+\ advance>in      c-addr u -- c-addr u
 
 
 \ Core Query
@@ -1637,10 +1639,11 @@ variable >in  ( -- a-addr )  0 >in !
 
 
 : word  ( '<chars>ccc<char>' char -- c-addr )
-  ( skip-delimiters )
-  parse
-  dup s"buf tuck c!
-  char+ swap cmove  ;
+  >r parse-area r@                ( c-addr1 u1 char R:char )
+  :noname literal = ; xt-skip r>  ( c-addr2 u2 char )
+  :noname literal <> ; xt-skip    ( c-addr3 u3 )
+  advance>in                      ( c-addr3 u3 )
+  s"buf swap cmove s"buf ;
 
 \ Skip leading delimiters and parse ccc delimited by char. Write
 \ the parsed word to a dedicated buffer as a counted string, and
@@ -1665,8 +1668,9 @@ variable >in  ( -- a-addr )  0 >in !
 
 
 : parse  ( 'ccc<char>' char -- c-addr u )
-  source >in @ /string rot
-  :noname literal = ; xt-skip ;
+  parse-area rot                ( c-addr u1 char )
+  :noname literal <> ; xt-skip  ( c-addr u )
+  advance>in ;
 
 \ Parse ccc delimited by the delimiter char. c-addr is the ad-
 \ dress of the parsed string within the input buffer, and u is
@@ -1675,10 +1679,10 @@ variable >in  ( -- a-addr )  0 >in !
 
 
 : parse-name  ( '<spaces>name<space>' -- c-addr u )
-  source >in @ /string
-  ['] space? xt-skip over >r
-  ['] space? 0= xt-skip
-  2dup 1 min + source drop - >in !
+  parse-area                  ( c-addr1 u1 )
+  ['] space? xt-skip over >r  ( c-addr u2 R:c-addr )
+  ['] space? 0= xt-skip       ( c-addr2 u3 R:c-addr )
+  advance>in                  ( c-addr2 u3 R:c-addr )
   drop r> tuck - ;
 
 \ Skip leading spaces and parse name delimited by a space.
@@ -1761,7 +1765,7 @@ $____ constant textindev  ( -- c-addr )
 \ space character, flag is true. Otherwise flag is false.
 
 
-: xt-skip  ( c-addr1 n1 xt -- c-addr2 n2 )
+: xt-skip  ( c-addr1 u1 xt -- c-addr2 u2 )
   >r
   begin
     dup while
@@ -1770,10 +1774,25 @@ $____ constant textindev  ( -- c-addr )
   repeat then
   r> drop ;
 
-\ Adjust the string with address c-addr1 and length n1 by skip-
+\ Adjust the string with address c-addr1 and length u1 by skip-
 \ ping all leading characters satisfying xt ( char -- flag ).
 \ c-addr2 is the address of the first character that causes xt
-\ to return a false flag.
+\ to return a false flag, and u2 is the length of the adjusted
+\ string.
+
+
+: parse-area  ( -- c-addr u )  source >in @ /string ;
+
+\ c-addr is the address of the parse area pointed to by >IN. u
+\ is the number of characters in the parse area.
+
+
+: advance>in  ( c-addr u -- c-addr u )
+  2dup 1 min + textinbuf = >in ! ;
+
+\ Given a string that has starting address c-addr within the in-
+\ put buffer and length u, set >IN to point to the first charac-
+\ ter past the end of the string.
 
 
 
