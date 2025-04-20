@@ -276,10 +276,11 @@
 
 \ Helper Text Input
 
-\ textinbuff     -- c-addr
-\ #textinbuff    -- u
-\ isspace?       char -- flag
-\ isnotspace?    char -- flag
+\ textinbuf       -- c-addr
+\ #textinbuf      -- u
+\ textindev       -- a-addr
+\ invalidchar?    char -- flag
+\ space?          char -- flag
 
 
 \ Core Query
@@ -339,13 +340,13 @@
 
 \ Helper Compiler
 
-\ lit        -- x
-\ pc         -- a-addr
-\ dp         -- a-addr
-\ dpmax      -- a-addr
-\ 2,         x1 x2 --
-\ s"buff     -- c-addr
-\ s\"buff    -- c-addr
+\ lit       -- x
+\ pc        -- a-addr
+\ dp        -- a-addr
+\ dpmax     -- a-addr
+\ 2,        x1 x2 --
+\ s"buf     -- c-addr
+\ s\"buf    -- c-addr
 
 
 \ Core Definition
@@ -1254,11 +1255,7 @@ synonym c!  ( char c-addr -- )  !
 
 
 : fill  ( c-addr u char -- )
-  -rot             ( char c-addr u )
-  0 ?do            ( char c-addr )
-    over swap c!+  ( char c-addr+i+1 )
-  loop             ( char c-addr+u )
-  2drop ;
+  -rot 0 ?do over swap c!+ loop 2drop ;
 
 \ If u is greater than zero, write char to each of the u consec-
 \ utive characters of memory beginning at address c-addr.
@@ -1433,13 +1430,13 @@ $0020 constant bl  ( -- char )
 \ lowed by a space.
 
 
-: <#  ( -- )  holdbuff to holdptr ;
+: <#  ( -- )  holdbuf to holdptr ;
 
 \ Start a number-to-string conversion. The closing delimiter for
 \ the conversion expression is #>.
 
 
-: #>  ( xd -- c-addr u )  2drop holdbuff dup holdptr - ;
+: #>  ( xd -- c-addr u )  2drop holdbuf dup holdptr - ;
 
 \ Finish a number-to-string conversion by dropping xd and making
 \ the string available. c-addr is the starting address of the
@@ -1570,12 +1567,12 @@ $____ value holdptr  ( -- c-addr )
 \ be written to c-addr.
 
 
-$____ constant holdbuff  ( -- c-addr )
+$____ constant holdbuf  ( -- c-addr )
 
 \ c-addr is the highest address in the buffer that is used by
 \ <# #> delimited number-to-string conversion expressions to
-\ hold the string being built. holdptr is set to holdbuff when
-\ a conversion is started.
+\ hold the string being built. holdptr is set to holdbuf when a
+\ conversion is started.
 
 
 
@@ -1592,7 +1589,7 @@ $____ constant holdbuff  ( -- c-addr )
 \ theses.
 
 
-: source  ( -- c-addr u )  textinbuff #textinbuff ;
+: source  ( -- c-addr u )  textinbuf #textinbuf ;
 
 \ c-addr is the address of the text input buffer used by the
 \ Forth outer interpreter. u is the number of characters in the
@@ -1606,7 +1603,12 @@ variable >in  ( -- a-addr )  0 >in !
 \ parse area.
 
 
-: key  ( -- char )  something ;
+: key  ( -- char )
+  begin
+    textindev c@
+    dup invalidchar? while
+    drop
+  repeat ;
 
 \ Receive one character char from the text input device. Key-
 \ board events that do not correspond to characters in the char-
@@ -1636,7 +1638,7 @@ variable >in  ( -- a-addr )  0 >in !
 : word  ( '<chars>ccc<char>' char -- c-addr )
   ( skip-delimiters )
   parse
-  dup s"buff tuck c!
+  dup s"buf tuck c!
   char+ swap cmove  ;
 
 \ Skip leading delimiters and parse ccc delimited by char. Write
@@ -1671,8 +1673,8 @@ variable >in  ( -- a-addr )  0 >in !
 
 : parse-name  ( '<spaces>name<space>' -- c-addr u )
   source >in @ /string
-  ['] isspace? xt-skip over >r
-  ['] isnotspace? xt-skip
+  ['] space? xt-skip over >r
+  ['] space? 0= xt-skip
   2dup 1 min + source drop - >in !
   drop r> tuck - ;
 
@@ -1725,28 +1727,34 @@ variable >in  ( -- a-addr )  0 >in !
 \ Helper Text Input Words
 
 
-$____ constant textinbuff  ( -- c-addr )
+$____ constant textinbuf  ( -- c-addr )
 
 \ c-addr is the address of the text input buffer used by the
 \ Forth outer interpreter.
 
 
-0 value #textinbuff  ( -- u )
+0 value #textinbuf  ( -- u )
 
 \ u is the number of characters in the text input buffer used by
 \ the Forth outer interpreter.
 
 
-: isspace?  ( char -- flag )  bl 1+ u< ;
+$____ constant textindev  ( -- c-addr )
+
+\ c-addr is the address of the text input device, which is typi-
+\ cally a keybord or a serial port.
+
+
+: invalidchar?  ( char -- flag )  something ;
+
+\ If char is a valid character in the character set, flag is
+\ true. Otherwise flag is false.
+
+
+: space?  ( char -- flag )  bl 1+ u< ;
 
 \ If char is the space character, flag is true. Otherwise flag
 \ is false.
-
-
-: isnotspace?  ( char -- flag )  isspace? 0= ;
-
-\ If char is the space character, flag is false. Otherwise flag
-\ is true.
 
 
 
@@ -2021,7 +2029,7 @@ variable state  ( -- a-addr )  false state !
 
 : s"  ( Inter: 'ccc<quote>' -- c-addr u )
   [char] " parse
-  2dup s"buff swap cmove ;
+  2dup s"buf swap cmove ;
 
 |: s"  ( Compi: 'ccc<quote>' -- ) ( Run: -- c-addr u )
   [char] " parse postpone sliteral ;| immediate
@@ -2163,12 +2171,12 @@ $____ value dpmax  ( -- a-addr )
 \ pointer.
 
 
-$____ constant s"buff  ( -- c-addr )
+$____ constant s"buf  ( -- c-addr )
 
 \ c-addr is the address of the buffer used by S".
 
 
-$____ constant s\"buff  ( -- c-addr )
+$____ constant s\"buf  ( -- c-addr )
 
 \ c-addr is the address of the buffer used by S\".
 
