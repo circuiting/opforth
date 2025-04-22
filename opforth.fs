@@ -247,8 +247,8 @@
 
 \ Helper Numeric String
 
-\ holdptr     -- c-addr
-\ holdbuff    -- c-addr
+\ holdptr    -- c-addr
+\ holdbuf    -- c-addr
 
 
 \ Core Text Input
@@ -281,9 +281,12 @@
 \ textindev       -- a-addr
 \ invalidchar?    char -- flag
 \ space?          char -- flag
+\ eol?            char -- flag
+\ backslash?      char -- flag
 \ xt-skip         addr1 n1 xt -- addr2 n2
 \ parse-area      -- c-addr u
 \ advance>in      c-addr u -- c-addr u
+\ parse\          'ccc<char>' char -- c-addr u
 
 
 \ Core Query
@@ -629,7 +632,8 @@ $____ opcode tuck  ( x1 x2 -- x2 x1 x2 )
 
 
 : roll  ( xu xu-1...x0 u -- xu-1...x0 xu )
-  dup if
+  dup
+  if
     swap >r 1- recurse
     r> swap exit
   then drop ;
@@ -1619,7 +1623,13 @@ variable >in  ( -- a-addr )  0 >in !
 \ and those events are subsequently unavailable.
 
 
-: accept  ( c-addr +n1 -- +n2 )  something ;
+: accept  ( c-addr +n1 -- +n2 )
+  0 ?do
+    key
+    dup eol? if leave then
+    tuck emit c!+
+  loop
+  drop ;
 
 \ Receive a string of at most +n1 characters from the text input
 \ device, write the string to the memory region with starting
@@ -1715,19 +1725,26 @@ variable >in  ( -- a-addr )  0 >in !
 \ by the arguments is not the same as the current input source.
 
 
-: refill  ( -- flag )  something ;
+: refill  ( -- flag )
+  false source-id 0=
+  if
+    textin?
+    if
+      textinbuf textinmax accept drop true
+    then
+  then ;
 
-\ Attempt to fill the input buffer from the input source.
+\ Attempt to fill the text input buffer from the input source.
 
 \ When the input source is the text input device, attempt to re-
-\ ceive input into the terminal input buffer. If successful,
-\ make the result the input buffer, set >IN to zero, and return
-\ a true flag. Receipt of a line containing no characters is
-\ considered successful. If no input is available from the input
-\ source, return false.
+\ ceive characters into the text input buffer. If successful,
+\ the text input buffer contains the received characters, >IN is
+\ zero, and flag is true. Receipt of a line containing no char-
+\ acters is considered successful. If no input is available from
+\ the text input device, flag is false.
 
-\ When the input source is a string via EVALUATE, return false
-\ and perform no other action.
+\ When the input source is a string via EVALUATE, flag is false
+\ and no other action is performed.
 
 
 
@@ -1765,6 +1782,24 @@ $____ constant textindev  ( -- c-addr )
 \ space character, flag is true. Otherwise flag is false.
 
 
+: eol?  ( char -- flag )  $000a = ;
+
+\ If char is a line terminator, flag is true. Otherwise flag is
+\ false
+
+\ In Opforth, the line terminator character is ASCII $0a (new
+\ line), and the size of a character is 16 bits.
+
+
+: backslash?  ( char -- flag )  $005c = ;
+
+\ If char is a backslash character, flag is true. Otherwise flag
+\ is false.
+
+\ In Opforth, backslash is ASCII $5c and the size of a character
+\ is 16 bits.
+
+
 : xt-skip  ( c-addr1 u1 xt -- c-addr2 u2 )
   >r
   begin
@@ -1793,6 +1828,12 @@ $____ constant textindev  ( -- c-addr )
 \ Given a string that has starting address c-addr within the in-
 \ put buffer and length u, set >IN to point to the first charac-
 \ ter past the end of the string.
+
+
+: parse\  ( 'ccc<char>' char -- c-addr u )
+
+
+\ Description goes here
 
 
 
@@ -2088,13 +2129,79 @@ variable state  ( -- a-addr )  false state !
 \ Core-Ext Compiler Words
 
 
-: s\"  ( Compi: 'ccc<quote>' -- )  something ;
+: s\"  ( Compi: 'ccc<quote>' -- ) ( Run: -- c-addr u )
+  create
+    [char] m c, [char] x c, [char] " c, [char] \ c, [char] a c,
+    [char] b c, [char] e c, [char] f c, [char] l c, [char] n c,
+    [char] q c, [char] r c, [char] t c, [char] v c, [char] z c,
+    $0d c, $0a c, $22 c, $5c c, $07 c,
+    $08 c, $1b c, $0c c, $a0 c, $0a c,
+    $22 c, $0d c, $09 c, $0b c, $00 c,
+  does>
+    parse-area 0             ( a-addr c-addr1 u1 0 )
+    ?do                      ( a-addr c-addr1 )
+      c@+ [char] \ =         ( a-addr c-addr1+1 flag )
+      if                     ( a-addr c-addr1+1 )
+        c@+ third #15 0      ( a-addr c-addr1+2 char2 a-addr 15 0 )
+        do                   ( a-addr c-addr1+2 char2 a-addr )
+          c@ over =          ( a-addr c-addr1+2 char2 flag )
+          if                 ( a-addr c-addr1+2 char2 )
+            i                ( a-addr c-addr1+2 char2 u )
+            case             ( a-addr c-addr1+2 char2 u )
+            0 of third c@+ swap c@ endof  ( a-addr c-addr1+2 char2 $0d $0a )
+            1 of ( something ) endof      ( a-addr c-addr1+2 char2 )
+            ( default ) ( something )
+            endcase
+          then
+        loop
+      then
+      ( if character is char )
+        ( then leave )
+      ( copy character to s\"buf )
+    loop
+    ( cleanup ) ;
+
+
+: s\"  ( Compi: 'ccc<quote>' -- ) ( Run: -- c-addr u )
+  create
+    ( lookup table )
+  does>
+    parse-area 0           ( a-addr c-addr1 u1 0 )
+    ?do                    \ Iterate through the parse area
+      c@+ [char] \ =       ( a-addr c-addr1+1 flag )
+      if                   \ If the fetched character = backslash
+        c@+ #15 0          ( a-addr c-addr1+2 char1 15 0 )
+        do                 \ Iterate through lookup table
+          third c@ over =  ( a-addr c-addr1+2 char1 flag )
+          if               \ If the next char matches a lookup entry
+            i              \ Get the lookup table index
+            case                          \ Cases:
+            0 of third c@+ swap c@ endof  ( a-addr c-addr1+2 char1 $0d $0a )
+            1 of ( something ) endof
+            ( default ) ( something )
+            endcase
+          then
+        loop
+      then
+      ( if character is char )
+        ( then leave )
+      ( copy character to s\"buf )
+    loop
+    ( cleanup ) ;
+
+
+: s\"  ( Compi: 'ccc<quote>' -- ) ( Run: -- c-addr u )
+  create
+    ( lookup table )
+  does>
+    parse-area 0
+
 
 \ Interpretation: Undefined
 
 \ Compilation: Parse ccc delimited by " (double-quote) using the
-\ translation rules below. Compile the following runtime seman-
-\ tics.
+\ translation rules defined below. Compile the following runtime
+\ semantics.
 
 \ Runtime: Return the address c-addr and length u of a string
 \ consisting of the characters ccc. A program shall not alter
@@ -2113,7 +2220,7 @@ variable state  ( -- a-addr )  false state !
 \ \e                escape                     1b
 \ \f                form feed                  0c
 \ \l                line feed                  0a
-\ \m                carriage return line feed  0d,0a
+\ \m                carriage return line feed  0d 0a
 \ \n                new line                   0a
 \ \q                double quote               22
 \ \r                carriage return            0d
