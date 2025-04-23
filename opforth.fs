@@ -282,11 +282,9 @@
 \ invalidchar?    char -- flag
 \ space?          char -- flag
 \ eol?            char -- flag
-\ backslash?      char -- flag
 \ xt-skip         addr1 n1 xt -- addr2 n2
 \ parse-area      -- c-addr u
 \ advance>in      c-addr u -- c-addr u
-\ parse\          'ccc<char>' char -- c-addr u
 
 
 \ Core Query
@@ -1518,10 +1516,10 @@ variable base  ( -- a-addr )  decimal
 \ non-convertible character is encountered. + and - are non-
 \ convertible characters.
 
-\ c-addr2 is the location of the first unconverted character or
-\ the first character past the end of the string if the string
-\ was entirely converted. u2 is the number of unconverted char-
-\ acters in the string.
+\ ud2 is the converted number. c-addr2 is the location of the
+\ first unconverted character or the first character past the
+\ end of the string if the string was entirely converted. u2 is
+\ the number of unconverted characters in the string.
 
 \ An ambiguous condition exists if ud2 overflows during the con-
 \ version.
@@ -1791,15 +1789,6 @@ $____ constant textindev  ( -- c-addr )
 \ line), and the size of a character is 16 bits.
 
 
-: backslash?  ( char -- flag )  $005c = ;
-
-\ If char is a backslash character, flag is true. Otherwise flag
-\ is false.
-
-\ In Opforth, backslash is ASCII $5c and the size of a character
-\ is 16 bits.
-
-
 : xt-skip  ( c-addr1 u1 xt -- c-addr2 u2 )
   >r
   begin
@@ -1828,12 +1817,6 @@ $____ constant textindev  ( -- c-addr )
 \ Given a string that has starting address c-addr within the in-
 \ put buffer and length u, set >IN to point to the first charac-
 \ ter past the end of the string.
-
-
-: parse\  ( 'ccc<char>' char -- c-addr u )
-
-
-\ Description goes here
 
 
 
@@ -2131,71 +2114,41 @@ variable state  ( -- a-addr )  false state !
 
 : s\"  ( Compi: 'ccc<quote>' -- ) ( Run: -- c-addr u )
   create
-    [char] m c, [char] x c, [char] " c, [char] \ c, [char] a c,
-    [char] b c, [char] e c, [char] f c, [char] l c, [char] n c,
-    [char] q c, [char] r c, [char] t c, [char] v c, [char] z c,
-    $0d c, $0a c, $22 c, $5c c, $07 c,
-    $08 c, $1b c, $0c c, $a0 c, $0a c,
-    $22 c, $0d c, $09 c, $0b c, $00 c,
-  does>
-    parse-area 0             ( a-addr c-addr1 u1 0 )
-    ?do                      ( a-addr c-addr1 )
-      c@+ [char] \ =         ( a-addr c-addr1+1 flag )
-      if                     ( a-addr c-addr1+1 )
-        c@+ third #15 0      ( a-addr c-addr1+2 char2 a-addr 15 0 )
-        do                   ( a-addr c-addr1+2 char2 a-addr )
-          c@ over =          ( a-addr c-addr1+2 char2 flag )
-          if                 ( a-addr c-addr1+2 char2 )
-            i                ( a-addr c-addr1+2 char2 u )
-            case             ( a-addr c-addr1+2 char2 u )
-            0 of third c@+ swap c@ endof  ( a-addr c-addr1+2 char2 $0d $0a )
-            1 of ( something ) endof      ( a-addr c-addr1+2 char2 )
-            ( default ) ( something )
-            endcase
-          then
-        loop
-      then
-      ( if character is char )
-        ( then leave )
-      ( copy character to s\"buf )
-    loop
-    ( cleanup ) ;
-
-
-: s\"  ( Compi: 'ccc<quote>' -- ) ( Run: -- c-addr u )
-  create
     ( lookup table )
   does>
-    parse-area 0           ( a-addr c-addr1 u1 0 )
-    ?do                    \ Iterate through the parse area
-      c@+ [char] \ =       ( a-addr c-addr1+1 flag )
-      if                   \ If the fetched character = backslash
-        c@+ #15 0          ( a-addr c-addr1+2 char1 15 0 )
-        do                 \ Iterate through lookup table
-          third c@ over =  ( a-addr c-addr1+2 char1 flag )
-          if               \ If the next char matches a lookup entry
-            i              \ Get the lookup table index
-            case                          \ Cases:
-            0 of third c@+ swap c@ endof  ( a-addr c-addr1+2 char1 $0d $0a )
-            1 of ( something ) endof
-            ( default ) ( something )
-            endcase
-          then
-        loop
+    s\"buf parse-area 0           ( lut s\"buf textinbuf #textinbuf 0 )
+    do                            \ Iterate through the parse area
+      c@+ dup [char] \ =          ( lut s\"buf textinbuf+1 char1 flag )
+      if                          \ If char1 = backslash
+        drop dup c@               ( lut s\"buf textinbuf+1 char2 )
+        case
+        of                        \ Case m: Append $0d $0a
+          $0d rot c!+             ( lut textinbuf+1 s\"buf+1 )
+          $0a swap c!+ swap       ( lut s\"buf+2 textinbuf+1 )
+        endof
+        of                        \ Case x: Append 2-digit hex code
+          dup 2 chars +           ( lut s\"buf textinbuf+1 textinbuf+3 )
+          0 rot 0 swap 2          ( lut s\"buf textinbuf+3 0. textinbuf+1 2 )
+          hex >number decimal     ( lut s\"buf textinbuf+3 ud textinbuf+4 0 )
+          2drop drop rot c!+ swap ( lut s\"buf+1 textinbuf+3 )
+        endof
+        ( default )               \ Case default: Lookup or append as-is
+          swap >r swap >r         ( lut char2 R:textinbuf+1 R:s\"buf )
+          #11 0                   ( lut char2 #11 0 R:textinbuf+1 R:s\"buf )
+          do                      \ Iterate through LUT
+            over i + c@ 2dup =    ( lut char2 key flag R:... )
+            if                    \ If char2 = LUT key
+              nip #22 + leave     ( lut value R:... )
+            then                  ( lut char2 key R:... )
+            drop                  ( lut char2 R:... )
+          loop                    ( lut char R:textinbuf+x R:s\"buf )
+          r> c!+ r>               ( lut s\"buf+1 textinbuf+1 )
+        endcase                   ( lut s\"buf+x textinbuf+y )
+      else                        \ If char1 <> backslash
+        rot c!+ swap              ( lut s\"buf+1 textinbuf+1 )
       then
-      ( if character is char )
-        ( then leave )
-      ( copy character to s\"buf )
     loop
-    ( cleanup ) ;
-
-
-: s\"  ( Compi: 'ccc<quote>' -- ) ( Run: -- c-addr u )
-  create
-    ( lookup table )
-  does>
-    parse-area 0
-
+    drop nip s\"buf tuck - ;
 
 \ Interpretation: Undefined
 
