@@ -2112,43 +2112,23 @@ variable state  ( -- a-addr )  false state !
 \ Core-Ext Compiler Words
 
 
-: s\"  ( Compi: 'ccc<quote>' -- ) ( Run: -- c-addr u )
-  create
-    ( lookup table )
-  does>
-    s\"buf parse-area 0           ( lut s\"buf textinbuf #textinbuf 0 )
-    do                            \ Iterate through the parse area
-      c@+ dup [char] \ =          ( lut s\"buf textinbuf+1 char1 flag )
-      if                          \ If char1 = backslash
-        drop dup c@               ( lut s\"buf textinbuf+1 char2 )
-        case
-        of                        \ Case m: Append $0d $0a
-          $0d rot c!+             ( lut textinbuf+1 s\"buf+1 )
-          $0a swap c!+ swap       ( lut s\"buf+2 textinbuf+1 )
-        endof
-        of                        \ Case x: Append 2-digit hex code
-          dup 2 chars +           ( lut s\"buf textinbuf+1 textinbuf+3 )
-          0 rot 0 swap 2          ( lut s\"buf textinbuf+3 0. textinbuf+1 2 )
-          hex >number decimal     ( lut s\"buf textinbuf+3 ud textinbuf+4 0 )
-          2drop drop rot c!+ swap ( lut s\"buf+1 textinbuf+3 )
-        endof
-        ( default )               \ Case default: Lookup or append as-is
-          swap >r swap >r         ( lut char2 R:textinbuf+1 R:s\"buf )
-          #11 0                   ( lut char2 #11 0 R:textinbuf+1 R:s\"buf )
-          do                      \ Iterate through LUT
-            over i + c@ 2dup =    ( lut char2 key flag R:... )
-            if                    \ If char2 = LUT key
-              nip #22 + leave     ( lut value R:... )
-            then                  ( lut char2 key R:... )
-            drop                  ( lut char2 R:... )
-          loop                    ( lut char R:textinbuf+x R:s\"buf )
-          r> c!+ r>               ( lut s\"buf+1 textinbuf+1 )
-        endcase                   ( lut s\"buf+x textinbuf+y )
-      else                        \ If char1 <> backslash
-        rot c!+ swap              ( lut s\"buf+1 textinbuf+1 )
-      then
-    loop
-    drop nip s\"buf tuck - ;
+: s\"  ( Inter: 'ccc<quote>' -- c-addr u )
+  0 >r
+  begin
+    dup while
+    over c@ [char] " <> while
+    r>
+    case
+    1 of /lookup ( copy to buf ) >r endof
+    2 of 3 >r endof
+    3 of ( convert hex code ) ( copy to buf ) 0 >r endof
+    ( default ) ( copy to buf ) ( test for \ ) >r
+    endcase
+  repeat
+  rdrop ( cleanup ) ;
+
+|: s\"  ( Compi: 'ccc<quote>' -- ) ( Run: -- c-addr u )
+  [ s\" ] postpone sliteral ;| immediate
 
 \ Interpretation: Undefined
 
@@ -3283,7 +3263,7 @@ $____ opcode m-  ( d1|ud1 n -- d2|ud2 )
 \ u is the string length.
 
 
-: /string  ( c-addr1 u1 n -- c-addr2 u2 )  something ;
+: /string  ( c-addr1 u1 n -- c-addr2 u2 )  tuck - >r + r> ;
 
 \ Standard Forth description (to be revised):
 
