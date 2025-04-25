@@ -2112,21 +2112,6 @@ variable state  ( -- a-addr )  false state !
 \ Core-Ext Compiler Words
 
 
-: s\"  ( Inter: 'ccc<quote>' -- c-addr u )
-  0 >r
-  begin
-    dup while
-    over c@ [char] " <> while
-    r>
-    case
-    1 of /lookup ( copy to buf ) >r endof
-    2 of 3 >r endof
-    3 of ( convert hex code ) ( copy to buf ) 0 >r endof
-    ( default ) ( copy to buf ) ( test for \ ) >r
-    endcase
-  repeat
-  rdrop ( cleanup ) ;
-
 |: s\"  ( Compi: 'ccc<quote>' -- ) ( Run: -- c-addr u )
   [ s\" ] postpone sliteral ;| immediate
 
@@ -2259,7 +2244,54 @@ $____ constant s\"buf  ( -- c-addr )
 \ c-addr is the address of the buffer used by S\".
 
 
-: \lookup  ( char1 -- 0 | char2 1 | char3 char4 2 )
+: s\"step  ( c-addr1 u1 -- c-addr2 u2 )
+  dup 0= if exit then                   ( c-addr u )
+  /char                                 ( c-addr u char )
+  dup [char] " = if drop exit then      ( c-addr u |char )
+  dup [char] \ = if                     ( c-addr u char )
+    drop /char dup [char] " = if        ( c-addr u char )
+      over 1 = if                       ( c-addr u char )
+        drop [char] \ s"append exit     ( c-addr u )
+      then                              ( c-addr u char )
+      s"append exit                     ( c-addr u )
+    then                                ( c-addr u char )
+    dup [char] x = if                   ( c-addr u char )
+      over 1 = if s"append exit then    ( c-addr u char )
+      drop /char dup not-hex? if        ( c-addr u char )
+        [char] \ s"append               ( c-addr u char )
+        [char] x s"append               ( c-addr u char )
+        s"append exit                   ( c-addr u )
+      then                              ( c-addr u char )
+      drop /char dup not-hex? if        ( c-addr u char )
+        [char] \ s"append               ( c-addr u char )
+        [char] x s"append               ( c-addr u char )
+        third c@ s"append               ( c-addr u char )
+        s"append exit                   ( c-addr u )
+      then                              ( c-addr u char )
+      drop over 0 tuck swap 2           ( c-addr u 0. c-addr 2 )
+      >number 2drop drop s"append exit  ( c-addr u )
+    then                                ( c-addr u char )
+    \lookup
+
+
+: /char  ( c-addr1 u1 -- c-addr2 u2 char )
+  char- >r c@+ r> swap ;
+
+
+: s"append  ( char -- )  s"ptr c!+ to s"ptr ;
+
+
+: hex?  ( char -- flag )
+  dup [char] 0 [char] 9 1+ within >r
+  dup [char] A [char] F 1+ within >r
+  dup [char] a [char] f 1+ within
+  r> or r> or ;
+
+
+: not-hex?  ( char -- flag )  hex? 0= ;
+
+
+: \lookup  ( char -- c-addr u )
   create
     [char] a c,  $07 c,
     [char] b c,  $08 c,
@@ -2267,23 +2299,13 @@ $____ constant s\"buf  ( -- c-addr )
     [char] f c,  $0c c,
     [char] l c,  $0a c,
     [char] n c,  $0a c,
-    [char] q c,  $22 c,
     [char] r c,  $0d c,
     [char] t c,  $09 c,
     [char] v c,  $0b c,
     [char] z c,  $00 c,
+    [char] m c,  $0d c, $0a c,
   does>
-    swap
-    case
-    [char] x of drop 0 endof
-    [char] m of drop $0d $0a 2 endof
-    ( default ) swap #11 0
-    do
-      c@+ third =
-      if c@ swap leave then
-    loop
-    drop 1
-    endcase ;
+    ( something ) ;
 
 
 
