@@ -282,6 +282,8 @@
 \ invalidchar?    char -- flag
 \ space?          char -- flag
 \ eol?            char -- flag
+\ hex?            char -- flag
+\ not-hex?        char -- flag
 \ xt-skip         addr1 n1 xt -- addr2 n2
 \ parse-area      -- c-addr u
 \ advance>in      c-addr u -- c-addr u
@@ -344,13 +346,17 @@
 
 \ Helper Compiler
 
-\ lit       -- x
-\ pc        -- a-addr
-\ dp        -- a-addr
-\ dpmax     -- a-addr
-\ 2,        x1 x2 --
-\ s"buf     -- c-addr
-\ s\"buf    -- c-addr
+\ lit         -- x
+\ pc          -- a-addr
+\ dp          -- a-addr
+\ dpmax       -- a-addr
+\ 2,          x1 x2 --
+\ s"buf       -- c-addr
+\ s\"buf      -- c-addr
+\ s"ptr       -- c-addr
+\ s\"step     c-addr1 u1 -- c-addr2 u2
+\ s"append    char --
+\ \lookup     char1 -- char2 false | char3 char4 true
 
 
 \ Core Definition
@@ -500,6 +506,11 @@
 \ replaces      c-addr1 u1 c-addr2 u2 --
 \ unescape      c-addr1 u1 c-addr2 -- c-addr2 u2
 \ substitute    c-addr1 u1 c-addr2 u2 -- c-addr3 u3 n
+
+
+\ Helper String
+
+\ /char  ( c-addr1 u1 -- c-addr2 u2 char )
 
 
 \ Facility
@@ -1789,6 +1800,20 @@ $____ constant textindev  ( -- c-addr )
 \ line), and the size of a character is 16 bits.
 
 
+: hex?  ( char -- flag )
+  dup [char] 0 [char] 9 1+ within >r
+  dup [char] A [char] F 1+ within >r
+  dup [char] a [char] f 1+ within
+  r> or r> or ;
+
+\ Description something something
+
+
+: not-hex?  ( char -- flag )  hex? 0= ;
+
+\ Description something something
+
+
 : xt-skip  ( c-addr1 u1 xt -- c-addr2 u2 )
   >r
   begin
@@ -2244,6 +2269,11 @@ $____ constant s\"buf  ( -- c-addr )
 \ c-addr is the address of the buffer used by S\".
 
 
+$____ value s"ptr  ( -- c-addr )
+
+\ Description something something
+
+
 : s\"step  ( c-addr1 u1 -- c-addr2 u2 )
   dup 0= if exit then                   ( c-addr u )
   /char                                 ( c-addr u char )
@@ -2271,27 +2301,20 @@ $____ constant s\"buf  ( -- c-addr )
       drop over 0 tuck swap 2           ( c-addr u 0. c-addr 2 )
       >number 2drop drop s"append exit  ( c-addr u )
     then                                ( c-addr u char )
-    \lookup
+    \lookup if                          ( c-addr u char |char )
+      s"append                          ( c-addr u char )
+    then                                ( c-addr u char )
+    s"append exit ;                     ( c-addr u )
 
-
-: /char  ( c-addr1 u1 -- c-addr2 u2 char )
-  char- >r c@+ r> swap ;
+\ Description something something
 
 
 : s"append  ( char -- )  s"ptr c!+ to s"ptr ;
 
-
-: hex?  ( char -- flag )
-  dup [char] 0 [char] 9 1+ within >r
-  dup [char] A [char] F 1+ within >r
-  dup [char] a [char] f 1+ within
-  r> or r> or ;
+\ Description something something
 
 
-: not-hex?  ( char -- flag )  hex? 0= ;
-
-
-: \lookup  ( char -- c-addr u )
+: \lookup  ( char1 -- char2 false | char3 char4 true )
   create
     [char] a c,  $07 c,
     [char] b c,  $08 c,
@@ -2303,9 +2326,18 @@ $____ constant s\"buf  ( -- c-addr )
     [char] t c,  $09 c,
     [char] v c,  $0b c,
     [char] z c,  $00 c,
-    [char] m c,  $0d c, $0a c,
+    [char] m c,  $0a c, $0d c,
   does>
-    ( something ) ;
+    c@+ dup [char] m = if          ( char lut+1 key )
+      third = if                   ( char lut+1 )
+        nip c@+ swap c@ true exit  ( $0a $0d true )
+      then                         ( char lut+1 )
+      drop false exit              ( char false )
+    then                           ( char lut+1 key )
+    third = if                     ( char lut+1 )
+      nip c@ false exit            ( char2 false )
+    then                           ( char lut+1 )
+    recurse exit ;
 
 
 
@@ -3440,6 +3472,16 @@ $____ opcode m-  ( d1|ud1 n -- d2|ud2 )
 \ If after processing any pairs of delimiters, the residue of
 \ the input string contains a single delimiter, the residue is
 \ passed unchanged to the output.
+
+
+
+\ Helper String Words
+
+
+: /char  ( c-addr1 u1 -- c-addr2 u2 char )
+  char- >r c@+ r> swap ;
+
+\ Description something something
 
 
 
