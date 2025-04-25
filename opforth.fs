@@ -2259,6 +2259,33 @@ $____ constant s\"buf  ( -- c-addr )
 \ c-addr is the address of the buffer used by S\".
 
 
+: \lookup  ( char1 -- 0 | char2 1 | char3 char4 2 )
+  create
+    [char] a c,  $07 c,
+    [char] b c,  $08 c,
+    [char] e c,  $1b c,
+    [char] f c,  $0c c,
+    [char] l c,  $0a c,
+    [char] n c,  $0a c,
+    [char] q c,  $22 c,
+    [char] r c,  $0d c,
+    [char] t c,  $09 c,
+    [char] v c,  $0b c,
+    [char] z c,  $00 c,
+  does>
+    swap
+    case
+    [char] x of drop 0 endof
+    [char] m of drop $0d $0a 2 endof
+    ( default ) swap #11 0
+    do
+      c@+ third =
+      if c@ swap leave then
+    loop
+    drop 1
+    endcase ;
+
+
 
 \ Core Definition Words
 
