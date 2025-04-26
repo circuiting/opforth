@@ -391,6 +391,7 @@
 \ compile-only    --
 \ header,         c-addr u --
 \ findable        --
+\ defcount        -- c-addr
 
 
 \ Core Control Flow
@@ -2137,6 +2138,8 @@ variable state  ( -- a-addr )  false state !
 \ Core-Ext Compiler Words
 
 
+: s\"  ( Inter: 'ccc<quote>' -- c-addr u )  something ;
+
 |: s\"  ( Compi: 'ccc<quote>' -- ) ( Run: -- c-addr u )
   [ s\" ] postpone sliteral ;| immediate
 
@@ -2379,7 +2382,7 @@ $____ value s"ptr  ( -- c-addr )
 \ turn address nest-sys.
 
 
-: immediate  ( -- )  something ;
+: immediate  ( -- )  defcount c@ $8000 or to defcount ;
 
 \ Make the most recent definition an immediate word.
 
@@ -2559,7 +2562,7 @@ $____ value s"ptr  ( -- c-addr )
 \ Helper Definition Words
 
 
-: compile-only  ( -- )  something ;
+: compile-only  ( -- )  defcount c@ $4000 or to defcount ;
 
 \ Make the most recent definition a compile-only word, which is
 \ a word that will cause the outer interpreter to abort and dis-
@@ -2568,6 +2571,7 @@ $____ value s"ptr  ( -- c-addr )
 
 
 : header,  ( c-addr u -- )
+  here to defcount
   dup , string, ( something ) ;
 
 \ Compile a dictionary header for a new dictionary definition
@@ -2578,6 +2582,11 @@ $____ value s"ptr  ( -- c-addr )
 
 \ Put the most recent definition at the front of the search or-
 \ der.
+
+
+0 value defcount  ( -- c-addr )
+
+\ Description something something
 
 
 
