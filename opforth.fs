@@ -392,6 +392,8 @@
 \ header,         c-addr u --
 \ findable        --
 \ defcount        -- c-addr
+\ dlink           -- a-addr
+\ deflink         -- a-addr
 
 
 \ Core Control Flow
@@ -2572,13 +2574,15 @@ $____ value s"ptr  ( -- c-addr )
 
 : header,  ( c-addr u -- )
   here to defcount
-  dup , string, ( something ) ;
+  dup , string,
+  here to deflink
+  dlink , ;
 
 \ Compile a dictionary header for a new dictionary definition
 \ using the name with address c-addr and length u.
 
 
-: findable  ( -- )  something ;
+: findable  ( -- )  deflink to dlink ;
 
 \ Put the most recent definition at the front of the search or-
 \ der.
@@ -2587,6 +2591,19 @@ $____ value s"ptr  ( -- c-addr )
 0 value defcount  ( -- c-addr )
 
 \ Description something something
+
+
+0 value deflink  ( - a-addr )
+
+\ a-addr is the link field address of the most recent defini-
+\ tion. DEFLINK is used as temporary storage when a definition
+\ has been started but has not been made findable yet.
+
+
+0 value dlink  ( -- a-addr )
+
+\ a-addr is the head link of the linked list used to find words
+\ in the dictionary.
 
 
 
