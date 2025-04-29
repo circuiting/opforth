@@ -219,7 +219,9 @@
 
 \ Helper Text Display
 
-\ textcursor    -- a-addr
+\ textcursor     -- u
+\ textcolumns    -- u
+\ textrows       -- u
 
 
 \ Core Numeric String
@@ -1373,7 +1375,8 @@ synonym c!-  ( char c-addr1 -- c-addr2 )  !-
 \ Runtime: Display ccc.
 
 
-: emit  ( x -- )  something ;
+: emit  ( x -- )
+  dup validchar? if textdisplay textcursor + c! then ;
 
 \ If x is a graphic character, display x.
 
@@ -1387,7 +1390,10 @@ synonym c!-  ( char c-addr1 -- c-addr2 )  !-
 \ ress c-addr and length u.
 
 
-: cr  ( -- )  0 textcursor ! ;
+: cr  ( -- )
+  textcursor textcolumns / 1+
+  textrows <> and
+  to textcursor ;
 
 \ Position the text cursor at the beginning of the next line.
 
@@ -1424,13 +1430,26 @@ $0020 constant bl  ( -- char )
 \ Helper Text Display Words
 
 
-2variable textcursor  ( -- a-addr )  0. textcursor 2!
+$____ constant textdisplay  ( -- c-addr )
 
-\ a-addr is the address of a cell containing the column (y coor-
-\ dinate) of the text cursor. The next consecutive cell after
-\ a-addr contains the row (x coordinate). The next character to
-\ be displayed will be displayed at these coordinates. Column
-\ zero, row zero is the upper left corner of the display device.
+\ Description something something
+
+
+0 value textcursor  ( -- u )
+
+\ Description something something
+
+
+#64 value textcolumns  ( -- u )
+
+\ u is the number of columns available for displaying text char-
+\ acters.
+
+
+#20 value textrows  ( -- u )
+
+\ u is the number of rows available for displaying text charac-
+\ ters.
 
 
 
@@ -3524,7 +3543,7 @@ $____ opcode m-  ( d1|ud1 n -- d2|ud2 )
 \ printer, PAGE performs a form feed.
 
 
-: at-xy  ( u1 u2 -- )  swap textcursor 2! ;
+: at-xy  ( u1 u2 -- )  swap textrows * + to textcursor ;
 
 \ Move the text cursor to column u1, row u2 of the display de-
 \ vice. Column 0, row 0 is the upper left corner.
