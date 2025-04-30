@@ -1375,8 +1375,7 @@ synonym c!-  ( char c-addr1 -- c-addr2 )  !-
 \ Runtime: Display ccc.
 
 
-: emit  ( x -- )
-  dup validchar? if textdisplay textcursor + c! then ;
+: emit  ( x -- )  dup validchar? if textdisplay c! then ;
 
 \ If x is a graphic character, display x.
 
@@ -1391,6 +1390,7 @@ synonym c!-  ( char c-addr1 -- c-addr2 )  !-
 
 
 : cr  ( -- )
+  \ write something to TEXTDISPLAY first?
   textcursor textcolumns / 1+
   textrows <> and
   to textcursor ;
@@ -1432,12 +1432,14 @@ $0020 constant bl  ( -- char )
 
 $____ constant textdisplay  ( -- c-addr )
 
-\ Description something something
+\ c-addr is the address of the text display device. Writing a
+\ valid graphic character to c-addr (e.g. using EMIT) causes
+\ the character to be displayed.
 
 
 0 value textcursor  ( -- u )
 
-\ Description something something
+\ u is the position of the text cursor.
 
 
 #64 value textcolumns  ( -- u )
@@ -1828,12 +1830,14 @@ $____ constant textindev  ( -- c-addr )
   dup [char] a [char] f 1+ within
   r> or r> or ;
 
-\ Description something something
+\ If char is a valid hexadecimal digit, flag is true. Otherwise
+\ flag is false.
 
 
 : not-hex?  ( char -- flag )  hex? 0= ;
 
-\ Description something something
+\ If char is not a valid hexadecimal digit, flag is true. Other-
+\ wise flag is false.
 
 
 : xt-skip  ( c-addr1 u1 xt -- c-addr2 u2 )
@@ -2295,7 +2299,8 @@ $____ constant s\"buf  ( -- c-addr )
 
 $____ value s"ptr  ( -- c-addr )
 
-\ Description something something
+\ c-addr is the address of the next character to be written to
+\ S"BUF or S\"BUF.
 
 
 : s\"step  ( c-addr1 u1 -- c-addr2 u2 )
