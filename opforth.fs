@@ -219,9 +219,10 @@
 
 \ Helper Text Display
 
-\ textcursor     -- u1 u2
-\ textcolumns    -- u
-\ textrows       -- u
+\ textcursory       -- a-addr
+\ textcursorx       -- a-addr
+\ textcursorymax    -- u
+\ textcursorxmax    -- u
 
 
 \ Core Numeric String
@@ -1375,7 +1376,12 @@ synonym c!-  ( char c-addr1 -- c-addr2 )  !-
 \ Runtime: Display ccc.
 
 
-: emit  ( x -- )  dup validchar? if textdisplay c! then ;
+: emit  ( x -- )
+  dup validchar? if
+    textdisplay c!
+    textcursorx dup @ dup textcursorxmax = and
+    swap 1+ swap !
+  then ;
 
 \ If x is a graphic character, display x.
 
@@ -1390,9 +1396,8 @@ synonym c!-  ( char c-addr1 -- c-addr2 )  !-
 
 
 : cr  ( -- )
-  textdisplay $0a c!
-  textcursor over textrows = and
-  1+ swap to textcursor ;
+  textcursory dup @ dup textcursorymax =
+  swap 1+ and swap ! ;
 
 \ Position the text cursor at the beginning of the next line.
 
@@ -1436,20 +1441,27 @@ $____ constant textdisplay  ( -- c-addr )
 \ the character to be displayed.
 
 
-0. 2value textcursor  ( -- u1 u2 )
+$____ constant textcursory  ( -- a-addr )
 
-\ The cell pair u1 u2 is the coordinate position of the text
-\ cursor. u1 is the column and u2 is the row where the next
-\ character will be displayed.
+\ a-addr is the hardware address of the text cursor y coordi-
+\ nate, which is the row where the next character will be dis-
+\ played. A program can read or write to the address.
 
 
-#64 value textcolumns  ( -- u )
+$____ constant textcursorx  ( -- a-addr )
+
+\ a-addr is the hardware address of the text cursor x coordi-
+\ nate, which is the column where the next character will be
+\ displayed. A program can read or write to the address.
+
+
+#64 value textcurxorymax  ( -- u )
 
 \ u is the number of columns available for displaying text char-
 \ acters.
 
 
-#20 value textrows  ( -- u )
+#20 value textcursorxmax  ( -- u )
 
 \ u is the number of rows available for displaying text charac-
 \ ters.
