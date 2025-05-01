@@ -35,15 +35,15 @@
 \ over     x1 x2 -- x1 x2 x1
 \ rot      x1 x2 x3 -- x2 x3 x1
 \ ?dup     x -- x x | 0
-\ 2drop    Inter: x1 x2 --
-\          Compi: --  Run: x1 x2 --
-\ 2dup     Inter: x1 x2 -- x1 x2 x1 x2
-\          Compi: --  Run: x1 x2 -- x1 x2 x1 x2
+\ 2drop    Int: x1 x2 --
+\          Com: --  Run: x1 x2 --
+\ 2dup     Int: x1 x2 -- x1 x2 x1 x2
+\          Com: --  Run: x1 x2 -- x1 x2 x1 x2
 \ 2swap    x1 x2 x3 x4 -- x3 x4 x1 x2
 \ 2over    x1 x2 x3 x4 -- x1 x2 x3 x4 x1 x2
-\ >r       Compi: --  Exe: x R: -- R:x
-\ r>       Compi: --  Exe: R:x -- x R:
-\ r@       Compi: --  Exe: R:x -- x R:x
+\ >r       Com: --  Exe: x R: -- R:x
+\ r>       Com: --  Exe: R:x -- x R:
+\ r@       Com: --  Exe: R:x -- x R:x
 
 
 \ Core-Ext Stack
@@ -52,9 +52,9 @@
 \ tuck    x1 x2 -- x2 x1 x2
 \ pick    xu...x1 x0 u -- xu...x1 x0 xu
 \ roll    xu xu-1...x0 u -- xu-1...x0 xu
-\ 2>r     Compi: --  Exe: x1 x2 R: -- R:x1 R:x2
-\ 2r>     Compi: --  Exe: R:x1 R:x2 -- x1 x2 R:
-\ 2r@     Compi: --  Exe: R:x1 R:x2 -- x1 x2 R:x1 R:x2
+\ 2>r     Com: --  Exe: x1 x2 R: -- R:x1 R:x2
+\ 2r>     Com: --  Exe: R:x1 R:x2 -- x1 x2 R:
+\ 2r@     Com: --  Exe: R:x1 R:x2 -- x1 x2 R:x1 R:x2
 
 
 \ Helper Stack
@@ -170,8 +170,8 @@
 \ Core Memory
 
 \ @       a-addr -- x
-\ !       Inter: x a-addr --
-\         Compi: --  Run: x a-addr --
+\ !       Int: x a-addr --
+\         Com: --  Run: x a-addr --
 \ c@      c-addr -- char
 \ c!      char c-addr --
 \ 2@      a-addr -- x1 x2
@@ -202,8 +202,8 @@
 
 \ Core Text Display
 
-\ ."        Inter: 'ccc<quote>' --
-\           Compi: 'ccc<quote>' --  Run: --
+\ ."        Int: 'ccc<quote>' --
+\           Com: 'ccc<quote>' --  Run: --
 \ emit      x --
 \ type      c-addr u --
 \ cr        --
@@ -219,10 +219,10 @@
 
 \ Helper Text Display
 
-\ textcursory       -- a-addr
-\ textcursorx       -- a-addr
-\ textcursorymax    -- u
-\ textcursorxmax    -- u
+\ text-y       -- a-addr
+\ text-x       -- a-addr
+\ text-ymax    -- u
+\ text-xmax    -- u
 
 
 \ Core Numeric String
@@ -256,8 +256,8 @@
 
 \ Core Text Input
 
-\ (         Inter: 'ccc<right-paren>' --
-\           Compi: 'ccc<right-paren>' --  Run: --
+\ (         Int: 'ccc<right-paren>' --
+\           Com: 'ccc<right-paren>' --  Run: --
 \ source    -- c-addr u
 \ >in       -- a-addr
 \ key       -- char
@@ -315,10 +315,10 @@
 
 \ defer@       xt1 -- xt2
 \ defer!       xt2 xt1 --
-\ is           Inter: '<spaces>name' xt --
-\              Compi: '<spaces>name' --  Run: xt --
-\ action-of    Inter: '<spaces>name' -- xt
-\              Compi: '<spaces>name' --  Run: -- xt
+\ is           Int: '<spaces>name' xt --
+\              Com: '<spaces>name' --  Run: xt --
+\ action-of    Int: '<spaces>name' -- xt
+\              Com: '<spaces>name' --  Run: -- xt
 
 
 \ Core Compiler
@@ -331,20 +331,20 @@
 \ [           --
 \ ]           --
 \ state       -- a-addr
-\ postpone    Compi: '<spaces>name' --
-\ literal     Compi: x --  Run: -- x
-\ [char]      Compi: '<spaces>name' --  Run: -- char
-\ [']         Compi: '<spaces>name' --  Run: -- xt
-\ s"          Inter: 'ccc<quote>' -- c-addr u
-\             Compi: 'ccc<quote>' --  Run: -- c-addr u
+\ postpone    Com: '<spaces>name' --
+\ literal     Com: x --  Run: -- x
+\ [char]      Com: '<spaces>name' --  Run: -- char
+\ [']         Com: '<spaces>name' --  Run: -- xt
+\ s"          Int: 'ccc<quote>' -- c-addr u
+\             Com: 'ccc<quote>' --  Run: -- c-addr u
 
 
 \ Core-Ext Compiler
 
-\ s\"          Compi: 'ccc<quote>' --
-\ c"           Compi: 'ccc<quote>' --  Run: -- c-addr
-\ compile,     Compi: --  Exe: xt --
-\ [compile]    Compi: '<spaces>name' --
+\ s\"          Com: 'ccc<quote>' --
+\ c"           Com: 'ccc<quote>' --  Run: -- c-addr
+\ compile,     Com: --  Exe: xt --
+\ [compile]    Com: '<spaces>name' --
 
 
 \ Helper Compiler
@@ -365,26 +365,26 @@
 \ Core Definition
 
 \ :            '<spaces>name' -- colon-sys
-\              Initi: i*x R: -- i*x R:nest-sys  Exe: i*x -- j*x
-\ ;            Compi: colon-sys --  Run: R:nest-sys -- R:
+\              Ini: i*x R: -- i*x R:nest-sys  Exe: i*x -- j*x
+\ ;            Com: colon-sys --  Run: R:nest-sys -- R:
 \ immediate    --
 \ constant     '<spaces>name' x --  Exe: -- x
 \ variable     '<spaces>name' --  Exe: -- a-addr
 \ create       '<spaces>name' --  Exe: -- a-addr
-\ does>        Compi: colon-sys1 -- colon-sys2
+\ does>        Com: colon-sys1 -- colon-sys2
 \              Run: R:nest-sys1 -- R:
-\              Initi: i*x R: -- i*x a-addr R:nest-sys2
+\              Ini: i*x R: -- i*x a-addr R:nest-sys2
 \              Exe: i*x -- j*x
 
 
 \ Core-Ext Definition
 
 \ :noname    -- xt colon-sys
-\            Initi: i*x R: -- i*x R:nest-sys  Exe: i*x -- j*x
+\            Ini: i*x R: -- i*x R:nest-sys  Exe: i*x -- j*x
 \ buffer:    '<spaces>name' u --  Exe: -- a-addr
 \ value      '<spaces>name' x --  Exe: -- x  to: x --
-\ to         Inter: '<spaces>name' i*x --
-\            Compi: '<spaces>name' --
+\ to         Int: '<spaces>name' i*x --
+\            Com: '<spaces>name' --
 \ defer      '<spaces>name' --  Exe: i*x -- j*x
 \ marker     '<spaces>name' --  Exe: --
 
@@ -401,51 +401,51 @@
 
 \ Core Control Flow
 
-\ if         Compi: -- orig  Run: x --
-\ then       Compi: orig --  Run: --
-\ else       Compi: orig1 -- orig2  Run: --
-\ begin      Compi: -- dest  Run: --
-\ until      Compi: dest --  Run: x --
-\ while      Compi: dest -- orig dest  Run: x --
-\ repeat     Compi: orig dest --  Run: --
-\ do         Compi: -- do-sys
+\ if         Com: -- orig  Run: x --
+\ then       Com: orig --  Run: --
+\ else       Com: orig1 -- orig2  Run: --
+\ begin      Com: -- dest  Run: --
+\ until      Com: dest --  Run: x --
+\ while      Com: dest -- orig dest  Run: x --
+\ repeat     Com: orig dest --  Run: --
+\ do         Com: -- do-sys
 \            Run: n1 n2 R: | n1 n2 R: -- R:loop-sys
-\ loop       Compi: do-sys --  Run: R:loop-sys1 -- R:|loop-sys2
-\ +loop      Compi: do-sys --
+\ loop       Com: do-sys --  Run: R:loop-sys1 -- R:|loop-sys2
+\ +loop      Com: do-sys --
 \            Run: n R:loop-sys1 -- R:|loop-sys2
-\ i          Compi: --  Exe: R:loop-sys -- n|u R:loop-sys
-\ j          Compi: --  Exe: R:loop-sys1 loop-sys2
+\ i          Com: --  Exe: R:loop-sys -- n|u R:loop-sys
+\ j          Com: --  Exe: R:loop-sys1 loop-sys2
 \                            -- n|u loop-sys1 loop-sys2
-\ leave      Compi: --  Exe: R:loop-sys -- R:
-\ unloop     Compi: --  Exe: R:loop-sys -- R:
-\ exit       Compi: --  Exe: R:nest-sys -- R:
-\ recurse    Compi: --
+\ leave      Com: --  Exe: R:loop-sys -- R:
+\ unloop     Com: --  Exe: R:loop-sys -- R:
+\ exit       Com: --  Exe: R:nest-sys -- R:
+\ recurse    Com: --
 
 
 \ Core-Ext Control Flow
 
-\ again      Compi: dest --  Run: --
-\ ?do        Compi: -- do-sys
+\ again      Com: dest --  Run: --
+\ ?do        Com: -- do-sys
 \            Run: n1 n2 R: | u1 u2 R: -- R:loop-sys
-\ case       Compi: -- case-sys  Run: --
-\ of         Compi: -- of-sys  Run: x1 x2 -- |x1
-\ endof      Compi: case-sys1 of-sys -- case-sys2  Run: --
-\ endcase    Compi: case-sys --  Run: x --
+\ case       Com: -- case-sys  Run: --
+\ of         Com: -- of-sys  Run: x1 x2 -- |x1
+\ endof      Com: case-sys1 of-sys -- case-sys2  Run: --
+\ endcase    Com: case-sys --  Run: x --
 
 
 \ Helper Control Flow
 
-\ nop        Compi: --  Exe: --
-\ branch     Compi: --  Exe: --
-\ ?branch    Compi: --  Exe: x --
-\ ?loop      Compi: --  Exe: R:n|u -- |loop-sys
+\ nop        Com: --  Exe: --
+\ branch     Com: --  Exe: --
+\ ?branch    Com: --  Exe: x --
+\ ?loop      Com: --  Exe: R:n|u -- |loop-sys
 
 
 \ Core Outer Interpreter
 
 \ quit        R:i*x -- R:
 \ abort       i*x R:j*x -- R:
-\ abort"      Compi: 'ccc<quote>' --
+\ abort"      Com: 'ccc<quote>' --
 \             Run: i*x x1 R:j*x -- |i*x R:|j*x
 \ evaluate    i*x c-addr u -- j*x
 
@@ -465,10 +465,10 @@
 \ dabs         d -- ud
 \ d>s          d -- n
 \ m*/          d1 n1 +n2 -- d2
-\ d0=          Inter: xd -- flag
-\              Compi: --  Run: xd -- flag
-\ d0<          Inter: d -- flag
-\              Compi: --  Run: d -- flag
+\ d0=          Int: xd -- flag
+\              Com: --  Run: xd -- flag
+\ d0<          Int: d -- flag
+\              Com: --  Run: d -- flag
 \ d=           xd1 xd2 -- flag
 \ d<           d1 d2 -- flag
 \ dmax         d1 d2 -- d3
@@ -477,7 +477,7 @@
 \ d2/          xd1 -- xd2
 \ d.           d --
 \ d.r          d n --
-\ 2literal     Compi: x1 x2 --  Run: -- x1 x2
+\ 2literal     Com: x1 x2 --  Run: -- x1 x2
 \ 2constant    '<spaces>name' x1 x2 --  Exe: -- x1 x2
 \ 2variable    '<spaces>name' --  Exe: -- a-addr
 
@@ -500,7 +500,7 @@
 \ cmove         c-addr1 c-addr2 u --
 \ cmove>        c-addr1 c-addr2 u --
 \ blank         c-addr u --
-\ sliteral      Compi: c-addr1 u --  Run: -- c-addr2 u
+\ sliteral      Com: c-addr1 u --  Run: -- c-addr2 u
 \ /string       c-addr1 u1 n2 -- c-addr2 u2
 \ -trailing     c-addr u1 -- c-addr u2
 \ compare       c-addr1 u1 c-addr2 u2 -- n
@@ -561,17 +561,17 @@ $____ opcode ?dup  ( x -- x x | 0 )
 \ Duplicate the top stack item if it is nonzero.
 
 
-: 2drop  ( Inter: x1 x2 -- )  drop drop ;
+: 2drop  ( Int: x1 x2 -- )  drop drop ;
 
-|: 2drop  ( Compi: -- ) ( Run: x1 x2 -- )
+|: 2drop  ( Com: -- ) ( Run: x1 x2 -- )
   postpone drop  postpone drop ;| immediate
 
 \ Remove the top two stack items.
 
 
-: 2dup  ( Inter: x1 x2 -- x1 x2 x1 x2 )  over over ;
+: 2dup  ( Int: x1 x2 -- x1 x2 x1 x2 )  over over ;
 
-|: 2dup  ( Compi: -- ) ( Run: x1 x2 -- x1 x2 x1 x2 )
+|: 2dup  ( Com: -- ) ( Run: x1 x2 -- x1 x2 x1 x2 )
   postpone over  postpone over ;| immediate
 
 \ Duplicate the cell pair on top of the stack.
@@ -589,7 +589,7 @@ $____ opcode ?dup  ( x -- x x | 0 )
 \ stack.
 
 
-$____ opcode >r  ( Compi: -- ) ( Exe: x R: -- R:x )
+$____ opcode >r  ( Com: -- ) ( Exe: x R: -- R:x )
   compile-only
 
 \ Interpretation: Undefined
@@ -600,7 +600,7 @@ $____ opcode >r  ( Compi: -- ) ( Exe: x R: -- R:x )
 \ stack.
 
 
-$____ opcode r>  ( Compi: -- ) ( Exe: R:x -- x R: )
+$____ opcode r>  ( Com: -- ) ( Exe: R:x -- x R: )
   compile-only
 
 \ Interpretation: Undefined
@@ -611,7 +611,7 @@ $____ opcode r>  ( Compi: -- ) ( Exe: R:x -- x R: )
 \ stack.
 
 
-$____ opcode r@  ( Compi: -- ) ( Exe: R:x -- x R:x )
+$____ opcode r@  ( Com: -- ) ( Exe: R:x -- x R:x )
   compile-only
 
 \ Interpretation: Undefined
@@ -657,7 +657,7 @@ $____ opcode tuck  ( x1 x2 -- x2 x1 x2 )
 \ top.
 
 
-: 2>r  ( Compi: -- ) ( Exe: x1 x2 R: -- R:x1 R:x2 )
+: 2>r  ( Com: -- ) ( Exe: x1 x2 R: -- R:x1 R:x2 )
   postpone swap
   postpone >r  postpone >r ; immediate compile-only
 
@@ -669,7 +669,7 @@ $____ opcode tuck  ( x1 x2 -- x2 x1 x2 )
 \ the return stack.
 
 
-: 2r>  ( Compi: -- ) ( Exe: R:x1 R:x2 -- x1 x2 R: )
+: 2r>  ( Com: -- ) ( Exe: R:x1 R:x2 -- x1 x2 R: )
   postpone r>  postpone r>
   postpone swap ; immediate compile-only
 
@@ -681,7 +681,7 @@ $____ opcode tuck  ( x1 x2 -- x2 x1 x2 )
 \ to the data stack.
 
 
-: 2r@  ( Compi: -- ) ( Exe: R:x1 R:x2 -- x1 x2 R:x1 R:x2 )
+: 2r@  ( Com: -- ) ( Exe: R:x1 R:x2 -- x1 x2 R:x1 R:x2 )
   postpone r>  postpone r>  postpone 2dup
   postpone >r  postpone >r
   postpone swap ; immediate compile-only
@@ -1215,9 +1215,9 @@ $____ opcode @  ( a-addr -- x )
 \ cell on the stack in place of a-addr.
 
 
-: !  ( Inter: x a-addr -- )  tuck! drop ;
+: !  ( Int: x a-addr -- )  tuck! drop ;
 
-|: !  ( Compi: -- ) ( Run: x a-addr -- )
+|: !  ( Com: -- ) ( Run: x a-addr -- )
   postpone tuck!  postpone drop ;| immediate
 
 \ Write x to memory address a-addr. The top two stack items are
@@ -1362,9 +1362,9 @@ synonym c!-  ( char c-addr1 -- c-addr2 )  !-
 \ Core Text Display Words
 
 
-: ."  ( Inter: 'ccc<quote>' -- )  [char] " parse type ;
+: ."  ( Int: 'ccc<quote>' -- )  [char] " parse type ;
 
-|: ."  ( Compi: 'ccc<quote>' -- ) ( Run: -- )
+|: ."  ( Com: 'ccc<quote>' -- ) ( Run: -- )
   [char] " parse postpone sliteral type ;| immediate
 
 \ Interpretation: Parse ccc delimited by " (double-quote). Dis-
@@ -1379,7 +1379,7 @@ synonym c!-  ( char c-addr1 -- c-addr2 )  !-
 : emit  ( x -- )
   dup validchar? if
     textdisplay c!
-    textcursorx dup @ dup textcursorxmax = and
+    text-x dup @ dup text-xmax = and
     swap 1+ swap !
   then ;
 
@@ -1396,7 +1396,7 @@ synonym c!-  ( char c-addr1 -- c-addr2 )  !-
 
 
 : cr  ( -- )
-  textcursory dup @ dup textcursorymax =
+  text-y dup @ dup text-ymax =
   swap 1+ and swap ! ;
 
 \ Position the text cursor at the beginning of the next line.
@@ -1441,27 +1441,37 @@ $____ constant textdisplay  ( -- c-addr )
 \ the character to be displayed.
 
 
-$____ constant textcursory  ( -- a-addr )
+$____ constant text-y  ( -- a-addr )
 
 \ a-addr is the hardware address of the text cursor y coordi-
 \ nate, which is the row where the next character will be dis-
-\ played. A program can read or write to the address.
+\ played. A program can get the y coordinate by reading the
+\ contents of a-addr, and a program can set the y coordinate
+\ by writing a number to a-addr. 
+
+\ An ambiguous condition exists if a program writes a number
+\ to a-addr that is less than zero or greater than TEXT-YMAX.
 
 
-$____ constant textcursorx  ( -- a-addr )
+$____ constant text-x  ( -- a-addr )
 
 \ a-addr is the hardware address of the text cursor x coordi-
 \ nate, which is the column where the next character will be
-\ displayed. A program can read or write to the address.
+\ displayed. A program can get the x coordinate by reading the
+\ contents of a-addr, and a program can set the x coordinate
+\ by writing a number to a-addr. 
+
+\ An ambiguous condition exists if a program writes a number
+\ to a-addr that is less than zero or greater than TEXT-XMAX.
 
 
-#64 value textcurxorymax  ( -- u )
+#64 value text-ymax  ( -- u )
 
 \ u is the number of columns available for displaying text char-
 \ acters.
 
 
-#20 value textcursorxmax  ( -- u )
+#20 value text-xmax  ( -- u )
 
 \ u is the number of rows available for displaying text charac-
 \ ters.
@@ -1632,9 +1642,9 @@ $____ constant holdbuf  ( -- c-addr )
 \ Core Text Input Words
 
 
-: (  ( Inter: 'ccc<right-paren>' -- )  [char] ) parse ;
+: (  ( Int: 'ccc<right-paren>' -- )  [char] ) parse ;
 
-|: (  ( Compi: 'ccc<right-paren>' -- ) ( Run: -- )
+|: (  ( Com: 'ccc<right-paren>' -- ) ( Run: -- )
   [char] ) postpone parse ;| immediate
 
 \ Parse ccc delimited by ) (right parenthesis). This causes the
@@ -1991,8 +2001,8 @@ $____ opcode execute  ( i*x xt -- j*x )
 \ by DEFER.
 
 
-: is  ( Inter: '<spaces>name' xt -- )
-  ( Compi: '<spaces>name' -- ) ( Run: xt -- )
+: is  ( Int: '<spaces>name' xt -- )
+  ( Com: '<spaces>name' -- ) ( Run: xt -- )
   something ;
 
 \ Interpretation: Skip leading spaces and parse name delimited
@@ -2007,8 +2017,8 @@ $____ opcode execute  ( i*x xt -- j*x )
 \ or if POSTPONE, [COMPILE], ['], or ' is applied to IS.
 
 
-: action-of  ( Inter: '<spaces>name' -- xt )
-  ( Compi: '<spaces>name' -- ) ( Run: -- xt )
+: action-of  ( Int: '<spaces>name' -- xt )
+  ( Com: '<spaces>name' -- ) ( Run: -- xt )
   something ;
 
 \ Interpretation: Skip leading spaces and parse name delimited
@@ -2104,7 +2114,7 @@ variable state  ( -- a-addr )  false state !
 \ :NONAME, [ (left-bracket), ] (right-bracket).
 
 
-: postpone  ( Compi: '<spaces>name' -- )
+: postpone  ( Com: '<spaces>name' -- )
   ' , ; immediate compile-only
 
 \ Skip leading spaces and parse name delimited by a space. Find
@@ -2114,7 +2124,7 @@ variable state  ( -- a-addr )  false state !
 \ An ambiguous condition exists if name is not found.
 
 
-: literal  ( Compi: x -- ) ( Run: -- x )
+: literal  ( Com: x -- ) ( Run: -- x )
   postpone lit , ; immediate compile-only
 
 \ Interpretation: Undefined
@@ -2124,7 +2134,7 @@ variable state  ( -- a-addr )  false state !
 \ Runtime: Put x on the stack.
 
 
-: [char]  ( Compi: '<spaces>name' -- ) ( Run: -- char )
+: [char]  ( Com: '<spaces>name' -- ) ( Run: -- char )
   parse-name drop c@ literal ; immediate compile-only
 
 \ Interpretation: Undefined
@@ -2136,7 +2146,7 @@ variable state  ( -- a-addr )  false state !
 \ stack.
 
 
-: [']  ( Compi: '<spaces>name' -- ) ( Run: -- xt )
+: [']  ( Com: '<spaces>name' -- ) ( Run: -- xt )
   ' literal ; immediate compile-only
 
 \ Interpretation: Undefined
@@ -2153,11 +2163,11 @@ variable state  ( -- a-addr )  false state !
 \ An ambiguous condition exists if name is not found.
 
 
-: s"  ( Inter: 'ccc<quote>' -- c-addr u )
+: s"  ( Int: 'ccc<quote>' -- c-addr u )
   [char] " parse
   2dup s"buf swap cmove ;
 
-|: s"  ( Compi: 'ccc<quote>' -- ) ( Run: -- c-addr u )
+|: s"  ( Com: 'ccc<quote>' -- ) ( Run: -- c-addr u )
   [char] " parse postpone sliteral ;| immediate
 
 \ Interpretation: Parse ccc delimited by " (double-quote). Store
@@ -2176,9 +2186,9 @@ variable state  ( -- a-addr )  false state !
 \ Core-Ext Compiler Words
 
 
-: s\"  ( Inter: 'ccc<quote>' -- c-addr u )  something ;
+: s\"  ( Int: 'ccc<quote>' -- c-addr u )  something ;
 
-|: s\"  ( Compi: 'ccc<quote>' -- ) ( Run: -- c-addr u )
+|: s\"  ( Com: 'ccc<quote>' -- ) ( Run: -- c-addr u )
   [ s\" ] postpone sliteral ;| immediate
 
 \ Interpretation: Undefined
@@ -2219,7 +2229,7 @@ variable state  ( -- a-addr )  false state !
 \ Forth systems may translate it differently.
 
 
-: c"  ( Compi: 'ccc<quote>' -- ) ( Run: -- c-addr )
+: c"  ( Com: 'ccc<quote>' -- ) ( Run: -- c-addr )
   [char] " word ; immediate compile-only
 
 \ Interpretation: Undefined
@@ -2232,7 +2242,7 @@ variable state  ( -- a-addr )  false state !
 \ string.
 
 
-: compile,  ( Compi: -- ) ( Exe: xt -- )
+: compile,  ( Com: -- ) ( Exe: xt -- )
   postpone , ; immediate compile-only
 
 \ Interpretation: Undefined
@@ -2243,7 +2253,7 @@ variable state  ( -- a-addr )  false state !
 \ represented by xt.
 
 
-: [compile]  ( Compi: '<spaces>name' -- )  something ;
+: [compile]  ( Com: '<spaces>name' -- )  something ;
 
 \ Interpretation: Undefined
 
@@ -2387,7 +2397,7 @@ $____ value s"ptr  ( -- c-addr )
 
 
 : :  ( '<spaces>name' -- colon-sys )
-  ( Initi: i*x R: -- i*x R:nest-sys ) ( Exe: i*x -- j*x )
+  ( Ini: i*x R: -- i*x R:nest-sys ) ( Exe: i*x -- j*x )
   something ;
 
 \ Skip leading spaces and parse name delimited by a space. Cre-
@@ -2406,7 +2416,7 @@ $____ value s"ptr  ( -- c-addr )
 \ ively.
 
 
-: ;  ( Compi: colon-sys -- ) ( Run: R:nest-sys -- R: )
+: ;  ( Com: colon-sys -- ) ( Run: R:nest-sys -- R: )
   postpone exit  findable drop [ ; immediate compile-only
 
 \ Interpretation: Undefined
@@ -2466,9 +2476,9 @@ $____ value s"ptr  ( -- c-addr )
 \ DOES>.
 
 
-: does>  ( Compi: colon-sys1 -- colon-sys2 )
+: does>  ( Com: colon-sys1 -- colon-sys2 )
   ( Run: R:nest-sys1 -- R: )
-  ( Initi: i*x R: -- i*x a-addr R:nest-sys2 )
+  ( Ini: i*x R: -- i*x a-addr R:nest-sys2 )
   ( Exe: i*x -- j*x )
   something ;
 
@@ -2503,7 +2513,7 @@ $____ value s"ptr  ( -- c-addr )
 
 
 : :noname  ( -- xt colon-sys )
-  ( Initi: i*x R: -- i*x R:nest-sys ) ( Exe: i*x -- j*x )
+  ( Ini: i*x R: -- i*x R:nest-sys ) ( Exe: i*x -- j*x )
   something ;
 
 \ Create an execution token xt, enter compilation state, start
@@ -2553,8 +2563,8 @@ $____ value s"ptr  ( -- c-addr )
 \ TO name Runtime: Write x to the data field of name.
 
 
-: to  ( Inter: '<spaces>name' i*x -- )
-  ( Compi: '<spaces>name' -- )
+: to  ( Int: '<spaces>name' i*x -- )
+  ( Com: '<spaces>name' -- )
   something ;
 
 \ Interpretation: Skip leading spaces and parse name delimited
@@ -2647,7 +2657,7 @@ $____ value s"ptr  ( -- c-addr )
 \ Core Control Flow Words
 
 
-: if  ( Compi: -- orig ) ( Run: x -- )
+: if  ( Com: -- orig ) ( Run: x -- )
   postpone ?branch here 0 , ; immediate compile-only
 
 \ Interpretation: Undefined
@@ -2661,7 +2671,7 @@ $____ value s"ptr  ( -- c-addr )
 \ location specified by the resolution of orig.
 
 
-: then  ( Compi: orig -- ) ( Run: -- )
+: then  ( Com: orig -- ) ( Run: -- )
   here swap ! ; immediate compile-only
 
 \ Interpretation: Undefined
@@ -2673,7 +2683,7 @@ $____ value s"ptr  ( -- c-addr )
 \ Runtime: Continue execution.
 
 
-: else  ( Compi: orig1 -- orig2 ) ( Run: -- )
+: else  ( Com: orig1 -- orig2 ) ( Run: -- )
   postpone then  postpone branch here
   0 , ; immediate compile-only
 
@@ -2689,7 +2699,7 @@ $____ value s"ptr  ( -- c-addr )
 \ olution of orig2.
 
 
-: begin  ( Compi: -- dest ) ( Run: -- )
+: begin  ( Com: -- dest ) ( Run: -- )
   here ; immediate compile-only
 
 \ Interpretation: Undefined
@@ -2700,7 +2710,7 @@ $____ value s"ptr  ( -- c-addr )
 \ Runtime: Continue execution.
 
 
-: until  ( Compi: dest -- ) ( Run: x -- )
+: until  ( Com: dest -- ) ( Run: x -- )
   postpone ?branch , ; immediate compile-only
 
 \ Interpretation: Undefined
@@ -2712,7 +2722,7 @@ $____ value s"ptr  ( -- c-addr )
 \ location specified by dest.
 
 
-: while  ( Compi: dest -- orig dest ) ( Run: x -- )
+: while  ( Com: dest -- orig dest ) ( Run: x -- )
   postpone if  swap ; immediate compile-only
 
 \ Interpretation: Undefined
@@ -2726,7 +2736,7 @@ $____ value s"ptr  ( -- c-addr )
 \ location specified by the resolution of orig.
 
 
-: repeat  ( Compi: orig dest -- ) ( Run: -- )
+: repeat  ( Com: orig dest -- ) ( Run: -- )
   postpone again  postpone then ; immediate compile-only
 
 \ Interpretation: Undefined
@@ -2758,7 +2768,7 @@ $____ value s"ptr  ( -- c-addr )
 \ of the same type.
 
 
-: loop  ( Compi: do-sys -- )
+: loop  ( Com: do-sys -- )
   ( Run: R:loop-sys1 -- R:|loop-sys2 )
   postpone r>1+  postpone ?loop ,
   dup if here swap ! else drop then ; immediate compile-only
@@ -2779,7 +2789,7 @@ $____ value s"ptr  ( -- c-addr )
 \ when the loop parameters are unavailable.
 
 
-: +loop  ( Compi: do-sys -- )
+: +loop  ( Com: do-sys -- )
   ( Run: n R:loop-sys1 -- |loop-sys2 )
   postpone r@+  postpone r>  postpone r@  postpone third
   postpone >r  postpone within  postpone 0=  postpone ?branch ,
@@ -2802,7 +2812,7 @@ $____ value s"ptr  ( -- c-addr )
 \ when the loop parameters are unavailable.
 
 
-synonym i  ( Compi: -- ) ( Exe: R:loop-sys -- n|u R:loop-sys )
+synonym i  ( Com: -- ) ( Exe: R:loop-sys -- n|u R:loop-sys )
   r@
 
 \ Interpretation: Undefined
@@ -2816,7 +2826,7 @@ synonym i  ( Compi: -- ) ( Exe: R:loop-sys -- n|u R:loop-sys )
 \ available.
 
 
-$____ opcode j  ( Compi: -- ) ( Exe: R:loop-sys1 R:loop-sys2 --
+$____ opcode j  ( Com: -- ) ( Exe: R:loop-sys1 R:loop-sys2 --
   n|u R:loop-sys1 R:loop-sys2 )
   compile-only
 
@@ -2830,7 +2840,7 @@ $____ opcode j  ( Compi: -- ) ( Exe: R:loop-sys1 R:loop-sys2 --
 \ outer loop, loop-sys2, are unavailable.
 
 
-: leave  ( Compi: -- ) ( Exe: R:loop-sys -- R: )  something ;
+: leave  ( Com: -- ) ( Exe: R:loop-sys -- R: )  something ;
 
 \ Interpretation: Undefined
 
@@ -2843,7 +2853,7 @@ $____ opcode j  ( Compi: -- ) ( Exe: R:loop-sys1 R:loop-sys2 --
 \ An ambiguous condition exists if they are unavailable.
 
 
-: unloop  ( Compi: -- ) ( R:loop-sys -- R: )  something ;
+: unloop  ( Com: -- ) ( R:loop-sys -- R: )  something ;
 
 \ Interpretation: Undefined
 
@@ -2857,7 +2867,7 @@ $____ opcode j  ( Compi: -- ) ( Exe: R:loop-sys1 R:loop-sys2 --
 \ available.
 
 
-$____ opcode exit  ( Compi: -- ) ( Exe: R:nest-sys -- R: )
+$____ opcode exit  ( Com: -- ) ( Exe: R:nest-sys -- R: )
   compile-only
 
 \ Interpretation: Undefined
@@ -2870,7 +2880,7 @@ $____ opcode exit  ( Compi: -- ) ( Exe: R:nest-sys -- R: )
 \ loop parameters by executing UNLOOP.
 
 
-: recurse  ( Compi: -- )  something ;
+: recurse  ( Com: -- )  something ;
 
 \ Interpretation: Undefined
 
@@ -2885,7 +2895,7 @@ $____ opcode exit  ( Compi: -- ) ( Exe: R:nest-sys -- R: )
 \ Core-Ext Control Flow
 
 
-: again  ( Compi: dest -- ) ( Run: -- )
+: again  ( Com: dest -- ) ( Run: -- )
   postpone branch , ; immediate compile-only
 
 \ Interpretation: Undefined
@@ -2898,7 +2908,7 @@ $____ opcode exit  ( Compi: -- ) ( Exe: R:nest-sys -- R: )
 \ ter AGAIN will not be executed.
 
 
-: ?do  ( Compi: -- do-sys )
+: ?do  ( Com: -- do-sys )
   ( Run: n1 n2 R: | u1 u2 R: -- R:loop-sys )
   postpone 2dup  postpone =  postpone if
   postpone 2>r here ; immediate compile-only
@@ -2922,7 +2932,7 @@ $____ opcode exit  ( Compi: -- ) ( Exe: R:nest-sys -- R: )
 \ of the same type.
 
 
-: case  ( Compi: -- case-sys ) ( Run: -- )
+: case  ( Com: -- case-sys ) ( Run: -- )
   0 ; immediate compile-only
 
 \ Interpretation: Undefined
@@ -2933,7 +2943,7 @@ $____ opcode exit  ( Compi: -- ) ( Exe: R:nest-sys -- R: )
 \ Runtime: Continue execution.
 
 
-: of  ( Compi: -- of-sys ) ( Run: x1 x2 -- |x1 )
+: of  ( Com: -- of-sys ) ( Run: x1 x2 -- |x1 )
   postpone over  postpone =  postpone ?branch  here 0 ,
   postpone drop ; immediate compile-only
 
@@ -2950,7 +2960,7 @@ $____ opcode exit  ( Compi: -- ) ( Exe: R:nest-sys -- R: )
 \ cution in line.
 
 
-: endof  ( Compi: case-sys1 of-sys -- case-sys2 ) ( Run: -- )
+: endof  ( Com: case-sys1 of-sys -- case-sys2 ) ( Run: -- )
   postpone branch  here rot ,
   here rot ! ; immediate compile-only
 
@@ -2966,7 +2976,7 @@ $____ opcode exit  ( Compi: -- ) ( Exe: R:nest-sys -- R: )
 \ consumer of case-sys2.
 
 
-: endcase  ( Compi: case-sys -- ) ( Run: x -- )
+: endcase  ( Com: case-sys -- ) ( Run: x -- )
   here >r
   begin
     dup while
@@ -2987,20 +2997,20 @@ $____ opcode exit  ( Compi: -- ) ( Exe: R:nest-sys -- R: )
 \ Helper Control Flow Words
 
 
-$____ opcode nop  ( Compi: -- ) ( Exe: -- )
+$____ opcode nop  ( Com: -- ) ( Exe: -- )
   compile-only
 
 \ Do nothing (i.e. no operation).
 
 
-$____ opcode branch  ( Compi: -- ) ( Exe: -- )
+$____ opcode branch  ( Com: -- ) ( Exe: -- )
   compile-only
 
 \ Continue execution at the address contained in the next con-
 \ secutive cell after the BRANCH opcode.
 
 
-$____ opcode ?branch  ( Compi: -- ) ( Exe: x -- )
+$____ opcode ?branch  ( Com: -- ) ( Exe: x -- )
   compile-only
 
 \ If all bits of x are zero, continue execution at the address
@@ -3008,7 +3018,7 @@ $____ opcode ?branch  ( Compi: -- ) ( Exe: x -- )
 \ code. Otherwise, continue execution in line.
 
 
-$____ opcode ?loop  ( Compi: -- )
+$____ opcode ?loop  ( Com: -- )
   ( Exe: n1 R:n2|u -- | R:n2|u R:n1 )
   compile-only
 
@@ -3045,7 +3055,7 @@ $____ opcode ?loop  ( Compi: -- )
 \ Perform the function of -1 THROW.
 
 
-: abort"  ( Compi: 'ccc<quote>' -- )
+: abort"  ( Com: 'ccc<quote>' -- )
   ( Run: i*x x1 R:j*x -- |i*x R:|j*x )
   something ;
 
@@ -3174,17 +3184,17 @@ synonym d>s  ( d -- n )  drop
 \ integer.
 
 
-: d0=  ( Inter: xd -- flag )  or 0= ;
+: d0=  ( Int: xd -- flag )  or 0= ;
 
-|: d0=  ( Compi: -- ) ( Run: xd -- flag )
+|: d0=  ( Com: -- ) ( Run: xd -- flag )
   postpone or  postpone 0= ;| immediate
 
 \ If xd is equal to zero, flag is true. Otherwise flag is false.
 
 
-: d0<  ( Inter: d -- flag )  0< nip ;
+: d0<  ( Int: d -- flag )  0< nip ;
 
-|: d0<  ( Compi: -- ) ( Run: d -- flag )
+|: d0<  ( Com: -- ) ( Run: d -- flag )
   postpone 0<  postpone nip ;| immediate
 
 \ If d is less than zero, flag is true. Otherwise flag is false.
@@ -3255,7 +3265,7 @@ synonym d>s  ( d -- n )  drop
 \ as necessary.
 
 
-: 2literal  ( Compi: x1 x2 -- ) ( -- x1 x2 )
+: 2literal  ( Com: x1 x2 -- ) ( -- x1 x2 )
   swap literal literal ; immediate compile-only
 
 \ Interpretation: Undefined
@@ -3390,7 +3400,7 @@ $____ opcode m-  ( d1|ud1 n -- d2|ud2 )
 \ character is 16 bits, the space character code is $0020.
 
 
-: sliteral  ( Compi: c-addr1 u -- ) ( Run: -- c-addr2 u )
+: sliteral  ( Com: c-addr1 u -- ) ( Run: -- c-addr2 u )
   postpone branch            ( c-addr1 u )
   here -rot 0 ,              ( a-addr c-addr1 u )
   here swap dup chars allot  ( a-addr c-addr1 c-addr2 u )
@@ -3561,7 +3571,7 @@ $____ opcode m-  ( d1|ud1 n -- d2|ud2 )
 \ printer, PAGE performs a form feed.
 
 
-: at-xy  ( u1 u2 -- )  something ;
+: at-xy  ( u1 u2 -- )  text-x ! text-y ! ;
 
 \ Move the text cursor to column u1, row u2 of the display de-
 \ vice. Column 0, row 0 is the upper left corner.
