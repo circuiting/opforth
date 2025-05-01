@@ -219,7 +219,7 @@
 
 \ Helper Text Display
 
-\ textcursor     -- u
+\ textcursor     -- u1 u2
 \ textcolumns    -- u
 \ textrows       -- u
 
@@ -1390,10 +1390,9 @@ synonym c!-  ( char c-addr1 -- c-addr2 )  !-
 
 
 : cr  ( -- )
-  \ write something to TEXTDISPLAY first?
-  textcursor textcolumns / 1+
-  textrows <> and
-  to textcursor ;
+  textdisplay $0a c!
+  textcursor over textrows = and
+  1+ swap to textcursor ;
 
 \ Position the text cursor at the beginning of the next line.
 
@@ -1437,9 +1436,11 @@ $____ constant textdisplay  ( -- c-addr )
 \ the character to be displayed.
 
 
-0 value textcursor  ( -- u )
+0. 2value textcursor  ( -- u1 u2 )
 
-\ u is the position of the text cursor.
+\ The cell pair u1 u2 is the coordinate position of the text
+\ cursor. u1 is the column and u2 is the row where the next
+\ character will be displayed.
 
 
 #64 value textcolumns  ( -- u )
@@ -3548,7 +3549,7 @@ $____ opcode m-  ( d1|ud1 n -- d2|ud2 )
 \ printer, PAGE performs a form feed.
 
 
-: at-xy  ( u1 u2 -- )  swap textrows * + to textcursor ;
+: at-xy  ( u1 u2 -- )  something ;
 
 \ Move the text cursor to column u1, row u2 of the display de-
 \ vice. Column 0, row 0 is the upper left corner.
