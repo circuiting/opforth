@@ -408,8 +408,8 @@
 \ until      Com: dest --  Run: x --
 \ while      Com: dest -- orig dest  Run: x --
 \ repeat     Com: orig dest --  Run: --
-\ do         Com: -- do-sys
-\            Run: n1 n2 R: | n1 n2 R: -- R:loop-sys
+\ do         -- do-sys
+\            Run: n1|u1 n2|u2 R: -- R:n1|u1 R:n2|u2
 \ loop       Com: do-sys --  Run: R:loop-sys1 -- R:|loop-sys2
 \ +loop      Com: do-sys --
 \            Run: n R:loop-sys1 -- R:|loop-sys2
@@ -426,7 +426,7 @@
 
 \ again      Com: dest --  Run: --
 \ ?do        Com: -- do-sys
-\            Run: n1 n2 R: | u1 u2 R: -- R:loop-sys
+\            Run: n1|u1 n2|u2 R: -- R:|n1|u1 R:|n2|u2
 \ case       Com: -- case-sys  Run: --
 \ of         Com: -- of-sys  Run: x1 x2 -- |x1
 \ endof      Com: case-sys1 of-sys -- case-sys2  Run: --
@@ -2186,7 +2186,36 @@ variable state  ( -- a-addr )  false state !
 \ Core-Ext Compiler Words
 
 
-: s\"  ( Int: 'ccc<quote>' -- c-addr u )  something ;
+: s\"  ( Int: 'ccc<quote>' -- c-addr u )
+  parse-area
+  begin
+    dup 0<> while
+    /char '"' <> while
+    over c@ '\' <> if
+      s\"append
+    else
+      /char
+      case
+        'x' of ( handle \x<digit><digit> case ) endof
+        'a' of $07 endof
+        'b' of $08 endof
+        'e' of $1b endof
+        'f' of $0c endof
+        'l' of $0a endof
+        'm' of $0d s\"append $0a endof
+        'n' of $0a endof
+        'q' of $22 endof
+        'r' of $0d endof
+        't' of $09 endof
+        'v' of $0b endof
+        'z' of $00 endof
+        '"' of ( handle string ending in " case ) $22 endof
+        '\' of $5c endof
+        ( default )
+        s\"append
+      endcase
+    then
+  repeat then then ;
 
 |: s\"  ( Com: 'ccc<quote>' -- ) ( Run: -- c-addr u )
   [ s\" ] postpone sliteral ;| immediate
@@ -2326,70 +2355,9 @@ $____ value s"ptr  ( -- c-addr )
 \ S"BUF or S\"BUF.
 
 
-: s\"step  ( c-addr1 u1 -- c-addr2 u2 )
-  dup 0= if exit then                   ( c-addr u )
-  /char                                 ( c-addr u char )
-  dup [char] " = if drop exit then      ( c-addr u |char )
-  dup [char] \ = if                     ( c-addr u char )
-    drop /char dup [char] " = if        ( c-addr u char )
-      over 1 = if                       ( c-addr u char )
-        drop [char] \ s"append exit     ( c-addr u )
-      then                              ( c-addr u char )
-      s"append exit                     ( c-addr u )
-    then                                ( c-addr u char )
-    dup [char] x = if                   ( c-addr u char )
-      over 1 = if s"append exit then    ( c-addr u char )
-      drop /char dup not-hex? if        ( c-addr u char )
-        [char] \ s"append               ( c-addr u char )
-        [char] x s"append               ( c-addr u char )
-        s"append exit                   ( c-addr u )
-      then                              ( c-addr u char )
-      drop /char dup not-hex? if        ( c-addr u char )
-        [char] \ s"append               ( c-addr u char )
-        [char] x s"append               ( c-addr u char )
-        third c@ s"append               ( c-addr u char )
-        s"append exit                   ( c-addr u )
-      then                              ( c-addr u char )
-      drop over 0 tuck swap 2           ( c-addr u 0. c-addr 2 )
-      >number 2drop drop s"append exit  ( c-addr u )
-    then                                ( c-addr u char )
-    \lookup if                          ( c-addr u char |char )
-      s"append                          ( c-addr u char )
-    then                                ( c-addr u char )
-    s"append exit ;                     ( c-addr u )
-
-\ Description something something
-
-
 : s"append  ( char -- )  s"ptr c!+ to s"ptr ;
 
 \ Description something something
-
-
-: \lookup  ( char1 -- char2 false | char3 char4 true )
-  create
-    [char] a c,  $07 c,
-    [char] b c,  $08 c,
-    [char] e c,  $1b c,
-    [char] f c,  $0c c,
-    [char] l c,  $0a c,
-    [char] n c,  $0a c,
-    [char] r c,  $0d c,
-    [char] t c,  $09 c,
-    [char] v c,  $0b c,
-    [char] z c,  $00 c,
-    [char] m c,  $0a c, $0d c,
-  does>
-    c@+ dup [char] m = if          ( char lut+1 key )
-      third = if                   ( char lut+1 )
-        nip c@+ swap c@ true exit  ( $0a $0d true )
-      then                         ( char lut+1 )
-      drop false exit              ( char false )
-    then                           ( char lut+1 key )
-    third = if                     ( char lut+1 )
-      nip c@ false exit            ( char2 false )
-    then                           ( char lut+1 )
-    recurse exit ;
 
 
 
@@ -2749,20 +2717,23 @@ $____ value s"ptr  ( -- c-addr )
 \ Runtime: Continue execution at the location given by dest.
 
 
-: do  ( -- do-sys ) ( Run: n1 n2 R: | u1 u2 R: -- R:loop-sys )
+: do  ( -- do-sys )
+      ( Run: n1|u1 n2|u2 R: -- R:n1|u1 R:n2|u2 )
   0 postpone 2>r here ; immediate compile-only
 
 \ Interpretation: Undefined
 
-\ Compilation: Put do-sys onto the stack. Compile the runtime
-\ semantics below. The semantics are incomplete until resolved
-\ by a consumer of do-sys such as LOOP.
+\ Compilation: Put a copy of the dictionary pointer onto the
+\ data stack. Compile the runtime semantics below. The seman-
+\ tics are incomplete until resolved by LOOP or +LOOP.
 
-\ Runtime: Set up loop parameters using the top data stack item
-\ as the index and the second data stack item as the limit. The
-\ index and limit can be signed or unsigned. Anything already on
-\ the return stack becomes unavailable until the loop parameters
-\ are discarded.
+\ Runtime: Set up loop parameters by transferring the top two
+\ data stack items to the return stack. The top item n1|u1 is
+\ the loop index and the second item n2|u2 is the loop limit.
+
+\ Standard Forth does not allow a program to access any return
+\ stack items underneath the loop parameters until the parame-
+\ ters are discarded.
 
 \ An ambiguous condition exists if the index and limit are not
 \ of the same type.
@@ -2909,23 +2880,26 @@ $____ opcode exit  ( Com: -- ) ( Exe: R:nest-sys -- R: )
 
 
 : ?do  ( Com: -- do-sys )
-  ( Run: n1 n2 R: | u1 u2 R: -- R:loop-sys )
+       ( Run: n1|u1 n2|u2 R: -- R:|n1|u1 R:|n2|u2 )
   postpone 2dup  postpone =  postpone if
   postpone 2>r here ; immediate compile-only
 
 \ Interpretation: Undefined
 
-\ Compilation: Put do-sys on the stack. Compile the runtime se-
-\ mantics described below to the current definition. The seman-
-\ tics are incomplete until resolved by a consumer of do-sys
-\ such as LOOP.
+\ Compilation: Put a copy of the dictionary pointer onto the
+\ data stack. Compile the runtime semantics described below. The
+\ semantics are incomplete until resolved by LOOP or +LOOP.
 
-\ Runtime: If n1 is bit-for-bit the same as n2, continue execu-
-\ tion at the location given by the consumer of do-sys. Other-
-\ wise, set up loop parameters using the top data stack item as
-\ the index and the second data stack item as the limit, then
-\ continue executing immediately following ?DO. Anything already
-\ on the return stack becomes unavailable until the loop parame-
+\ Runtime: If n1 is bit-for-bit the same as n2, skip over the
+\ ?DO...LOOP or ?DO...+LOOP control structure and continue exe-
+\ cution at the location following the loop. Otherwise, set up
+\ loop parameters by transferring the top two data stack items
+\ to the return stack, and then continue execution inside the
+\ loop. The top item n1|u1 is the loop index and the second item
+\ n2|u2 is the loop limit.
+
+\ Standard Forth does not allow a program to access any return
+\ stack items underneath the loop parameters until the parame-
 \ ters are discarded.
 
 \ An ambiguous condition exists if the index and limit are not
