@@ -2188,12 +2188,13 @@ variable state  ( -- a-addr )  false state !
 
 : s\"  ( Int: 'ccc<quote>' -- c-addr u )
   parse-area
-  begin                      ( c-addr u )
-    dup 0<> while            ( c-addr u ) \ there is at least one char
-    /char '"' <> while       ( c-addr u ) \ the char is not "
-    over c@ '\' if           ( c-addr u ) \ the char is \
-      dup 0<> if /char then  ( c-addr u ) \ attempt to advance string
-      case                   ( c-addr u char )
+  begin                   ( c-addr u )
+    dup 0<> while         ( c-addr u ) \ there is at least one char
+    /char '"' <> while    ( c-addr u ) \ get char, the char is not "
+    over c@ dup '\' if    ( c-addr u char ) \ if the char is \
+      over 0<> if         ( c-addr u char ) \ if more than 0 chars remain
+        drop /char        ( c-addr u char1 ) \ get char
+        case              ( c-addr u char1 )
         'x' of ( handle \x<digit><digit> case ) endof
         'a' of $07 endof     ( c-addr u $07 )
         'b' of $08 endof
@@ -2208,11 +2209,12 @@ variable state  ( -- a-addr )  false state !
         'v' of $0b endof
         'z' of $00 endof
         '\' of $5c endof
-        '"' of $22 ( handle string ending in \" case ) endof
-        ( default )          ( c-addr u char )
-      endcase                ( c-addr u char1 )
-    then                     ( c-addr u char1 )
-    s"append                 ( c-addr u )
+        '"' of $22 endof
+        ( default ) third char- c@ s"append  ( c-addr u char )
+        endcase                              ( c-addr u char1 )
+      then                                   ( c-addr u char )
+    then                                     ( c-addr u char1 )
+    s"append                                 ( c-addr u )
   repeat then then ;
 
 |: s\"  ( Com: 'ccc<quote>' -- ) ( Run: -- c-addr u )
