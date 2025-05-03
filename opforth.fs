@@ -2188,33 +2188,32 @@ variable state  ( -- a-addr )  false state !
 
 : s\"  ( Int: 'ccc<quote>' -- c-addr u )
   parse-area
-begin                     ( c-addr u )
-  dup 0<> while           ( c-addr u )
-  /char '"' <> while      ( c-addr u )
-  ( handle 1 character remaining case )
-  over c@ '\' if          ( c-addr u )
-    over char+ c@         ( c-addr u char )
-    case                  ( c-addr u char )
-      'x' of ( handle \x<digit><digit> case ) endof
-      'a' of $07 endof    ( c-addr u $07 )
-      'b' of $08 endof
-      'e' of $1b endof
-      'f' of $0c endof
-      'l' of $0a endof
-      'm' of $0d s"append $0a endof
-      'n' of $0a endof
-      'q' of $22 endof
-      'r' of $0d endof
-      't' of $09 endof
-      'v' of $0b endof
-      'z' of $00 endof
-      '\' of $5c endof
-      '"' of $22 ( handle string ending in \" case ) endof
-      ( default )         ( c-addr u char )
-    endcase               ( c-addr u char1 )
-  then                    ( c-addr u char1 )
-  s"append                ( c-addr u )
-repeat then then ;
+  begin                      ( c-addr u )
+    dup 0<> while            ( c-addr u ) \ there is at least one char
+    /char '"' <> while       ( c-addr u ) \ the char is not "
+    over c@ '\' if           ( c-addr u ) \ the char is \
+      dup 0<> if /char then  ( c-addr u ) \ attempt to advance string
+      case                   ( c-addr u char )
+        'x' of ( handle \x<digit><digit> case ) endof
+        'a' of $07 endof     ( c-addr u $07 )
+        'b' of $08 endof
+        'e' of $1b endof
+        'f' of $0c endof
+        'l' of $0a endof
+        'm' of $0d s"append $0a endof
+        'n' of $0a endof
+        'q' of $22 endof
+        'r' of $0d endof
+        't' of $09 endof
+        'v' of $0b endof
+        'z' of $00 endof
+        '\' of $5c endof
+        '"' of $22 ( handle string ending in \" case ) endof
+        ( default )          ( c-addr u char )
+      endcase                ( c-addr u char1 )
+    then                     ( c-addr u char1 )
+    s"append                 ( c-addr u )
+  repeat then then ;
 
 |: s\"  ( Com: 'ccc<quote>' -- ) ( Run: -- c-addr u )
   [ s\" ] postpone sliteral ;| immediate
