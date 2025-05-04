@@ -286,7 +286,6 @@
 \ space?          char -- flag
 \ eol?            char -- flag
 \ hex?            char -- flag
-\ not-hex?        char -- flag
 \ xt-skip         addr1 n1 xt -- addr2 n2
 \ parse-area      -- c-addr u
 \ advance>in      c-addr u -- c-addr u
@@ -356,10 +355,9 @@
 \ 2,          x1 x2 --
 \ s"buf       -- c-addr
 \ s\"buf      -- c-addr
-\ s"ptr       -- c-addr
-\ s\"step     c-addr1 u1 -- c-addr2 u2
-\ s"append    char --
-\ \lookup     char1 -- char2 false | char3 char4 true
+\ s\"ptr      -- c-addr
+\ s\"append   char --
+\ \x          c-addr1 u1 -- c-addr u2 char
 
 
 \ Core Definition
@@ -1857,12 +1855,6 @@ $____ constant textindev  ( -- c-addr )
 \ flag is false.
 
 
-: not-hex?  ( char -- flag )  hex? 0= ;
-
-\ If char is not a valid hexadecimal digit, flag is true. Other-
-\ wise flag is false.
-
-
 : xt-skip  ( c-addr1 u1 xt -- c-addr2 u2 )
   >r
   begin
@@ -2187,21 +2179,24 @@ variable state  ( -- a-addr )  false state !
 
 
 : s\"  ( Int: 'ccc<quote>' -- c-addr u )
-  parse-area
-  begin                   ( c-addr u )
-    dup 0<> while         ( c-addr u ) \ there is at least one char
-    /char '"' <> while    ( c-addr u ) \ get char, the char is not "
-    over c@ dup '\' if    ( c-addr u char ) \ if the char is \
-      over 0<> if         ( c-addr u char ) \ if more than 0 chars remain
-        drop /char        ( c-addr u char1 ) \ get char
-        case              ( c-addr u char1 )
-        'x' of ( handle \x<digit><digit> case ) endof
-        'a' of $07 endof     ( c-addr u $07 )
+  s\"buf to s\"ptr parse-area
+  begin
+    dup 0<> while
+    /char '"' <> while
+    over c@ dup '\' if
+      over 0<> if
+        drop /char
+        case
+        'x' of
+          dup 2 u< while
+          foo
+        endof
+        'a' of $07 endof
         'b' of $08 endof
         'e' of $1b endof
         'f' of $0c endof
         'l' of $0a endof
-        'm' of $0d s"append $0a endof
+        'm' of $0d s\"append $0a endof
         'n' of $0a endof
         'q' of $22 endof
         'r' of $0d endof
@@ -2210,11 +2205,11 @@ variable state  ( -- a-addr )  false state !
         'z' of $00 endof
         '\' of $5c endof
         '"' of $22 endof
-        ( default ) third char- c@ s"append  ( c-addr u char )
-        endcase                              ( c-addr u char1 )
-      then                                   ( c-addr u char )
-    then                                     ( c-addr u char1 )
-    s"append                                 ( c-addr u )
+        ( default ) third char- c@ s\"append
+        endcase
+      then
+    then
+    s\"append
   repeat then then ;
 
 |: s\"  ( Com: 'ccc<quote>' -- ) ( Run: -- c-addr u )
@@ -2349,13 +2344,25 @@ $____ constant s\"buf  ( -- c-addr )
 \ c-addr is the address of the buffer used by S\".
 
 
-$____ value s"ptr  ( -- c-addr )
+$____ value s\"ptr  ( -- c-addr )
 
 \ c-addr is the address of the next character to be written to
-\ S"BUF or S\"BUF.
+\ S\"BUF.
 
 
-: s"append  ( char -- )  s"ptr c!+ to s"ptr ;
+: s\"append  ( char -- )  s\"ptr c!+ to s\"ptr ;
+
+\ Description something something
+
+
+: \x  ( c-addr1 u1 -- c-addr2 u2 char )
+  /char dup hex? if
+    drop over c@ dup hex? if
+      drop over 0 swap 0 swap 2 >number 2drop drop
+    then
+  else
+    s\"append /char
+  then ;
 
 \ Description something something
 
