@@ -999,10 +999,10 @@ $____ opcode u>  ( u1 u2 -- flag )
 \ n2>=n3 and n1 lies outside the interval [n3,n2)
 
 \ Otherwise, flag is false. The integers can be signed or un-
-\ signed.
+\ signed, but not a mix of both.
 
-\ An ambiguous condition exists if the integers are not all of
-\ the same type.
+\ An ambiguous condition exists if the integers are a mix of
+\ signed and unsigned.
 
 
 
@@ -1360,10 +1360,10 @@ synonym c!-  ( char c-addr1 -- c-addr2 )  !-
 \ Core Text Display Words
 
 
-: ."  ( Int: 'ccc<quote>' -- )  [char] " parse type ;
+: ."  ( Int: 'ccc<quote>' -- )  '"' parse type ;
 
 |: ."  ( Com: 'ccc<quote>' -- ) ( Run: -- )
-  [char] " parse postpone sliteral type ;| immediate
+  '"' parse postpone sliteral type ;| immediate
 
 \ Interpretation: Parse ccc delimited by " (double-quote). Dis-
 \ play ccc.
@@ -1423,7 +1423,7 @@ $0020 constant bl  ( -- char )
 
 
 : .(  ( 'ccc<right-paren>' -- )
-  [char] " parse type ; immediate
+  '"' parse type ; immediate
 
 \ Parse ccc delimited by ) (right parenthesis). Display ccc.
 
@@ -1506,8 +1506,8 @@ $____ constant text-x  ( -- a-addr )
 
 
 : #  ( ud1 -- ud2 )
-  base @ ud/mod rot dup 9 u>
-  [ char A char 9 1+ - ] literal and +
+  base @ ud/mod rot
+  dup 9 u> [ char A char 9 1+ - ] literal and +
   '0' + hold ;
 
 \ As part of a <# #> delimited number-to-string conversion, con-
@@ -1561,15 +1561,20 @@ variable base  ( -- a-addr )  decimal
 \ the number system. BASE is initialized to ten (decimal).
 
 
-: >number  ( ud1 c-addr1 u1 -- ud2 c-addr2 u2 )  something ;
+: >number  ( ud1 c-addr1 u1 -- ud2 c-addr2 u2 )
+  /char '0' -
+  'A' 'z' 1+ within [ char 'A' $a - ] literal and -
+  'a' 'z' 1+ within [ char 'a' $a - ] literal and -
+  ( something )
 
 \ Attempt to convert the string with address c-addr1 and length
 \ u1 to a double-cell unsigned integer using ud1 as an accumula-
 \ tor. For each character in the string, from left to right,
 \ convert the character to a number using the radix in BASE, add
-\ the number to ud1, and then multiply ud1 by the radix. Conver-
-\ sion continues until the string is entirely converted or a
-\ non-convertible character is encountered. + and - are non-
+\ the number to ud1, and then multiply the result by the radix.
+
+\ Conversion continues until the string is entirely converted or
+\ a non-convertible character is encountered. + and - are non-
 \ convertible characters.
 
 \ ud2 is the converted number. c-addr2 is the location of the
@@ -1640,10 +1645,10 @@ $____ constant holdbuf  ( -- c-addr )
 \ Core Text Input Words
 
 
-: (  ( Int: 'ccc<right-paren>' -- )  [char] ) parse ;
+: (  ( Int: 'ccc<right-paren>' -- )  ')' parse ;
 
 |: (  ( Com: 'ccc<right-paren>' -- ) ( Run: -- )
-  [char] ) postpone parse ;| immediate
+  ')' postpone parse ;| immediate
 
 \ Parse ccc delimited by ) (right parenthesis). This causes the
 \ outer interpreter to skip past the text enclosed in the paren-
@@ -1724,7 +1729,7 @@ variable >in  ( -- a-addr )  0 >in !
 \ Core-Ext Text Input Words
 
 
-: \  ( 'ccc<eol>' -- ) ( Run: -- )  something ;
+: \  ( 'ccc<eol>' -- ) ( Run: -- )  0 to #textinbuf ;
 
 \ Parse the remainder of the parse area. This causes the outer
 \ interpreter to skip past all the text from the backslash to
@@ -1846,9 +1851,9 @@ $____ constant textindev  ( -- c-addr )
 
 
 : hex?  ( char -- flag )
-  dup [char] 0 [char] 9 1+ within >r
-  dup [char] A [char] F 1+ within >r
-  dup [char] a [char] f 1+ within
+  dup '0' '9' 1+ within >r
+  dup 'A' 'F' 1+ within >r
+  dup 'a' 'f' 1+ within
   r> or r> or ;
 
 \ If char is a valid hexadecimal digit, flag is true. Otherwise
@@ -2156,11 +2161,11 @@ variable state  ( -- a-addr )  false state !
 
 
 : s"  ( Int: 'ccc<quote>' -- c-addr u )
-  [char] " parse
+  '"' parse
   2dup s"buf swap cmove ;
 
 |: s"  ( Com: 'ccc<quote>' -- ) ( Run: -- c-addr u )
-  [char] " parse postpone sliteral ;| immediate
+  '"' parse postpone sliteral ;| immediate
 
 \ Interpretation: Parse ccc delimited by " (double-quote). Store
 \ the resulting string in a transient buffer. c-addr is string
@@ -2254,7 +2259,7 @@ variable state  ( -- a-addr )  false state !
 
 
 : c"  ( Com: 'ccc<quote>' -- ) ( Run: -- c-addr )
-  [char] " word ; immediate compile-only
+  '"' word ; immediate compile-only
 
 \ Interpretation: Undefined
 
