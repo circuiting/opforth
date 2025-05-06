@@ -1562,10 +1562,16 @@ variable base  ( -- a-addr )  decimal
 
 
 : >number  ( ud1 c-addr1 u1 -- ud2 c-addr2 u2 )
-  /char '0' -
-  'A' 'z' 1+ within [ char 'A' $a - ] literal and -
-  'a' 'z' 1+ within [ char 'a' $a - ] literal and -
-  ( something )
+  2swap 2>r 0
+  begin
+    over 0<> while
+    drop /char'0' -
+    'A' 'z' 1+ within [ char 'A' $a - ] literal and -
+    'a' 'z' 1+ within [ char 'a' $a - ] literal and -
+    base @ over u<= while
+    2r> swap m+ 2>r 0
+  repeat then then
+  drop 2r> ;
 
 \ Attempt to convert the string with address c-addr1 and length
 \ u1 to a double-cell unsigned integer using ud1 as an accumula-
