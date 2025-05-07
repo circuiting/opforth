@@ -514,7 +514,8 @@
 
 \ Helper String
 
-\ /char  ( c-addr1 u1 -- c-addr2 u2 char )
+\ /char      ( c-addr1 u1 -- c-addr2 u2 char )
+\ string,    ( c-addr u -- )
 
 
 \ Facility
@@ -1774,13 +1775,13 @@ variable >in  ( -- a-addr )  0 >in !
 \ on the stack.
 
 
-: save-input  ( -- xn...x1 n )  something ;
+: save-input  ( -- xn...x1 n )  >in @ 1 ;
 
 \ x1 through xn describe the current state of the input source
 \ specification for later use by RESTORE-INPUT.
 
 
-: restore-input  ( xn...x1 n -- flag )  something ;
+: restore-input  ( xn...x1 n -- flag )  drop >in ! ;
 
 \ Attempt to restore the input source specification to the state
 \ described by x1 through xn. flag is true if the input source
@@ -1906,7 +1907,23 @@ $____ constant textindev  ( -- c-addr )
 \ stack before +n was placed on the stack.
 
 
-: environment?  ( c-addr u -- false | i*x true )  something ;
+: environment?  ( c-addr u -- false | i*x true )
+  0
+  case
+  [ s" /COUNTED-STRING" ] compare of $fffe endof
+  [ s" /HOLD " ] compare of $0100 endof
+  [ s" /PAD " ] compare of $0100 endof
+  [ s" ADDRESS-UNIT-BITS" ] compare of #16 endof
+  [ s" FLOORED" ] compare of false endof
+  [ s" MAX-CHAR" ] compare of $7e endof
+  [ s" MAX-D" ] compare of $efffffff. endof
+  [ s" MAX-N" ] compare of $efff endof
+  [ s" MAX-U" ] compare of $ffff endof
+  [ s" MAX-UD" ] compare of $ffffffff. endof
+  [ s" RETURN-STACK-CELLS" ] compare of $1000 endof
+  [ s" STACK-CELLS" ] compare of $1000 endof
+  endcase
+  0<> if true then ;
 
 \ Provide information about the programming environment by at-
 \ tempting to match the string with address c-addr and length u
@@ -3558,6 +3575,12 @@ $____ opcode m-  ( d1|ud1 n -- d2|ud2 )
   char- >r c@+ r> swap ;
 
 \ Description something something
+
+
+: string,  ( c-addr u -- )  here over chars allot swap cmove ;
+
+\ Compile the characters of the string with address c-addr and
+\ length u.
 
 
 
