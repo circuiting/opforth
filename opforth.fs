@@ -1562,14 +1562,14 @@ variable base  ( -- a-addr )  decimal
 
 
 : >number  ( ud1 c-addr1 u1 -- ud2 c-addr2 u2 )
-  2swap 2>r 0
+  2swap 2>r
   begin
-    over 0<> while
+    dup 0<> while
     drop /char'0' -
     'A' 'z' 1+ within [ char 'A' $a - ] literal and -
     'a' 'z' 1+ within [ char 'a' $a - ] literal and -
-    base @ over u<= while
-    2r> swap m+ 2>r 0
+    dup base @ u< dup 0= if nip then while
+    2r> swap m+ 2>r
   repeat then then
   drop 2r> ;
 
@@ -1960,11 +1960,26 @@ $____ opcode execute  ( i*x xt -- j*x )
 \ When interpreting, ' xyz EXECUTE is equivalent to xyz.
 
 
-: find  ( c-addr -- c-addr 0 | xt 1 | xt -1 )  something ;
+: find  ( c-addr -- c-addr 0 | xt 1 | xt -1 )
+  dlink >r                                 ( c-addr R:dlink )
+  begin                                    ( c-addr R:dlink )
+    r@ 0= dup if 0 swap then 0= while      ( c-addr R:dlink )
+    r@ cell+ dup                           ( c-addr dlink+1 dlink+1 R:dlink )
+    c@ $3fff and                           ( c-addr dlink+1 nlength R:dlink )
+    third c@ = if                          ( c-addr dlink+1 nlength R:dlink )
+      third third           ( c-addr dlink+1 nlength c-addr dlink+1 R:dlink )
+      count rot count compare 0= if        ( c-addr dlink+1 nlength R:dlink )
+        over c@ $8000 and 0<> 1 or    ( c-addr dlink+1 nlength 1|-1 R:dlink )
+        >r + nip r>                        ( xt 1|-1 )
+        0 while
+      then
+    then
+  repeat then then
+  rdrop ;
 
-\ Attempt to match the counted string at c-addr to the name of a
-\ dictionary definition. If the definition is not found, return
-\ c-addr and zero. If the definition is found, return the corre-
+\ Determine if the counted string at c-addr matches the name of
+\ any existing dictionary definition. If no match is found, re-
+\ turn c-addr and zero. If a match is found, return the corre-
 \ sponding execution token. If the definition is immediate, also
 \ return 1. Otherwise, also return -1. For a given string, the
 \ results returned by FIND while compiling may differ from those
@@ -2606,10 +2621,10 @@ $____ value s\"ptr  ( -- c-addr )
 
 
 : header,  ( c-addr u -- )
+  dlink ,
   here to defcount
   dup , string,
-  here to deflink
-  dlink , ;
+  here to deflink ;
 
 \ Compile a dictionary header for a new dictionary definition
 \ using the name with address c-addr and length u.
