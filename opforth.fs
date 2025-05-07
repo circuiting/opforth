@@ -1961,21 +1961,17 @@ $____ opcode execute  ( i*x xt -- j*x )
 
 
 : find  ( c-addr -- c-addr 0 | xt 1 | xt -1 )
-  dlink >r                                 ( c-addr R:dlink )
-  begin                                    ( c-addr R:dlink )
-    r@ 0= dup if 0 swap then 0= while      ( c-addr R:dlink )
-    r@ cell+ dup                           ( c-addr dlink+1 dlink+1 R:dlink )
-    c@ $3fff and                           ( c-addr dlink+1 nlength R:dlink )
-    third c@ = if                          ( c-addr dlink+1 nlength R:dlink )
-      third third           ( c-addr dlink+1 nlength c-addr dlink+1 R:dlink )
-      count rot count compare 0= if        ( c-addr dlink+1 nlength R:dlink )
-        over c@ $8000 and 0<> 1 or    ( c-addr dlink+1 nlength 1|-1 R:dlink )
-        >r + nip r>                        ( xt 1|-1 )
-        0 while
+  dlink >r
+  begin
+    r@ 0= if 0 rdrop exit then
+    r@ cell+ dup c@ $3fff and >r
+    over c@ r@ = if
+      over count third char+ r@ compare 0= if
+        nip r> over + swap c@
+        $8000 and 0<> 1 or rdrop exit
       then
     then
-  repeat then then
-  rdrop ;
+  again ;
 
 \ Determine if the counted string at c-addr matches the name of
 \ any existing dictionary definition. If no match is found, re-
