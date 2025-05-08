@@ -392,9 +392,9 @@
 \ compile-only    --
 \ header,         c-addr u --
 \ findable        --
-\ defcount        -- c-addr
 \ dlink           -- a-addr
 \ deflink         -- a-addr
+\ defxt           -- xt
 
 
 \ Core Control Flow
@@ -648,8 +648,7 @@ $____ opcode tuck  ( x1 x2 -- x2 x1 x2 )
 : roll  ( xu xu-1...x0 u -- xu-1...x0 xu )
   dup
   if
-    swap >r 1- recurse
-    r> swap exit
+    swap >r 1- recurse r> swap exit
   then drop ;
 
 \ Remove u and rotate the top u+1 stack items to bring xu to the
@@ -2412,7 +2411,7 @@ $____ value s\"ptr  ( -- c-addr )
 
 : :  ( '<spaces>name' -- colon-sys )
   ( Ini: i*x R: -- i*x R:nest-sys ) ( Exe: i*x -- j*x )
-  something ;
+  parse-name header, 0 here to defxt ;
 
 \ Skip leading spaces and parse name delimited by a space. Cre-
 \ ate a new definition for name. Enter compilation state, start
@@ -2445,7 +2444,7 @@ $____ value s\"ptr  ( -- c-addr )
 \ turn address nest-sys.
 
 
-: immediate  ( -- )  defcount c@ $8000 or to defcount ;
+: immediate  ( -- )  deflink cell+ dup c@ $8000 or swap c! ;
 
 \ Make the most recent definition an immediate word.
 
@@ -2625,7 +2624,7 @@ $____ value s\"ptr  ( -- c-addr )
 \ Helper Definition Words
 
 
-: compile-only  ( -- )  defcount c@ $4000 or to defcount ;
+: compile-only  ( -- )  deflink cell+ dup c@ $4000 or swap c! ;
 
 \ Make the most recent definition a compile-only word, which is
 \ a word that will cause the outer interpreter to abort and dis-
@@ -2634,10 +2633,8 @@ $____ value s\"ptr  ( -- c-addr )
 
 
 : header,  ( c-addr u -- )
-  dlink ,
-  here to defcount
-  dup , string,
-  here to deflink ;
+  here to deflink
+  dlink , dup , string, ;
 
 \ Compile a dictionary header for a new dictionary definition
 \ using the name with address c-addr and length u.
@@ -2647,11 +2644,6 @@ $____ value s\"ptr  ( -- c-addr )
 
 \ Put the most recent definition at the front of the search or-
 \ der.
-
-
-0 value defcount  ( -- c-addr )
-
-\ Description something something
 
 
 0 value deflink  ( - a-addr )
@@ -2665,6 +2657,12 @@ $____ value s\"ptr  ( -- c-addr )
 
 \ a-addr is the head link of the linked list used to find words
 \ in the dictionary.
+
+
+0 value defxt  ( -- xt )
+
+\ xt is the execution token of the most recent definition. DEFXT
+\ is used by RECURSE.
 
 
 
@@ -2897,7 +2895,7 @@ $____ opcode exit  ( Com: -- ) ( Exe: R:nest-sys -- R: )
 \ loop parameters by executing UNLOOP.
 
 
-: recurse  ( Com: -- )  something ;
+: recurse  ( Com: -- )  defxt compile, ;
 
 \ Interpretation: Undefined
 
