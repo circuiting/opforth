@@ -65,7 +65,7 @@
 \ rp0      -- +n
 \ sp@      -- +n
 \ rp@      -- +n
-\ sp!      i*x +n -- j*x
+n\ sp!      i*x +n -- j*x
 \ rp!      +n R:i*x -- R:j*x
 
 
@@ -363,8 +363,8 @@
 \ Core Definition
 
 \ :            '<spaces>name' -- colon-sys
-\              Ini: i*x R: -- i*x R:nest-sys  Exe: i*x -- j*x
-\ ;            Com: colon-sys --  Run: R:nest-sys -- R:
+\              Ini: i*x R: -- i*x R:a-addr  Exe: i*x -- j*x
+\ ;            Com: colon-sys --  Run: R:a-addr -- R:
 \ immediate    --
 \ constant     '<spaces>name' x --  Exe: -- x
 \ variable     '<spaces>name' --  Exe: -- a-addr
@@ -378,7 +378,7 @@
 \ Core-Ext Definition
 
 \ :noname    -- xt colon-sys
-\            Ini: i*x R: -- i*x R:nest-sys  Exe: i*x -- j*x
+\            Ini: i*x R: -- i*x R:a-addr  Exe: i*x -- j*x
 \ buffer:    '<spaces>name' u --  Exe: -- a-addr
 \ value      '<spaces>name' x --  Exe: -- x  to: x --
 \ to         Int: '<spaces>name' i*x --
@@ -406,24 +406,27 @@
 \ until      Com: dest --  Run: x --
 \ while      Com: dest -- orig dest  Run: x --
 \ repeat     Com: orig dest --  Run: --
-\ do         -- do-sys
+\ do         Com: -- false a-addr
 \            Run: n1|u1 n2|u2 R: -- R:n1|u1 R:n2|u2
-\ loop       Com: do-sys --  Run: R:loop-sys1 -- R:|loop-sys2
-\ +loop      Com: do-sys --
-\            Run: n R:loop-sys1 -- R:|loop-sys2
-\ i          Com: --  Exe: R:loop-sys -- n|u R:loop-sys
-\ j          Com: --  Exe: R:loop-sys1 loop-sys2
-\                            -- n|u loop-sys1 loop-sys2
-\ leave      Com: --  Exe: R:loop-sys -- R:
-\ unloop     Com: --  Exe: R:loop-sys -- R:
-\ exit       Com: --  Exe: R:nest-sys -- R:
+\ loop       Com: flag a-addr --
+\            Run: R:n1|u1 R:n2|u2 -- R:|n1|u1 R:|n3|u3
+\ +loop      Com: flag a-addr --
+\            Run: n R:n1|u1 R:n2|u2 -- R:|n1|u1 R:|n3|u3
+\ i          Com: --
+\            Exe: R:n|u -- n|u R:n|u
+\ j          Com: --
+\            Exe: R:n1|u1 R:n2|u2 R:n3|u3 --
+\            n3|u3 R:n1|u1 R:n2|u2 R:n3|u3
+\ leave      Com: --  Exe: R:n1|u1 R:n2|u2 -- R:
+\ unloop     Com: --  Exe: R:n1|u1 R:n2|u2 -- R:
+\ exit       Com: --  Exe: R:a-addr -- R:
 \ recurse    Com: --
 
 
 \ Core-Ext Control Flow
 
 \ again      Com: dest --  Run: --
-\ ?do        Com: -- do-sys
+\ ?do        Com: -- true a-addr
 \            Run: n1|u1 n2|u2 R: -- R:|n1|u1 R:|n2|u2
 \ case       Com: -- case-sys  Run: --
 \ of         Com: -- of-sys  Run: x1 x2 -- |x1
@@ -2410,7 +2413,7 @@ $____ value s\"ptr  ( -- c-addr )
 
 
 : :  ( '<spaces>name' -- colon-sys )
-  ( Ini: i*x R: -- i*x R:nest-sys ) ( Exe: i*x -- j*x )
+  ( Ini: i*x R: -- i*x R:a-addr ) ( Exe: i*x -- j*x )
   parse-name header, 0 here to defxt ;
 
 \ Skip leading spaces and parse name delimited by a space. Cre-
@@ -2429,7 +2432,7 @@ $____ value s\"ptr  ( -- c-addr )
 \ ively.
 
 
-: ;  ( Com: colon-sys -- ) ( Run: R:nest-sys -- R: )
+: ;  ( Com: colon-sys -- ) ( Run: R:a-addr -- R: )
   postpone exit  findable drop [ ; immediate compile-only
 
 \ Interpretation: Undefined
@@ -2526,7 +2529,7 @@ $____ value s\"ptr  ( -- c-addr )
 
 
 : :noname  ( -- xt colon-sys )
-  ( Ini: i*x R: -- i*x R:nest-sys ) ( Exe: i*x -- j*x )
+  ( Ini: i*x R: -- i*x R:a-addr ) ( Exe: i*x -- j*x )
   something ;
 
 \ Create an execution token xt, enter compilation state, start
@@ -2761,7 +2764,7 @@ $____ value s\"ptr  ( -- c-addr )
 \ Runtime: Continue execution at the location given by dest.
 
 
-: do  ( -- do-sys )
+: do  ( Com: -- false a-addr )
       ( Run: n1|u1 n2|u2 R: -- R:n1|u1 R:n2|u2 )
   0 postpone 2>r here ; immediate compile-only
 
@@ -2783,9 +2786,9 @@ $____ value s\"ptr  ( -- c-addr )
 \ of the same type.
 
 
-: loop  ( Com: do-sys -- )
-  ( Run: R:loop-sys1 -- R:|loop-sys2 )
-  postpone r>1+  postpone ?loop ,
+: loop  ( Com: flag a-addr -- )
+        ( Run: R:n1|u1 R:n2|u2 -- R:|n1|u1 R:|n3|u3 )
+  postpone r>1+  postpone ?loop  ,
   dup if here swap ! else drop then ; immediate compile-only
 
 \ Interpretation: Undefined
@@ -2804,10 +2807,10 @@ $____ value s\"ptr  ( -- c-addr )
 \ when the loop parameters are unavailable.
 
 
-: +loop  ( Com: do-sys -- )
-  ( Run: n R:loop-sys1 -- |loop-sys2 )
+: +loop  ( Com: flag a-addr -- )
+         ( Run: n R:n1|u1 R:n2|u2 -- R:|n1|u1 R:|n3|u3 )
   postpone r@+  postpone r>  postpone r@  postpone third
-  postpone >r  postpone within  postpone 0=  postpone ?branch ,
+  postpone >r  postpone within  postpone 0=  postpone ?branch  ,
   dup if here swap ! else drop then ; immediate compile-only
 
 \ Interpretation: Undefined
@@ -2827,8 +2830,7 @@ $____ value s\"ptr  ( -- c-addr )
 \ when the loop parameters are unavailable.
 
 
-synonym i  ( Com: -- ) ( Exe: R:loop-sys -- n|u R:loop-sys )
-  r@
+synonym i  ( Com: -- ) ( Exe: R:n|u -- n|u R:n|u )  r@
 
 \ Interpretation: Undefined
 
@@ -2841,8 +2843,8 @@ synonym i  ( Com: -- ) ( Exe: R:loop-sys -- n|u R:loop-sys )
 \ available.
 
 
-$____ opcode j  ( Com: -- ) ( Exe: R:loop-sys1 R:loop-sys2 --
-  n|u R:loop-sys1 R:loop-sys2 )
+$____ opcode j  ( Com: -- )  ( Exe: R:n1|u1 R:n2|u2 R:n3|u3 --
+                               n3|u3 R:n1|u1 R:n2|u2 R:n3|u3 )
   compile-only
 
 \ Interpretation: Undefined
@@ -2855,7 +2857,8 @@ $____ opcode j  ( Com: -- ) ( Exe: R:loop-sys1 R:loop-sys2 --
 \ outer loop, loop-sys2, are unavailable.
 
 
-: leave  ( Com: -- ) ( Exe: R:loop-sys -- R: )  something ;
+: leave  ( Com: -- ) ( Exe: R:n1|u1 R:n2|u2 -- R: )
+  something ;
 
 \ Interpretation: Undefined
 
@@ -2868,7 +2871,8 @@ $____ opcode j  ( Com: -- ) ( Exe: R:loop-sys1 R:loop-sys2 --
 \ An ambiguous condition exists if they are unavailable.
 
 
-: unloop  ( Com: -- ) ( R:loop-sys -- R: )  something ;
+: unloop  ( Com: -- ) ( Exe: R:n1|u1 R:n2|u2 -- R: )
+  something ;
 
 \ Interpretation: Undefined
 
@@ -2882,7 +2886,7 @@ $____ opcode j  ( Com: -- ) ( Exe: R:loop-sys1 R:loop-sys2 --
 \ available.
 
 
-$____ opcode exit  ( Com: -- ) ( Exe: R:nest-sys -- R: )
+$____ opcode exit  ( Com: -- ) ( Exe: R:a-addr -- R: )
   compile-only
 
 \ Interpretation: Undefined
@@ -2923,7 +2927,7 @@ $____ opcode exit  ( Com: -- ) ( Exe: R:nest-sys -- R: )
 \ ter AGAIN will not be executed.
 
 
-: ?do  ( Com: -- do-sys )
+: ?do  ( Com: -- true a-addr )
        ( Run: n1|u1 n2|u2 R: -- R:|n1|u1 R:|n2|u2 )
   postpone 2dup  postpone =  postpone if
   postpone 2>r here ; immediate compile-only
