@@ -65,7 +65,7 @@
 \ rp0      -- +n
 \ sp@      -- +n
 \ rp@      -- +n
-n\ sp!      i*x +n -- j*x
+\ sp!      i*x +n -- j*x
 \ rp!      +n R:i*x -- R:j*x
 
 
@@ -799,7 +799,25 @@ $____ opcode s>d  ( n -- d )
 \ and arithmetic are signed.
 
 
-: um*  ( u1 u2 -- ud )  something ;
+: um*  ( u1 u2 -- ud )
+  >r 0
+  over odd r@ and + d2/
+  over odd r@ and + d2/
+  over odd r@ and + d2/
+  over odd r@ and + d2/
+  over odd r@ and + d2/
+  over odd r@ and + d2/
+  over odd r@ and + d2/
+  over odd r@ and + d2/
+  over odd r@ and + d2/
+  over odd r@ and + d2/
+  over odd r@ and + d2/
+  over odd r@ and + d2/
+  over odd r@ and + d2/
+  over odd r@ and + d2/
+  over odd r@ and + d2/
+  over odd r@ and + d2/
+  rdrop ;
 
 \ Multiply u1 by u2. ud is the double-cell product. All numbers
 \ and arithmetic are unsigned.
@@ -2035,7 +2053,7 @@ $____ opcode execute  ( i*x xt -- j*x )
 
 
 : is  ( Int: '<spaces>name' xt -- )
-  ( Com: '<spaces>name' -- ) ( Run: xt -- )
+      ( Com: '<spaces>name' -- ) ( Run: xt -- )
   something ;
 
 \ Interpretation: Skip leading spaces and parse name delimited
@@ -2051,7 +2069,7 @@ $____ opcode execute  ( i*x xt -- j*x )
 
 
 : action-of  ( Int: '<spaces>name' -- xt )
-  ( Com: '<spaces>name' -- ) ( Run: -- xt )
+             ( Com: '<spaces>name' -- ) ( Run: -- xt )
   something ;
 
 \ Interpretation: Skip leading spaces and parse name delimited
@@ -2413,7 +2431,7 @@ $____ value s\"ptr  ( -- c-addr )
 
 
 : :  ( '<spaces>name' -- colon-sys )
-  ( Ini: i*x R: -- i*x R:a-addr ) ( Exe: i*x -- j*x )
+     ( Ini: i*x R: -- i*x R:a-addr ) ( Exe: i*x -- j*x )
   parse-name header, 0 here to defxt ;
 
 \ Skip leading spaces and parse name delimited by a space. Cre-
@@ -2529,7 +2547,7 @@ $____ value s\"ptr  ( -- c-addr )
 
 
 : :noname  ( -- xt colon-sys )
-  ( Ini: i*x R: -- i*x R:a-addr ) ( Exe: i*x -- j*x )
+           ( Ini: i*x R: -- i*x R:a-addr ) ( Exe: i*x -- j*x )
   something ;
 
 \ Create an execution token xt, enter compilation state, start
@@ -2580,7 +2598,7 @@ $____ value s\"ptr  ( -- c-addr )
 
 
 : to  ( Int: '<spaces>name' i*x -- )
-  ( Com: '<spaces>name' -- )
+      ( Com: '<spaces>name' -- )
   something ;
 
 \ Interpretation: Skip leading spaces and parse name delimited
@@ -3041,7 +3059,7 @@ $____ opcode ?branch  ( Com: -- ) ( Exe: x -- )
 
 
 $____ opcode ?loop  ( Com: -- )
-  ( Exe: n1 R:n2|u -- | R:n2|u R:n1 )
+                    ( Exe: n1 R:n2|u -- | R:n2|u R:n1 )
   compile-only
 
 \ Interpretation: Undefined
@@ -3078,7 +3096,7 @@ $____ opcode ?loop  ( Com: -- )
 
 
 : abort"  ( Com: 'ccc<quote>' -- )
-  ( Run: i*x x1 R:j*x -- |i*x R:|j*x )
+          ( Run: i*x x1 R:j*x -- |i*x R:|j*x )
   something ;
 
 \ Interpretation: Undefined
@@ -3338,7 +3356,7 @@ synonym d>s  ( d -- n )  drop
 
 
 : 2value  ( '<spaces>name' x1 x2 -- ) ( Exe: -- x1 x2 )
-  ( to: x1 x2 -- )
+          ( to: x1 x2 -- )
   create 2, does> 2@ ;
 
 \ Skip leading spaces and parse name delimited by a space. Cre-
