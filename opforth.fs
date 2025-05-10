@@ -883,7 +883,17 @@ $____ opcode s>d  ( n -- d )
 \ side the range of a single-cell signed integer.
 
 
-: um/mod  ( ud u1 -- u2 u3 )  something ;
+: um/mod  ( ud u1 -- u2 u3 )
+  -rot
+  16 0 do
+    dup 0< if
+      d2* third +
+    else
+      d2* swap 1+ swap third -
+    then
+  loop
+  d2* swap 1+ swap
+  rot drop ;
 
 \ Divide ud by u1. u2 is the remainder and u3 is the quotient.
 \ All integers and arithmetic are unsigned.
