@@ -357,7 +357,7 @@
 \ s\"buf      -- c-addr
 \ s\"ptr      -- c-addr
 \ s\"append   char --
-\ \x          c-addr1 u1 -- c-addr u2 char
+\ \x          c-addr1 u1 -- c-addr2 u2 | c-addr2 u2 char
 
 
 \ Core Definition
@@ -2411,10 +2411,10 @@ $____ value s\"ptr  ( -- c-addr )
 
 : s\"append  ( char -- )  s\"ptr c!+ to s\"ptr ;
 
-\ Description something something
+\ Append char to the buffer used by S\".
 
 
-: \x  ( c-addr1 u1 -- c-addr2 u2 char )
+: \x  ( c-addr1 u1 -- c-addr2 u2 | c-addr2 u2 char )
   /char dup hex? if
     drop over c@ dup hex? if
       drop over 0 swap 0 swap 2 >number 2drop drop
@@ -2423,7 +2423,21 @@ $____ value s\"ptr  ( -- c-addr )
     s\"append /char
   then ;
 
-\ Description something something
+\ If the first two characters of the string with address c-addr1
+\ and length u1 are valid hexadecimal digits, convert the digits
+\ to the character code with the same value,
+
+\ If both characters are valid hex digits, put the character
+\ with the equivalent character code on the stack.
+
+\ If the first character is not a valid hex digit, append both
+\ characters.
+
+\ If the first character is a valid hex digit, but the second
+\ character is not, append the second character.
+
+\ c-addr2 is the address 2 characters past c-addr1, and u2 is
+\ u1 - 2.
 
 
 
