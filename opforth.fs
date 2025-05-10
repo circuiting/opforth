@@ -793,7 +793,24 @@ $____ opcode s>d  ( n -- d )
 \ may be signed or unsigned.
 
 
-: m*  ( n1 n2 -- d )  something ;
+: m*  ( n1 n2 -- d )
+  >r 0
+  over odd r@ and + d2/
+  over odd r@ and + d2/
+  over odd r@ and + d2/
+  over odd r@ and + d2/
+  over odd r@ and + d2/
+  over odd r@ and + d2/
+  over odd r@ and + d2/
+  over odd r@ and + d2/
+  over odd r@ and + d2/
+  over odd r@ and + d2/
+  over odd r@ and + d2/
+  over odd r@ and + d2/
+  over odd r@ and + d2/
+  over odd r@ and + d2/
+  over odd r> and + d2/
+  over odd if dnegate then ;
 
 \ Multiply n1 by n2. d is the double-cell product. All numbers
 \ and arithmetic are signed.
@@ -816,8 +833,7 @@ $____ opcode s>d  ( n -- d )
   over odd r@ and + d2/
   over odd r@ and + d2/
   over odd r@ and + d2/
-  over odd r@ and + d2/
-  rdrop ;
+  over odd r> and + ;
 
 \ Multiply u1 by u2. ud is the double-cell product. All numbers
 \ and arithmetic are unsigned.
