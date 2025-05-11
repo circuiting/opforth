@@ -1622,7 +1622,7 @@ variable base  ( -- a-addr )  decimal
     'a' 'z' 1+ within [ char 'a' $a - ] literal and -
     dup base @ u< dup 0= if nip then while
     2r> swap m+ 2>r
-  repeat then then
+  repeat then
   drop 2r> ;
 
 \ Attempt to convert the string with address c-addr1 and length
@@ -3129,9 +3129,16 @@ $____ opcode ?loop  ( Com: -- )
 
 
 : resolve-leave  ( Com: -- )  ( Exe: -- )
-  something ;
+  here leave-link
+  begin
+    dup while
+    2dup ! @
+  repeat
+  nip to leave-link ; immediate compile-only
 
-\ Description something something
+\ As part of the compilation of a counted loop, resolve all oc-
+\ currences of LEAVE by writing the dictionary pointer to the
+\ branch address fields compiled by the occurrences of LEAVE.
 
 
 
