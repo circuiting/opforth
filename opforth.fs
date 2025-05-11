@@ -2938,7 +2938,7 @@ $____ opcode j  ( Com: -- )  ( Exe: R:n1|u1 R:n2|u2 R:n3|u3 --
 
 
 : unloop  ( Com: -- ) ( Exe: R:n1|u1 R:n2|u2 -- R: )
-  something ; immediate compile-only
+  rdrop rdrop ; immediate compile-only
 
 \ Interpretation: Undefined
 
