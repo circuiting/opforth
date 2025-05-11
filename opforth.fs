@@ -892,8 +892,11 @@ $____ opcode s>d  ( n -- d )
       d2* swap 1+ swap third -
     then
   loop
-  d2* swap 1+ swap
-  rot drop ;
+  swap 2* 1+ over 0< if
+    1- >r + r>
+  else
+    rot drop
+  then ;
 
 \ Divide ud by u1. u2 is the remainder and u3 is the quotient.
 \ All integers and arithmetic are unsigned.
