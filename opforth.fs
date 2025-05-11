@@ -436,10 +436,12 @@
 
 \ Helper Control Flow
 
-\ nop        Com: --  Exe: --
-\ branch     Com: --  Exe: --
-\ ?branch    Com: --  Exe: x --
-\ ?loop      Com: --  Exe: R:n|u -- |loop-sys
+\ nop              Com: --  Exe: --
+\ branch           Com: --  Exe: --
+\ ?branch          Com: --  Exe: x --
+\ ?loop            Com: --  Exe: R:n|u -- |loop-sys
+\ leave-link       -- a-addr
+\ resolve-leave    Com: --  Exe: --
 
 
 \ Core Outer Interpreter
@@ -2850,7 +2852,8 @@ $____ value s\"ptr  ( -- c-addr )
 : loop  ( Com: flag a-addr -- )
         ( Run: R:n1|u1 R:n2|u2 -- R:|n1|u1 R:|n3|u3 )
   postpone r>1+  postpone ?loop  ,
-  dup if here swap ! else drop then ; immediate compile-only
+  dup if here swap ! else drop then
+  resolve-leave ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2872,7 +2875,8 @@ $____ value s\"ptr  ( -- c-addr )
          ( Run: n R:n1|u1 R:n2|u2 -- R:|n1|u1 R:|n3|u3 )
   postpone r@+  postpone r>  postpone r@  postpone third
   postpone >r  postpone within  postpone 0=  postpone ?branch  ,
-  dup if here swap ! else drop then ; immediate compile-only
+  dup if here swap ! else drop then
+  resolve-leave ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2919,7 +2923,8 @@ $____ opcode j  ( Com: -- )  ( Exe: R:n1|u1 R:n2|u2 R:n3|u3 --
 
 
 : leave  ( Com: -- ) ( Exe: R:n1|u1 R:n2|u2 -- R: )
-  something ;
+  postpone unloop  postpone branch
+  here leave-link , to leave-link ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2933,7 +2938,7 @@ $____ opcode j  ( Com: -- )  ( Exe: R:n1|u1 R:n2|u2 R:n3|u3 --
 
 
 : unloop  ( Com: -- ) ( Exe: R:n1|u1 R:n2|u2 -- R: )
-  something ;
+  something ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -3115,6 +3120,18 @@ $____ opcode ?loop  ( Com: -- )
 \ cell after the ?LOOP opcode. Otherwise, remove both the top
 \ data stack item and the top return stack item, and then con-
 \ tinue execution in line.
+
+
+0 value leave-link  ( -- a-addr )
+
+\ a-addr is the address of the head link of the linked list of
+\ LEAVE branch address fields.
+
+
+: resolve-leave  ( Com: -- )  ( Exe: -- )
+  something ;
+
+\ Description something something
 
 
 
