@@ -865,7 +865,11 @@ $____ opcode s>d  ( n -- d )
 \ An ambiguous condition exists if n2 is zero.
 
 
-: sm/rem  ( d n1 -- n2 n3 )  something ;
+: sm/rem  ( d n1 -- n2 n3 )
+  dup >r abs
+  non-restoring
+  over 0< if 1- swap r@ abs + swap then
+  r> 0< if negate then ;
 
 \ Divide d by n1. n2 is the remainder and n3 is the quotient. If
 \ d and n1 differ in sign, n2 and n3 are determined by symmetric
@@ -888,13 +892,15 @@ $____ opcode s>d  ( n -- d )
 : um/mod  ( ud u1 -- u2 u3 )
   -rot
   16 0 do
-    dup 0< if
+    dup 0<
+    if
       d2* third +
     else
       d2* swap 1+ swap third -
     then
   loop
-  swap 2* 1+ over 0< if
+  swap 2* 1+ over 0<
+  if
     1- >r + r>
   else
     rot drop
@@ -930,6 +936,24 @@ $____ opcode s>d  ( n -- d )
 
 
 \ Helper Arithmetic Words
+
+
+: non-restoring  ( ud u1 -- n u2 )
+  -rot
+  16 0 do
+    dup 0<
+    if
+      d2* third +
+    else
+      d2* swap 1+ swap third -
+    then
+  loop
+  swap 2* 1+ rot drop ;
+
+\ Divide ud by u1. n is the remainder and u2 is the quotient.
+\ After executing NON-RESTORING, a fixup step is necessary to
+\ convert the negative remainder to positive and to adjust the
+\ quotient accordingly.
 
 
 : ud/mod  ( ud1 u1 -- u2 ud2 )
