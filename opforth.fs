@@ -868,7 +868,7 @@ $____ opcode s>d  ( n -- d )
 : sm/rem  ( d n1 -- n2 n3 )
   dup >r abs
   non-restoring
-  over 0< if 1- swap r@ abs + swap then
+  over abs r@ abs = if 1- swap r@ abs + swap then
   r> 0< if negate then ;
 
 \ Divide d by n1. n2 is the remainder and n3 is the quotient. If
@@ -889,22 +889,7 @@ $____ opcode s>d  ( n -- d )
 \ side the range of a single-cell signed integer.
 
 
-: um/mod  ( ud u1 -- u2 u3 )
-  -rot
-  16 0 do
-    dup 0<
-    if
-      d2* third +
-    else
-      d2* swap 1+ swap third -
-    then
-  loop
-  swap 2* 1+ over 0<
-  if
-    1- >r + r>
-  else
-    rot drop
-  then ;
+: um/mod  ( ud u1 -- u2 u3 ) something ;
 
 \ Divide ud by u1. u2 is the remainder and u3 is the quotient.
 \ All integers and arithmetic are unsigned.
