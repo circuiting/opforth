@@ -866,10 +866,10 @@ $____ opcode s>d  ( n -- d )
 
 
 : sm/rem  ( d n1 -- n2 n3 )
-  dup >r abs
+  dup 0< dup >r if negate then dup >r
   non-restoring
-  over abs r@ abs = if 1- swap r@ abs + swap then
-  r> 0< if negate then ;
+  over negate r@ = if 1- swap r@ + swap then
+  rdrop r> if negate then ;
 
 \ Divide d by n1. n2 is the remainder and n3 is the quotient. If
 \ d and n1 differ in sign, n2 and n3 are determined by symmetric
