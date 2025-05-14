@@ -882,7 +882,7 @@ $____ opcode s>d  ( n -- d )
 : fm/mod  ( d n1 -- n2 n3 )
   dup 0< tuck if negate then tuck >r >r              ( d u R:u R:flag )
   non-restoring                                 ( rem quot R:u R:flag )
-  r> r@ 0<> and 0= if                                  ( rem quot R:u )
+  over 0>= r> 0= and 0= if                             ( rem quot R:u )
   1- swap r@ + swap then
   rdrop ;
 
