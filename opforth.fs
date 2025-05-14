@@ -866,7 +866,7 @@ $____ opcode s>d  ( n -- d )
 
 
 : sm/rem  ( d n1 -- n2 n3 )
-  dup 0< dup >r if negate then dup >r
+  dup 0< dup >r if negate then dup >r    ( d u R:flag R:u )
   non-restoring
   over negate r@ = if 1- swap r@ + swap then
   rdrop r> if negate then ;
@@ -879,7 +879,12 @@ $____ opcode s>d  ( n -- d )
 \ side the range of a single-cell signed integer.
 
 
-: fm/mod  ( d n1 -- n2 n3 )  something ;
+: fm/mod  ( d n1 -- n2 n3 )
+  dup 0< tuck if negate then tuck >r >r              ( d u R:u R:flag )
+  non-restoring                                 ( rem quot R:u R:flag )
+  r> r@ 0<> and 0= if                                  ( rem quot R:u )
+  1- swap r@ + swap then
+  rdrop ;
 
 \ Divide d by n1. n2 is the remainder and n3 is the quotient. If
 \ d and n1 differ in sign, n2 and n3 are determined by floored
