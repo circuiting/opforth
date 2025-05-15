@@ -866,9 +866,9 @@ $____ opcode s>d  ( n -- d )
 
 
 : sm/rem  ( d n1 -- n2 n3 )
-  dup 0< dup >r if negate then dup >r
+  dup 0< >r abs dup >r
   non-restoring
-  over negate r@ =
+  over r@ + 0=
   if 1- swap r@ + swap then
   rdrop r> if negate then ;
 
