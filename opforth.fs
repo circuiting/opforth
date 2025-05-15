@@ -884,7 +884,7 @@ $____ opcode s>d  ( n -- d )
   if negate >r dnegate r> then
   non-restoring
   over abs r@ abs -
-  dup 0= r> 0< or r@ 0< or
+  dup 0= r> 0< r@ 0< xor or
   if -rot 1- swap then
   drop r> if swap negate swap then ;
 
