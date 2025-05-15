@@ -866,9 +866,10 @@ $____ opcode s>d  ( n -- d )
 
 
 : sm/rem  ( d n1 -- n2 n3 )
-  dup 0< dup >r if negate then dup >r    ( d u R:flag R:u )
+  dup 0< dup >r if negate then dup >r
   non-restoring
-  over negate r@ = if 1- swap r@ + swap then
+  over negate r@ =
+  if 1- swap r@ + swap then
   rdrop r> if negate then ;
 
 \ Divide d by n1. n2 is the remainder and n3 is the quotient. If
@@ -880,13 +881,11 @@ $____ opcode s>d  ( n -- d )
 
 
 : fm/mod  ( d n1 -- n2 n3 )
-  2dup 2>r dup 0<
-  if negate >r dnegate r> then
-  non-restoring
-  over abs r@ abs -
-  dup 0= r> 0< r@ 0< xor or
-  if -rot 1- swap then
-  drop r> if swap negate swap then ;
+  2dup >r >r
+  sm/rem
+  over 0<> r> 0< r@ 0< xor and
+  if 1- swap r@ + swap then
+  rdrop ;
 
 \ Divide d by n1. n2 is the remainder and n3 is the quotient. If
 \ d and n1 differ in sign, n2 and n3 are determined by floored
