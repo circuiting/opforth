@@ -880,11 +880,13 @@ $____ opcode s>d  ( n -- d )
 
 
 : fm/mod  ( d n1 -- n2 n3 )
-  dup 0< tuck if negate then tuck >r >r              ( d u R:u R:flag )
-  non-restoring                                 ( rem quot R:u R:flag )
-  over 0>= r> 0= and 0= if                             ( rem quot R:u )
-  1- swap r@ + swap then
-  rdrop ;
+  2dup 2>r dup 0<
+  if negate >r dnegate r> then
+  non-restoring
+  over abs r@ abs -
+  dup 0= r> 0< or r@ 0< or
+  if -rot 1- swap then
+  drop r> if swap negate swap then ;
 
 \ Divide d by n1. n2 is the remainder and n3 is the quotient. If
 \ d and n1 differ in sign, n2 and n3 are determined by floored
