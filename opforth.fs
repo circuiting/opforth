@@ -953,8 +953,9 @@ $____ opcode s>d  ( n -- d )
 
 
 : ud/mod  ( ud1 u1 -- u2 ud2 )
-  >r 0 r@ um/mod r> swap >r
-  um/mod r> ;
+  >r 0 r@ um/mod
+  r> swap >r um/mod
+  r> ;
 
 \ Divide ud1 by u1. u2 is the remainder and ud2 is the quotient.
 \ All integers and arithmetic are unsigned.
@@ -3301,7 +3302,11 @@ synonym d>s  ( d -- n )  drop
 \ single-cell signed integer.
 
 
-: m*/  ( d1 n1 +n2 -- d2 )  something ;
+: m*/  ( d1 n1 +n2 -- d2 )
+  >r swap r@ m*
+  rot r> m*
+  rot m+
+  ( triple cell division ) ;
 
 \ Multiply d1 by n1 to produce the triple-cell intermediate re-
 \ sult t. Divide t by +n2. d2 is the double-cell quotient.
