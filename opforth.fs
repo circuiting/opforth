@@ -3303,8 +3303,8 @@ synonym d>s  ( d -- n )  drop
 
 
 : m*/  ( d1 n1 +n2 -- d2 )
-  >r swap r@ m*
-  rot r> m*
+  >r swap r@ um*
+  rot r> um*
   rot m+
   ( triple cell division ) ;
 
