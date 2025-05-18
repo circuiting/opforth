@@ -459,6 +459,11 @@
 \ throw    k*x n -- k*x | i*x n
 
 
+\ Helper Exception
+
+\ handler    -- a-addr
+
+
 \ Double
 
 \ m+           d1|ud1 n -- d2|ud2
@@ -3224,10 +3229,15 @@ $____ opcode ?loop  ( Com: -- )
 
 
 
-\ Exception
+\ Exception Words
 
 
-: catch  ( i*x xt -- j*x 0 | i*x n )  something ;
+: catch  ( i*x xt -- j*x 0 | i*x n )
+  sp@ >r handler @ >r    \ Save SP and previous handler
+  rp@ handler !          \ Set current handler
+  execute                \ EXECUTE returns if no THROW
+  r> handler !           \ Restore previous handler
+  rdrop 0 ;              \ Discard saved SP
 
 \ Standard Forth description (slightly modified):
 
@@ -3244,7 +3254,13 @@ $____ opcode ?loop  ( Com: -- )
 \ tion semantics are given by THROW.
 
 
-: throw  ( k*x n -- k*x | i*x n )  something ;
+: throw  ( k*x n -- k*x | i*x n )
+  ?dup if            \ 0 THROW is no-op
+    handler @ rp!    \ Restore previous return stack
+    r> handler !     \ Restore previous handler
+    r> swap >r       \ Exception # on return stack
+    sp! drop r>      \ Restore data stack
+  then ;             \ Return to the caller of CATCH
 
 \ Standard Forth description (slightly modified):
 
@@ -3272,6 +3288,16 @@ $____ opcode ?loop  ( Com: -- )
 \ about the condition associated with the THROW code n. Subse-
 \ quently, the system shall perform the function of ABORT (the
 \ version of ABORT in the core wordset).
+
+
+
+\ Helper Exception Words
+
+
+variable handler  ( -- a-addr )  0 handler !
+
+\ a-addr is the address of a cell containing the last exception
+\ handler used by CATCH and THROW.
 
 
 
