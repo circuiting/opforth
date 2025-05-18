@@ -3317,9 +3317,9 @@ synonym d>s  ( d -- n )  drop
 
 : m*/  ( d1 n1 +n2 -- d2 )
   >r swap r@ um*
-  rot r> um*
-  rot m+
-  ( triple cell division ) ;
+  rot r> m*  rot m+
+  dup >r um/mod
+  r> swap >r um/mod nip r> ;
 
 \ Multiply d1 by n1 to produce the triple-cell intermediate re-
 \ sult t. Divide t by +n2. d2 is the double-cell quotient.
