@@ -1436,7 +1436,7 @@ synonym c!-  ( char c-addr1 -- c-addr2 )  !-
 : ."  ( Int: 'ccc<quote>' -- )  '"' parse type ;
 
 |: ."  ( Com: 'ccc<quote>' -- ) ( Run: -- )
-  '"' parse postpone sliteral type ;| immediate
+  '"' parse postpone sliteral  postpone type ;| immediate
 
 \ Interpretation: Parse ccc delimited by " (double-quote). Dis-
 \ play ccc.
@@ -3191,14 +3191,17 @@ $____ opcode ?loop  ( Com: -- )
 \   been completed, and no ambiguous condition exists.
 
 
-: abort  ( i*x R:j*x -- )  something ;
+: abort  ( i*x R:j*x -- )  -1 throw ;
 
 \ Perform the function of -1 THROW.
 
 
 : abort"  ( Com: 'ccc<quote>' -- )
           ( Run: i*x x1 R:j*x -- |i*x R:|j*x )
-  something ;
+  '"' parse
+  postpone if  -2 literal postpone throw
+  ( check for exception frame on the return stack )
+  postpone sliteral  postpone type ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -3206,8 +3209,8 @@ $____ opcode ?loop  ( Com: -- )
 \ the following runtime semantics.
 
 \ Runtime: Remove x1 from the stack. If any bit of x1 is non-
-\ zero, perform the function of -2 THROW and display ccc if
-\ there is no exception frame on the return stack
+\ zero, perform the function of -2 THROW. If there is no excep-
+\ tion frame on the return stack, display ccc.
 
 
 : evaluate  ( i*x c-addr u -- j*x )  something ;
