@@ -3166,7 +3166,20 @@ $____ opcode ?loop  ( Com: -- )
 \ Core Outer Interpreter Words
 
 
-: quit  ( R:i*x -- R: )  something ;
+: quit  ( R:i*x -- R: )
+  rp0 rp! 0 to source-id
+  begin
+    postpone [
+    refill while
+    ['] interpret catch
+    case
+    0 of state @ 0= if ." ok" then cr endof
+    -1 of ( aborted ) endof
+    -2 of ( display message from ABORT" ) endof
+    ( default ) dup ." Exception # " .
+    endcase
+  repeat
+  bye ;
 
 \ Empty the return stack, store zero in SOURCE-ID, make the user
 \ input device the input source, and enter interpretation state.
