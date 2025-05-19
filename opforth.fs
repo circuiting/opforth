@@ -380,7 +380,7 @@
 \ :noname    -- xt colon-sys
 \            Ini: i*x R: -- i*x R:a-addr  Exe: i*x -- j*x
 \ buffer:    '<spaces>name' u --  Exe: -- a-addr
-\ value      '<spaces>name' x --  Exe: -- x  to: x --
+\ value      '<spaces>name' x --  Exe: -- x  To: x --
 \ to         Int: '<spaces>name' i*x --
 \            Com: '<spaces>name' --
 \ defer      '<spaces>name' --  Exe: i*x -- j*x
@@ -453,6 +453,11 @@
 \ evaluate    i*x c-addr u -- j*x
 
 
+\ Helper Outer Interpreter
+
+\ interpret    '<chars>ccc<char>' i*x -- j*x
+
+
 \ Exception
 
 \ catch    i*x xt -- j*x 0 | i*x n
@@ -494,7 +499,7 @@
 
 \ 2rot      x1 x2 x3 x4 x5 x6 -- x3 x4 x5 x6 x1 x2
 \ du<       ud1 ud2 -- flag
-\ 2value    '<spaces>name' x1 x2 --  Exe: -- x1 x2  to: x1 x2 --
+\ 2value    '<spaces>name' x1 x2 --  Exe: -- x1 x2  To: x1 x2 --
 
 
 \ Helper Double
@@ -1453,7 +1458,8 @@ synonym c!-  ( char c-addr1 -- c-addr2 )  !-
 
 
 : emit  ( x -- )
-  dup validchar? if
+  dup validchar?
+  if
     textdisplay c!
     text-x dup @ dup text-xmax = and
     swap 1+ swap !
@@ -2059,8 +2065,10 @@ $____ opcode execute  ( i*x xt -- j*x )
   begin
     r@ 0= if 0 rdrop exit then
     r@ cell+ dup c@ $3fff and >r
-    over c@ r@ = if
-      over count third char+ r@ compare 0= if
+    over c@ r@ =
+    if
+      over count third char+ r@ compare 0=
+      if
         nip r> over + swap c@
         $8000 and 0<> 1 or rdrop exit
       then
@@ -2081,8 +2089,8 @@ $____ opcode execute  ( i*x xt -- j*x )
 \ a-addr is the address of the data field of the definition with
 \ execution token xt.
 
-\ In Opforth, the contents of an execution token are the address
-\ of the data field.
+\ In Opforth, the execution token is the address of the data
+\ field.
 
 \ An ambiguous condition exists if xt is not the execution token
 \ of a word defined by CREATE.
@@ -2109,9 +2117,10 @@ $____ opcode execute  ( i*x xt -- j*x )
 \ by DEFER.
 
 
-: is  ( Int: '<spaces>name' xt -- )
-      ( Com: '<spaces>name' -- ) ( Run: xt -- )
-  something ;
+: is  ( Int: '<spaces>name' xt -- )  ' cell+ ! ;
+
+|: is  ( Com: '<spaces>name' -- ) ( Run: xt -- )
+  ' cell+ literal postpone ! ;| immediate
 
 \ Interpretation: Skip leading spaces and parse name delimited
 \ by a space. Set name to execute xt.
@@ -2299,8 +2308,10 @@ variable state  ( -- a-addr )  false state !
   begin
     dup 0<> while
     /char '"' <> while
-    over c@ dup '\' if
-      over 0<> if
+    over c@ dup '\'
+    if
+      over 0<>
+      if
         drop /char
         case
         'x' of
@@ -2472,8 +2483,10 @@ $____ value s\"ptr  ( -- c-addr )
 
 
 : \x  ( c-addr1 u1 -- c-addr2 u2 | c-addr2 u2 char )
-  /char dup hex? if
-    drop over c@ dup hex? if
+  /char dup hex?
+  if
+    drop over c@ dup hex?
+    if
       drop over 0 swap 0 swap 2 >number 2drop drop
     then
   else
@@ -2652,7 +2665,7 @@ $____ value s\"ptr  ( -- c-addr )
 \ initializing the contents.
 
 
-: value  ( '<spaces>name' x -- ) ( Exe: -- x ) ( to: x -- )
+: value  ( '<spaces>name' x -- ) ( Exe: -- x ) ( To: x -- )
   create , does> @ ;
 
 \ Skip leading spaces and parse name delimited by a space. Cre-
@@ -2669,8 +2682,10 @@ $____ value s\"ptr  ( -- c-addr )
 
 
 : to  ( Int: '<spaces>name' i*x -- )
-      ( Com: '<spaces>name' -- )
-  something ;
+  parse-name ( test if VALUE or 2VALUE ) something ;
+
+|: to ( Com: '<spaces>name' -- )
+  parse-name something ;| immediate
 
 \ Interpretation: Skip leading spaces and parse name delimited
 \ by a space. Perform the "TO name Runtime" semantics given in
@@ -2685,7 +2700,8 @@ $____ value s\"ptr  ( -- c-addr )
 \ [COMPILE], or ', or ['] are applied to TO.
 
 
-: defer  ( '<spaces>name' -- ) ( Exe: i*x -- j*x )  something ;
+: defer  ( '<spaces>name' -- ) ( Exe: i*x -- j*x )
+  parse-name header, align postpone branch  0 , ;
 
 \ Skip leading spaces and parse name delimited by a space. Cre-
 \ ate a definition for name with the execution semantics de-
@@ -3218,7 +3234,9 @@ $____ opcode ?loop  ( Com: -- )
 \ tion frame on the return stack, display ccc.
 
 
-: evaluate  ( i*x c-addr u -- j*x )  something ;
+: evaluate  ( i*x c-addr u -- j*x )
+  save-input -1 to source-id
+  something ;
 
 \ Save the current input source specification, store -1 in
 \ SOURCE-ID, make the string with address c-addr and length u
@@ -3226,6 +3244,26 @@ $____ opcode ?loop  ( Com: -- )
 \ and interpret. When the parse area is empty, restore the prior
 \ input source specification. Other stack effects are due to the
 \ words EVALUATEd.
+
+
+
+\ Helper Outer Interpreter Words
+
+
+: interpret  ( '<chars>ccc<char>' i*x -- j*x )
+  bl word find ?dup
+  if
+    state @
+    if
+      0> if execute else compile, then
+    else
+      drop execute
+    then
+  else
+    ( whatever you do for an undefined word )
+  then ;
+
+\ Description something something
 
 
 
@@ -3255,7 +3293,8 @@ $____ opcode ?loop  ( Com: -- )
 
 
 : throw  ( k*x n -- k*x | i*x n )
-  ?dup if            \ 0 THROW is no-op
+  ?dup
+  if                 \ 0 THROW is no-op
     handler @ rp!    \ Restore previous return stack
     r> handler !     \ Restore previous handler
     r> swap >r       \ Exception # on return stack
@@ -3490,7 +3529,7 @@ synonym d>s  ( d -- n )  drop
 
 
 : 2value  ( '<spaces>name' x1 x2 -- ) ( Exe: -- x1 x2 )
-          ( to: x1 x2 -- )
+          ( To: x1 x2 -- )
   create 2, does> 2@ ;
 
 \ Skip leading spaces and parse name delimited by a space. Cre-
