@@ -390,7 +390,7 @@
 \ Helper Definition
 
 \ compile-only    --
-\ header,         c-addr u --
+\ define          '<spaces>name<space>' --
 \ findable        --
 \ dlink           -- a-addr
 \ deflink         -- a-addr
@@ -2517,7 +2517,7 @@ $____ value s\"ptr  ( -- c-addr )
 
 : :  ( '<spaces>name' -- colon-sys )
      ( Ini: i*x R: -- i*x R:a-addr ) ( Exe: i*x -- j*x )
-  parse-name header, 0 here to defxt ;
+  define true here to defxt ;
 
 \ Skip leading spaces and parse name delimited by a space. Cre-
 \ ate a new definition for name. Enter compilation state, start
@@ -2536,7 +2536,8 @@ $____ value s\"ptr  ( -- c-addr )
 
 
 : ;  ( Com: colon-sys -- ) ( Run: R:a-addr -- R: )
-  postpone exit  findable drop [ ; immediate compile-only
+  postpone exit
+  if findable then [ ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2581,7 +2582,7 @@ $____ value s\"ptr  ( -- c-addr )
 
 
 : create  ( '<spaces>name' -- ) ( Exe: -- a-addr )
-  parse-name header, align postpone pc ;
+  define postpone pc ;
 
 \ Skip leading spaces and parse name delimited by a space. Cre-
 \ ate a definition for name with the execution semantics de-
@@ -2633,7 +2634,7 @@ $____ value s\"ptr  ( -- c-addr )
 
 : :noname  ( -- xt colon-sys )
            ( Ini: i*x R: -- i*x R:a-addr ) ( Exe: i*x -- j*x )
-  something ;
+  here false [ ;
 
 \ Create an execution token xt, enter compilation state, start
 \ the current definition, and produce colon-sys. Compile the
@@ -2702,7 +2703,7 @@ $____ value s\"ptr  ( -- c-addr )
 
 
 : defer  ( '<spaces>name' -- ) ( Exe: i*x -- j*x )
-  parse-name header, align postpone branch  0 , ;
+  define postpone branch  0 , ;
 
 \ Skip leading spaces and parse name delimited by a space. Cre-
 \ ate a definition for name with the execution semantics de-
@@ -2714,7 +2715,12 @@ $____ value s\"ptr  ( -- c-addr )
 \ cute an xt.
 
 
-: marker  ( '<spaces>name' -- ) ( Exe: -- )  something ;
+: marker  ( '<spaces>name' -- ) ( Exe: -- )
+  create
+    dlink , here ,
+  does>
+    dup cell+ @ dp !
+    @ to dlink ;
 
 \ Skip leading spaces and parse name delimited by a space. Cre-
 \ ate a definition for name with the execution semantics defined
@@ -2741,12 +2747,15 @@ $____ value s\"ptr  ( -- c-addr )
 \ word in interpretation state.
 
 
-: header,  ( c-addr u -- )
+: define  ( '<spaces>name<space>' -- )
+  parse-name
   here to deflink
-  dlink , dup , string, ;
+  dlink , dup , string,
+  align ;
 
-\ Compile a dictionary header for a new dictionary definition
-\ using the name with address c-addr and length u.
+\ Skip leading spaces and parse name delimited by a space. Com-
+\ pile a dictionary header for a new dictionary definition using
+\ the parsed name.
 
 
 : findable  ( -- )  deflink to dlink ;
