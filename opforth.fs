@@ -466,7 +466,9 @@
 
 \ Helper Exception
 
-\ handler    -- a-addr
+\ handler      -- a-addr
+\ errorbuf     -- c-addr
+\ #errorbuf    -- u
 
 
 \ Double
@@ -578,7 +580,8 @@ $____ opcode ?dup  ( x -- x x | 0 )
 : 2drop  ( Int: x1 x2 -- )  drop drop ;
 
 |: 2drop  ( Com: -- ) ( Run: x1 x2 -- )
-  postpone drop  postpone drop ;| immediate
+  postpone drop
+  postpone drop ;| immediate
 
 \ Remove the top two stack items.
 
@@ -586,7 +589,8 @@ $____ opcode ?dup  ( x -- x x | 0 )
 : 2dup  ( Int: x1 x2 -- x1 x2 x1 x2 )  over over ;
 
 |: 2dup  ( Com: -- ) ( Run: x1 x2 -- x1 x2 x1 x2 )
-  postpone over  postpone over ;| immediate
+  postpone over
+  postpone over ;| immediate
 
 \ Duplicate the cell pair on top of the stack.
 
@@ -672,7 +676,8 @@ $____ opcode tuck  ( x1 x2 -- x2 x1 x2 )
 
 : 2>r  ( Com: -- ) ( Exe: x1 x2 R: -- R:x1 R:x2 )
   postpone swap
-  postpone >r  postpone >r ; immediate compile-only
+  postpone >r
+  postpone >r ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -683,7 +688,8 @@ $____ opcode tuck  ( x1 x2 -- x2 x1 x2 )
 
 
 : 2r>  ( Com: -- ) ( Exe: R:x1 R:x2 -- x1 x2 R: )
-  postpone r>  postpone r>
+  postpone r>
+  postpone r>
   postpone swap ; immediate compile-only
 
 \ Interpretation: Undefined
@@ -695,8 +701,11 @@ $____ opcode tuck  ( x1 x2 -- x2 x1 x2 )
 
 
 : 2r@  ( Com: -- ) ( Exe: R:x1 R:x2 -- x1 x2 R:x1 R:x2 )
-  postpone r>  postpone r>  postpone 2dup
-  postpone >r  postpone >r
+  postpone r>
+  postpone r>
+  postpone 2dup
+  postpone >r
+  postpone >r
   postpone swap ; immediate compile-only
 
 \ Interpretation: Undefined
@@ -1299,7 +1308,8 @@ $____ opcode @  ( a-addr -- x )
 : !  ( Int: x a-addr -- )  tuck! drop ;
 
 |: !  ( Com: -- ) ( Run: x a-addr -- )
-  postpone tuck!  postpone drop ;| immediate
+  postpone tuck!
+  postpone drop ;| immediate
 
 \ Write x to memory address a-addr. The top two stack items are
 \ removed.
@@ -1446,7 +1456,8 @@ synonym c!-  ( char c-addr1 -- c-addr2 )  !-
 : ."  ( Int: 'ccc<quote>' -- )  '"' parse type ;
 
 |: ."  ( Com: 'ccc<quote>' -- ) ( Run: -- )
-  '"' parse postpone sliteral  postpone type ;| immediate
+  '"' parse postpone sliteral
+  postpone type ;| immediate
 
 \ Interpretation: Parse ccc delimited by " (double-quote). Dis-
 \ play ccc.
@@ -2243,7 +2254,8 @@ variable state  ( -- a-addr )  false state !
 
 
 : literal  ( Com: x -- ) ( Run: -- x )
-  postpone lit , ; immediate compile-only
+  postpone lit
+  , ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2703,7 +2715,8 @@ $____ value s\"ptr  ( -- c-addr )
 
 
 : defer  ( '<spaces>name' -- ) ( Exe: i*x -- j*x )
-  define postpone branch  0 , ;
+  define postpone branch
+  0 , ;
 
 \ Skip leading spaces and parse name delimited by a space. Cre-
 \ ate a definition for name with the execution semantics de-
@@ -2788,7 +2801,8 @@ $____ value s\"ptr  ( -- c-addr )
 
 
 : if  ( Com: -- orig ) ( Run: x -- )
-  postpone ?branch here 0 , ; immediate compile-only
+  postpone ?branch
+  here 0 , ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2814,8 +2828,9 @@ $____ value s\"ptr  ( -- c-addr )
 
 
 : else  ( Com: orig1 -- orig2 ) ( Run: -- )
-  postpone then  postpone branch here
-  0 , ; immediate compile-only
+  postpone then
+  postpone branch
+  here 0 , ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2841,7 +2856,8 @@ $____ value s\"ptr  ( -- c-addr )
 
 
 : until  ( Com: dest -- ) ( Run: x -- )
-  postpone ?branch , ; immediate compile-only
+  postpone ?branch
+  , ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2853,7 +2869,8 @@ $____ value s\"ptr  ( -- c-addr )
 
 
 : while  ( Com: dest -- orig dest ) ( Run: x -- )
-  postpone if  swap ; immediate compile-only
+  postpone if
+  swap ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2867,7 +2884,8 @@ $____ value s\"ptr  ( -- c-addr )
 
 
 : repeat  ( Com: orig dest -- ) ( Run: -- )
-  postpone again  postpone then ; immediate compile-only
+  postpone again
+  postpone then ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2881,7 +2899,8 @@ $____ value s\"ptr  ( -- c-addr )
 
 : do  ( Com: -- false a-addr )
       ( Run: n1|u1 n2|u2 R: -- R:n1|u1 R:n2|u2 )
-  0 postpone 2>r here ; immediate compile-only
+  0 postpone 2>r
+  here ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2903,8 +2922,9 @@ $____ value s\"ptr  ( -- c-addr )
 
 : loop  ( Com: flag a-addr -- )
         ( Run: R:n1|u1 R:n2|u2 -- R:|n1|u1 R:|n3|u3 )
-  postpone r>1+  postpone ?loop  ,
-  dup if here swap ! else drop then
+  postpone r>1+
+  postpone ?loop
+  , dup if here swap ! else drop then
   resolve-leave ; immediate compile-only
 
 \ Interpretation: Undefined
@@ -2925,9 +2945,15 @@ $____ value s\"ptr  ( -- c-addr )
 
 : +loop  ( Com: flag a-addr -- )
          ( Run: n R:n1|u1 R:n2|u2 -- R:|n1|u1 R:|n3|u3 )
-  postpone r@+  postpone r>  postpone r@  postpone third
-  postpone >r  postpone within  postpone 0=  postpone ?branch  ,
-  dup if here swap ! else drop then
+  postpone r@+
+  postpone r>
+  postpone r@
+  postpone third
+  postpone >r
+  postpone within
+  postpone 0=
+  postpone ?branch
+  , dup if here swap ! else drop then
   resolve-leave ; immediate compile-only
 
 \ Interpretation: Undefined
@@ -2975,7 +3001,8 @@ $____ opcode j  ( Com: -- )  ( Exe: R:n1|u1 R:n2|u2 R:n3|u3 --
 
 
 : leave  ( Com: -- ) ( Exe: R:n1|u1 R:n2|u2 -- R: )
-  postpone unloop  postpone branch
+  postpone unloop
+  postpone branch
   here leave-link , to leave-link ; immediate compile-only
 
 \ Interpretation: Undefined
@@ -3033,7 +3060,8 @@ $____ opcode exit  ( Com: -- ) ( Exe: R:a-addr -- R: )
 
 
 : again  ( Com: dest -- ) ( Run: -- )
-  postpone branch , ; immediate compile-only
+  postpone branch
+  , ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -3047,8 +3075,11 @@ $____ opcode exit  ( Com: -- ) ( Exe: R:a-addr -- R: )
 
 : ?do  ( Com: -- true a-addr )
        ( Run: n1|u1 n2|u2 R: -- R:|n1|u1 R:|n2|u2 )
-  postpone 2dup  postpone =  postpone if
-  postpone 2>r here ; immediate compile-only
+  postpone 2dup
+  postpone =
+  postpone if
+  postpone 2>r
+  here ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -3084,8 +3115,10 @@ $____ opcode exit  ( Com: -- ) ( Exe: R:a-addr -- R: )
 
 
 : of  ( Com: -- of-sys ) ( Run: x1 x2 -- |x1 )
-  postpone over  postpone =  postpone ?branch  here 0 ,
-  postpone drop ; immediate compile-only
+  postpone over
+  postpone =
+  postpone ?branch
+  here 0 , postpone drop ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -3101,8 +3134,8 @@ $____ opcode exit  ( Com: -- ) ( Exe: R:a-addr -- R: )
 
 
 : endof  ( Com: case-sys1 of-sys -- case-sys2 ) ( Run: -- )
-  postpone branch  here rot ,
-  here rot ! ; immediate compile-only
+  postpone branch
+  here rot , here rot ! ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -3206,7 +3239,7 @@ $____ opcode ?loop  ( Com: -- )
     case
     0 of state @ 0= if ." ok" then cr endof
     -1 of ( aborted ) endof
-    -2 of ( display message from ABORT" ) endof
+    -2 of errorbuf #errorbuf type endof
     ( default ) dup ." Exception # " .
     endcase
   repeat
@@ -3229,19 +3262,22 @@ $____ opcode ?loop  ( Com: -- )
 
 : abort"  ( Com: 'ccc<quote>' -- )
           ( Run: i*x x1 R:j*x -- |i*x R:|j*x )
-  '"' parse
-  postpone if  -2 literal postpone throw
-  ( check for exception frame on the return stack )
-  postpone sliteral  postpone type ; immediate compile-only
+  '"' parse dup to #errorbuf errorbuf swap cmove
+  postpone if
+  postpone sliteral
+  postpone type
+  -2 literal postpone throw
+  postpone then ; immediate compile-only
 
 \ Interpretation: Undefined
 
 \ Compilation: Parse ccc delimited by " (double-quote). Compile
 \ the following runtime semantics.
 
-\ Runtime: Remove x1 from the stack. If any bit of x1 is non-
-\ zero, perform the function of -2 THROW. If there is no excep-
-\ tion frame on the return stack, display ccc.
+\ Runtime: Write the parsed string to the error message buffer.
+\ Remove x1 from the stack. If any bit of x1 is nonzero, perform
+\ the function of -2 THROW. If there is no exception frame on
+\ the return stack, the error message will be displayed by QUIT.
 
 
 : evaluate  ( i*x c-addr u -- j*x )
@@ -3307,7 +3343,7 @@ $____ opcode ?loop  ( Com: -- )
   if                 \ 0 THROW is no-op
     handler @ rp!    \ Restore previous return stack
     r> handler !     \ Restore previous handler
-    r> swap >r       \ Exception # on return stack
+    r> swap >r       \ Push exception # onto return stack
     sp! drop r>      \ Restore data stack
   then ;             \ Return to the caller of CATCH
 
@@ -3347,6 +3383,18 @@ variable handler  ( -- a-addr )  0 handler !
 
 \ a-addr is the address of a cell containing the last exception
 \ handler used by CATCH and THROW.
+
+
+$____ constant errorbuf  ( -- c-addr )
+
+\ c-addr is the starting address of the buffer that holds error
+\ messages produced by ABORT".
+
+
+0 value #errorbuf  ( -- u )
+
+\ u is the number of characters in the buffer that holdes error
+\ messages produced by ABORT".
 
 
 
@@ -3410,7 +3458,8 @@ synonym d>s  ( d -- n )  drop
 : d0=  ( Int: xd -- flag )  or 0= ;
 
 |: d0=  ( Com: -- ) ( Run: xd -- flag )
-  postpone or  postpone 0= ;| immediate
+  postpone or
+  postpone 0= ;| immediate
 
 \ If xd is equal to zero, flag is true. Otherwise flag is false.
 
@@ -3418,7 +3467,8 @@ synonym d>s  ( d -- n )  drop
 : d0<  ( Int: d -- flag )  0< nip ;
 
 |: d0<  ( Com: -- ) ( Run: d -- flag )
-  postpone 0<  postpone nip ;| immediate
+  postpone 0<
+  postpone nip ;| immediate
 
 \ If d is less than zero, flag is true. Otherwise flag is false.
 
