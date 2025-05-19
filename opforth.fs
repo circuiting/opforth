@@ -1869,13 +1869,14 @@ variable >in  ( -- a-addr )  0 >in !
 \ on the stack.
 
 
-: save-input  ( -- xn...x1 n )  >in @ 1 ;
+: save-input  ( -- xn...x1 n )  textinbuf >in @ 2 ;
 
 \ x1 through xn describe the current state of the input source
 \ specification for later use by RESTORE-INPUT.
 
 
-: restore-input  ( xn...x1 n -- flag )  drop >in ! ;
+: restore-input  ( xn...x1 n -- flag )
+  drop to textinbuf >in ! ;
 
 \ Attempt to restore the input source specification to the state
 \ described by x1 through xn. flag is true if the input source
@@ -1911,7 +1912,7 @@ variable >in  ( -- a-addr )  0 >in !
 \ Helper Text Input Words
 
 
-$____ constant textinbuf  ( -- c-addr )
+$____ value textinbuf  ( -- c-addr )
 
 \ c-addr is the address of the text input buffer used by the
 \ Forth outer interpreter.
@@ -3281,8 +3282,10 @@ $____ opcode ?loop  ( Com: -- )
 
 
 : evaluate  ( i*x c-addr u -- j*x )
-  save-input -1 to source-id
-  something ;
+  save-input
+  -1 to source-id to #textinbuf to textinbuf 0 >in !
+  interpret
+  restore-input ;
 
 \ Save the current input source specification, store -1 in
 \ SOURCE-ID, make the string with address c-addr and length u
@@ -3297,17 +3300,20 @@ $____ opcode ?loop  ( Com: -- )
 
 
 : interpret  ( '<chars>ccc<char>' i*x -- j*x )
-  bl word find ?dup
-  if
-    state @
+  begin
+    >in @ #textinbuf u< while
+    bl word find ?dup
     if
-      0> if execute else compile, then
+      state @
+      if
+        0> if execute else compile, then
+      else
+        drop execute
+      then
     else
-      drop execute
+      ( whatever you do for an undefined word )
     then
-  else
-    ( whatever you do for an undefined word )
-  then ;
+  repeat ;
 
 \ Description something something
 
