@@ -2100,7 +2100,7 @@ $____ opcode execute  ( i*x xt -- j*x )
 \ Core-Ext Execution Token Words
 
 
-: defer@  ( xt1 -- xt2 )  something ;
+: defer@  ( xt1 -- xt2 )  >body cell+ @ ;
 
 \ xt2 is the execution token xt1 is set to execute.
 
@@ -2109,7 +2109,7 @@ $____ opcode execute  ( i*x xt -- j*x )
 \ execute an xt.
 
 
-: defer!  ( xt1 xt2 -- )  something ;
+: defer!  ( xt1 xt2 -- )  swap >body cell+ ! ;
 
 \ Set the word xt1 to execute xt2.
 
@@ -2134,9 +2134,10 @@ $____ opcode execute  ( i*x xt -- j*x )
 \ or if POSTPONE, [COMPILE], ['], or ' is applied to IS.
 
 
-: action-of  ( Int: '<spaces>name' -- xt )
-             ( Com: '<spaces>name' -- ) ( Run: -- xt )
-  something ;
+: action-of  ( Int: '<spaces>name' -- xt )  ' cell+ @ ;
+
+:| action-of  ( Com: '<spaces>name' -- ) ( Run: -- xt )
+  ' cell+ literal postpone @ ;|
 
 \ Interpretation: Skip leading spaces and parse name delimited
 \ by a space. xt is the execution token that name is set to exe-
