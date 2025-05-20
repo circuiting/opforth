@@ -362,14 +362,14 @@
 
 \ Core Definition
 
-\ :            '<spaces>name' -- colon-sys
+\ :            '<spaces>name' -- flag
 \              Ini: i*x R: -- i*x R:a-addr  Exe: i*x -- j*x
-\ ;            Com: colon-sys --  Run: R:a-addr -- R:
+\ ;            Com: flag --  Run: R:a-addr -- R:
 \ immediate    --
 \ constant     '<spaces>name' x --  Exe: -- x
 \ variable     '<spaces>name' --  Exe: -- a-addr
 \ create       '<spaces>name' --  Exe: -- a-addr
-\ does>        Com: colon-sys1 -- colon-sys2
+\ does>        Com: flag1 -- flag2
 \              Run: R:nest-sys1 -- R:
 \              Ini: i*x R: -- i*x a-addr R:nest-sys2
 \              Exe: i*x -- j*x
@@ -377,7 +377,7 @@
 
 \ Core-Ext Definition
 
-\ :noname    -- xt colon-sys
+\ :noname    -- xt flag
 \            Ini: i*x R: -- i*x R:a-addr  Exe: i*x -- j*x
 \ buffer:    '<spaces>name' u --  Exe: -- a-addr
 \ value      '<spaces>name' x --  Exe: -- x  To: x --
@@ -395,6 +395,9 @@
 \ dlink           -- a-addr
 \ deflink         -- a-addr
 \ defxt           -- xt
+\ |:              '<spaces>name' -- flag a-addr
+\                 Ini: i*x R: -- i*x R:a-addr  Exe: i*x -- j*x
+\ ;|              Com: flag a-addr -- flag  Run: R:a-addr -- R:
 
 
 \ Core Control Flow
@@ -577,20 +580,22 @@ $____ opcode ?dup  ( x -- x x | 0 )
 \ Duplicate the top stack item if it is nonzero.
 
 
-: 2drop  ( Int: x1 x2 -- )  drop drop ;
-
-|: 2drop  ( Com: -- ) ( Run: x1 x2 -- )
+|: 2drop  ( Int: x1 x2 -- )
+          ( Com: -- ) ( Run: x1 x2 -- )
+  drop drop
+;|
   postpone drop
-  postpone drop ;| immediate
+  postpone drop ; immediate
 
 \ Remove the top two stack items.
 
 
-: 2dup  ( Int: x1 x2 -- x1 x2 x1 x2 )  over over ;
-
-|: 2dup  ( Com: -- ) ( Run: x1 x2 -- x1 x2 x1 x2 )
+|: 2dup  ( Int: x1 x2 -- x1 x2 x1 x2 )
+         ( Com: -- ) ( Run: x1 x2 -- x1 x2 x1 x2 )
+  over over
+;|
   postpone over
-  postpone over ;| immediate
+  postpone over ; immediate
 
 \ Duplicate the cell pair on top of the stack.
 
@@ -1305,11 +1310,13 @@ $____ opcode @  ( a-addr -- x )
 \ cell on the stack in place of a-addr.
 
 
-: !  ( Int: x a-addr -- )  tuck! drop ;
-
-|: !  ( Com: -- ) ( Run: x a-addr -- )
+|: !  ( Int: x a-addr -- )
+      ( Com: -- ) ( Run: x a-addr -- )
+  tuck! drop
+;|
   postpone tuck!
-  postpone drop ;| immediate
+  postpone drop
+; immediate
 
 \ Write x to memory address a-addr. The top two stack items are
 \ removed.
@@ -1453,11 +1460,13 @@ synonym c!-  ( char c-addr1 -- c-addr2 )  !-
 \ Core Text Display Words
 
 
-: ."  ( Int: 'ccc<quote>' -- )  '"' parse type ;
-
-|: ."  ( Com: 'ccc<quote>' -- ) ( Run: -- )
+|: ."  ( Int: 'ccc<quote>' -- )
+       ( Com: 'ccc<quote>' -- ) ( Run: -- )
+  '"' parse type
+;|
   '"' parse postpone sliteral
-  postpone type ;| immediate
+  postpone type
+; immediate
 
 \ Interpretation: Parse ccc delimited by " (double-quote). Dis-
 \ play ccc.
@@ -1746,10 +1755,12 @@ $____ constant holdbuf  ( -- c-addr )
 \ Core Text Input Words
 
 
-: (  ( Int: 'ccc<right-paren>' -- )  ')' parse ;
-
-|: (  ( Com: 'ccc<right-paren>' -- ) ( Run: -- )
-  ')' postpone parse ;| immediate
+|: (  ( Int: 'ccc<right-paren>' -- )
+   ( Com: 'ccc<right-paren>' -- ) ( Run: -- )
+  ')' parse
+;|
+  ')' postpone parse
+; immediate
 
 \ Parse ccc delimited by ) (right parenthesis). This causes the
 \ outer interpreter to skip past the text enclosed in the paren-
@@ -2065,7 +2076,8 @@ $____ opcode execute  ( i*x xt -- j*x )
 \ xt.
 
 
-: '  ( '<spaces>name' -- xt )  parse-name find-name ;
+: '  ( '<spaces>name' -- xt )
+  parse-name count find 0<> if drop ( throw ) then ;
 
 \ Skip leading spaces and parse name delimited by a space. Find
 \ name and put the corresponding execution token on the stack.
@@ -2073,18 +2085,22 @@ $____ opcode execute  ( i*x xt -- j*x )
 
 
 : find  ( c-addr -- c-addr 0 | xt 1 | xt -1 )
-  dlink >r
+  dlink >r                         \ Get dictionary head link
   begin
-    r@ 0= if 0 rdrop exit then
-    r@ cell+ dup c@ $3fff and >r
-    over c@ r@ =
+    r@ 0= if 0 rdrop exit then     \ Exit if end of list
+    r@ cell+                       \ Get name field address
+    dup @ $3fff and >r             \ Get name length
+    over c@ r@ =                   \ Test if lengths match
     if
-      over count third char+ r@ compare 0=
+      over count third cell+ r@    \ Put both strings on stack
+      compare 0=                   \ Test if strings match
       if
-        nip r> over + swap c@
-        $8000 and 0<> 1 or rdrop exit
+        nip r> over + swap c@      \ Get xt, get immediate flag
+        $8000 and 0<> 1 or         \ Put 1 or -1 on stack
+        rdrop exit                 \ Exit (match was found)
       then
     then
+    rdrop                          \ Discard name field address
   again ;
 
 \ Determine if the counted string at c-addr matches the name of
@@ -2129,10 +2145,12 @@ $____ opcode execute  ( i*x xt -- j*x )
 \ by DEFER.
 
 
-: is  ( Int: '<spaces>name' xt -- )  ' cell+ ! ;
-
-|: is  ( Com: '<spaces>name' -- ) ( Run: xt -- )
-  ' cell+ literal postpone ! ;| immediate
+|: is  ( Int: '<spaces>name' xt -- )
+       ( Com: '<spaces>name' -- ) ( Run: xt -- )
+  ' cell+ !
+;|
+  ' cell+ literal postpone !
+; immediate
 
 \ Interpretation: Skip leading spaces and parse name delimited
 \ by a space. Set name to execute xt.
@@ -2294,12 +2312,13 @@ variable state  ( -- a-addr )  false state !
 \ An ambiguous condition exists if name is not found.
 
 
-: s"  ( Int: 'ccc<quote>' -- c-addr u )
+|: s"  ( Int: 'ccc<quote>' -- c-addr u )
+       ( Com: 'ccc<quote>' -- ) ( Run: -- c-addr u )
   '"' parse
-  2dup s"buf swap cmove ;
-
-|: s"  ( Com: 'ccc<quote>' -- ) ( Run: -- c-addr u )
-  '"' parse postpone sliteral ;| immediate
+  2dup s"buf swap cmove
+;|
+  '"' parse postpone sliteral
+; immediate
 
 \ Interpretation: Parse ccc delimited by " (double-quote). Store
 \ the resulting string in a transient buffer. c-addr is string
@@ -2317,7 +2336,8 @@ variable state  ( -- a-addr )  false state !
 \ Core-Ext Compiler Words
 
 
-: s\"  ( Int: 'ccc<quote>' -- c-addr u )
+|: s\"  ( Int: 'ccc<quote>' -- c-addr u )
+        ( Com: 'ccc<quote>' -- ) ( Run: -- c-addr u )
   s\"buf to s\"ptr parse-area
   begin
     dup 0<> while
@@ -2351,10 +2371,10 @@ variable state  ( -- a-addr )  false state !
       then
     then
     s\"append
-  repeat then then ;
-
-|: s\"  ( Com: 'ccc<quote>' -- ) ( Run: -- c-addr u )
-  [ s\" ] postpone sliteral ;| immediate
+  repeat then then
+;|
+  [ s\" ] postpone sliteral
+; immediate
 
 \ Interpretation: Undefined
 
@@ -2528,9 +2548,9 @@ $____ value s\"ptr  ( -- c-addr )
 \ Core Definition Words
 
 
-: :  ( '<spaces>name' -- colon-sys )
+: :  ( '<spaces>name' -- flag )
      ( Ini: i*x R: -- i*x R:a-addr ) ( Exe: i*x -- j*x )
-  define true here to defxt ;
+  define true here to defxt ] exit
 
 \ Skip leading spaces and parse name delimited by a space. Cre-
 \ ate a new definition for name. Enter compilation state, start
@@ -2548,7 +2568,7 @@ $____ value s\"ptr  ( -- c-addr )
 \ ively.
 
 
-: ;  ( Com: colon-sys -- ) ( Run: R:a-addr -- R: )
+: ;  ( Com: flag -- ) ( Run: R:a-addr -- R: )
   postpone exit
   if findable then [ ; immediate compile-only
 
@@ -2564,7 +2584,7 @@ $____ value s\"ptr  ( -- c-addr )
 \ turn address nest-sys.
 
 
-: immediate  ( -- )  deflink cell+ dup c@ $8000 or swap c! ;
+: immediate  ( -- )  deflink cell+ dup @ $8000 or swap ! ;
 
 \ Make the most recent definition an immediate word.
 
@@ -2609,10 +2629,10 @@ $____ value s\"ptr  ( -- c-addr )
 \ DOES>.
 
 
-: does>  ( Com: colon-sys1 -- colon-sys2 )
-  ( Run: R:nest-sys1 -- R: )
-  ( Ini: i*x R: -- i*x a-addr R:nest-sys2 )
-  ( Exe: i*x -- j*x )
+: does>  ( Com: flag1 -- flag2 )
+         ( Run: R:nest-sys1 -- R: )
+         ( Ini: i*x R: -- i*x a-addr R:nest-sys2 )
+         ( Exe: i*x -- j*x )
   something ;
 
 \ Interpretation: Undefined
@@ -2645,9 +2665,9 @@ $____ value s\"ptr  ( -- c-addr )
 \ Core-Ext Definition Words
 
 
-: :noname  ( -- xt colon-sys )
+: :noname  ( -- xt flag )
            ( Ini: i*x R: -- i*x R:a-addr ) ( Exe: i*x -- j*x )
-  here false [ ;
+  here false ] ;
 
 \ Create an execution token xt, enter compilation state, start
 \ the current definition, and produce colon-sys. Compile the
@@ -2696,11 +2716,12 @@ $____ value s\"ptr  ( -- c-addr )
 \ TO name Runtime: Write x to the data field of name.
 
 
-: to  ( Int: '<spaces>name' i*x -- )
-  parse-name ( test if VALUE or 2VALUE ) something ;
-
-|: to ( Com: '<spaces>name' -- )
-  parse-name something ;| immediate
+|: to  ( Int: '<spaces>name' i*x -- )
+       ( Com: '<spaces>name' -- )
+  ' ( test if VALUE or 2VALUE ) something
+;|
+  ' ( something )
+; immediate
 
 \ Interpretation: Skip leading spaces and parse name delimited
 \ by a space. Perform the "TO name Runtime" semantics given in
@@ -2753,7 +2774,7 @@ $____ value s\"ptr  ( -- c-addr )
 \ Helper Definition Words
 
 
-: compile-only  ( -- )  deflink cell+ dup c@ $4000 or swap c! ;
+: compile-only  ( -- )  deflink cell+ dup @ $4000 or swap ! ;
 
 \ Make the most recent definition a compile-only word, which is
 \ a word that will cause the outer interpreter to abort and dis-
@@ -2795,6 +2816,22 @@ $____ value s\"ptr  ( -- c-addr )
 
 \ xt is the execution token of the most recent definition. DEFXT
 \ is used by RECURSE.
+
+
+: |:  ( '<spaces>name' -- flag a-addr )
+      ( Ini: i*x R: -- i*x R:a-addr ) ( Exe: i*x -- j*x )
+  define true here to defxt postpone branch
+  here 0 , ] exit
+
+\ Description something something
+
+
+: ;|  ( Com: flag a-addr -- flag ) ( Run: R:a-addr -- R: )
+  postpone exit
+  here swap !
+  dup if findable then [ ; immediate compile-only
+
+\ Description something something
 
 
 
@@ -3461,20 +3498,24 @@ synonym d>s  ( d -- n )  drop
 \ integer.
 
 
-: d0=  ( Int: xd -- flag )  or 0= ;
-
-|: d0=  ( Com: -- ) ( Run: xd -- flag )
+|: d0=  ( Int: xd -- flag )
+        ( Com: -- ) ( Run: xd -- flag )
+  or 0=
+;|
   postpone or
-  postpone 0= ;| immediate
+  postpone 0=
+; immediate
 
 \ If xd is equal to zero, flag is true. Otherwise flag is false.
 
 
-: d0<  ( Int: d -- flag )  0< nip ;
-
-|: d0<  ( Com: -- ) ( Run: d -- flag )
+|: d0<  ( Int: d -- flag )
+        ( Com: -- ) ( Run: d -- flag )
+  0< nip
+;|
   postpone 0<
-  postpone nip ;| immediate
+  postpone nip
+; immediate
 
 \ If d is less than zero, flag is true. Otherwise flag is false.
 
