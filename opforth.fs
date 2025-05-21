@@ -389,19 +389,24 @@
 
 \ Helper Definition
 
-\ compile-only      --
-\ define            '<spaces>name<space>' --
-\ findable          --
-\ dlink             -- a-addr
-\ deflink           -- a-addr
-\ defxt             -- xt
-\ |:                '<spaces>name' -- flag a-addr
-\                   Ini: i*x R: -- i*x R:a-addr  Exe: i*x -- j*x
-\ ;|                Com: flag a-addr -- flag
-\                   Run: R:a-addr -- R:
-\ immediate-mask    -- x
-\ compile-mask      -- x
-\ combined-mask     -- x
+\ compile-only         --
+\ define               '<spaces>name<space>' x --
+\ findable             --
+\ dlink                -- a-addr
+\ deflink              -- a-addr
+\ defxt                -- xt
+\ |:                   '<spaces>name' -- flag a-addr
+\                      Ini: i*x R: -- i*x R:a-addr
+\                      Exe: i*x -- j*x
+\ ;|                   Com: flag a-addr -- flag
+\                      Run: R:a-addr -- R:
+\ length-mask          -- x
+\ flags-mask           -- x
+\ immediate-flag       -- x
+\ compile-only-flag    -- x
+\ combined-flag        -- x
+\ create-flag          -- x
+\ defer-flag           -- x
 
 
 \ Core Control Flow
@@ -2081,7 +2086,7 @@ $____ opcode execute  ( i*x xt -- j*x )
 
 
 : '  ( '<spaces>name' -- xt )
-  parse-name count find 0<> if drop ( throw ) then ;
+  bl word find 0<> if drop ( error-code ) throw then ;
 
 \ Skip leading spaces and parse name delimited by a space. Find
 \ name and put the corresponding execution token on the stack.
@@ -2089,30 +2094,30 @@ $____ opcode execute  ( i*x xt -- j*x )
 
 
 : find  ( c-addr -- c-addr 0 | xt 1 | xt -1 )
-  dlink >r                         \ Get dictionary head link
+  dlink >r                          \ Get dictionary head link
   begin
-    r@ 0= if 0 rdrop exit then     \ Exit if end of list
-    r@ cell+                       \ Get name field address
-    dup @ $3fff and >r             \ Get name length
-    over c@ r@ =                   \ Test if lengths match
+    r@ 0= if 0 rdrop exit then      \ Exit if end of list
+    r@ cell+                        \ Get name field address
+    dup @ length-mask and >r        \ Get name length
+    over c@ r@ =                    \ Test if lengths match
     if
-      over count third cell+ r@    \ Put both strings on stack
-      compare 0=                   \ Test if strings match
+      over count third cell+ r@     \ Put both strings on stack
+      compare 0=                    \ Test if strings match
       if
-        nip dup r> +               \ Get data field address
-        swap @                     \ Get cell with flags
-        dup combined-mask and      \ Test if combined word
+        nip dup r> + swap @         \ Get data field address
+        swap @ flags-mask           \ Get flags
+        dup combined-flag and       \ Test if combined word
         if
-          drop dup @               \ Get compilation xt offset
-          state @ and + 1+ 1       \ Add either offset or 1
+          swap dup @ state @ and    \ Get offset for xt address
+          + 1+ swap 1               \ Add offset, put 1 on stack
         else
-          immediate-mask and       \ Get immediate flag
-          0<> 1 or                 \ Put 1 or -1 on stack
+          dup immediate-flag and    \ Get immediate flag
+          0<> 1 or                  \ Put 1 or -1 or the stack
         then
-        rdrop exit                 \ Drop name length and exit
+        rdrop exit                  \ Drop name length and exit
       then
     then
-    drop rdrop                     \ Drop name addr and length
+    drop rdrop                      \ Drop name addr and length
   again ;
 
 \ Determine if the counted string at c-addr matches the name of
@@ -2124,44 +2129,50 @@ $____ opcode execute  ( i*x xt -- j*x )
 \ returned while not compiling.
 
 
-: >body  ( xt -- a-addr )  ; immediate
+: >body  ( xt -- a-addr )
+  create-flag and 0= if ( error-code ) throw then ;
 
-\ a-addr is the address of the data field of the definition with
-\ execution token xt.
+\ a-addr is the data field addressof the definition with execu-
+\ tion token xt.
 
-\ In Opforth, the execution token is the address of the data
-\ field.
+\ In Opforth, the lower cell of the execution token is the ad-
+\ dress of the data field.
 
-\ An ambiguous condition exists if xt is not the execution token
-\ of a word defined by CREATE.
+\ If xt is not the execution token of a word defined by CREATE,
+\ ( throw an error ).
 
 
 
 \ Core-Ext Execution Token Words
 
 
-: defer@  ( xt1 -- xt2 )  cell+ @ ;
+: defer@  ( xt1 -- xt2 )
+  defer-flag ( test if xt1 has been set ) or and
+  if cell+ @ else ( error-code ) throw then ;
 
 \ xt2 is the execution token xt1 is set to execute.
 
-\ An ambiguous condition exists if xt1 is not the execution to-
-\ ken of a word defined by DEFER, or if xt1 has not been set to
-\ execute an xt.
+\ If xt1 is not the execution token of a word defined by DEFER,
+\ or if xt1 has not been set to execute an xt, ( throw an
+\ error ).
 
 
-: defer!  ( xt1 xt2 -- )  swap cell+ ! ;
+: defer!  ( xt1 xt2 -- )
+  defer-flag and
+  if swap cell+ ! else ( error-code ) throw then ;
 
 \ Set the word xt1 to execute xt2.
 
-\ An ambiguous condition exists if xt1 is not for a word defined
-\ by DEFER.
+\ If xt1 is not for a word defined by DEFER, ( throw an error ).
 
 
 |: is  ( Int: '<spaces>name' xt -- )
        ( Com: '<spaces>name' -- ) ( Run: xt -- )
-  ' cell+ !
+  defer-flag and
+  if ' cell+ ! else ( error-code ) throw then
 ;|
-  ' cell+ literal postpone !
+  defer-flag and
+  if ' cell+ literal postpone ! else ( error-code ) throw then
 ; immediate
 
 \ Interpretation: Skip leading spaces and parse name delimited
@@ -2172,14 +2183,20 @@ $____ opcode execute  ( i*x xt -- j*x )
 
 \ Runtime: Set name to execute xt.
 
-\ An ambiguous condition exists if name was not defined by DEFER,
-\ or if POSTPONE, [COMPILE], ['], or ' is applied to IS.
+\ If name was not defined by DEFER, ( throw an error ).
+
+\ An ambiguous condition exists if POSTPONE, [COMPILE], ['], or
+\ ' is applied to IS.
 
 
-: action-of  ( Int: '<spaces>name' -- xt )  ' cell+ @ ;
-
-:| action-of  ( Com: '<spaces>name' -- ) ( Run: -- xt )
-  ' cell+ literal postpone @ ;|
+:| action-of  ( Int: '<spaces>name' -- xt )
+              ( Com: '<spaces>name' -- ) ( Run: -- xt )
+  defer-flag ( test if xt has been set ) or and
+  if ' cell+ @ else ( error-code ) throw then
+;|
+  defer-flag ( test if xt has been set ) or and
+  if ' cell+ literal postpone @ else ( error-code ) throw then
+; immediate
 
 \ Interpretation: Skip leading spaces and parse name delimited
 \ by a space. xt is the execution token that name is set to exe-
@@ -2191,9 +2208,11 @@ $____ opcode execute  ( i*x xt -- j*x )
 \ Runtime: xt is the execution token that name is set to exe-
 \ cute.
 
-\ An ambiguous condition exists if name was not defined by
-\ DEFER, if name was not set to execute an xt, or if POSTPONE,
-\ [COMPILE], ['], or ' is applied to ACTION-OF.
+\ If name was not defined by DEFER, or if name was not set to
+\ execute an xt, ( throw an error ).
+
+\ An ambiguous condition exists if POSTPONE, [COMPILE], ['], or
+\ ' is applied to ACTION-OF.
 
 
 
@@ -2308,7 +2327,7 @@ variable state  ( -- a-addr )  false state !
 
 
 : [']  ( Com: '<spaces>name' -- ) ( Run: -- xt )
-  ' literal ; immediate compile-only
+  ' 2literal ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2440,7 +2459,7 @@ variable state  ( -- a-addr )  false state !
 
 
 : compile,  ( Com: -- ) ( Exe: xt -- )
-  postpone , ; immediate compile-only
+  postpone 2, ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2562,7 +2581,7 @@ $____ value s\"ptr  ( -- c-addr )
 
 : :  ( '<spaces>name' -- flag )
      ( Ini: i*x R: -- i*x R:a-addr ) ( Exe: i*x -- j*x )
-  define true here to defxt ] exit
+  0 define true here to defxt ] exit
 
 \ Skip leading spaces and parse name delimited by a space. Cre-
 \ ate a new definition for name. Enter compilation state, start
@@ -2597,7 +2616,7 @@ $____ value s\"ptr  ( -- c-addr )
 
 
 : immediate  ( -- )
-  deflink cell+ dup @ immediate-mask or swap ! ;
+  deflink cell+ dup @ immediate-flag or swap ! ;
 
 \ Make the most recent definition an immediate word.
 
@@ -2628,7 +2647,7 @@ $____ value s\"ptr  ( -- c-addr )
 
 
 : create  ( '<spaces>name' -- ) ( Exe: -- a-addr )
-  define postpone pc ;
+  create-flag define postpone pc ;
 
 \ Skip leading spaces and parse name delimited by a space. Cre-
 \ ate a definition for name with the execution semantics de-
@@ -2680,7 +2699,7 @@ $____ value s\"ptr  ( -- c-addr )
 
 : :noname  ( -- xt flag )
            ( Ini: i*x R: -- i*x R:a-addr ) ( Exe: i*x -- j*x )
-  here false ] ;
+  here 0 false ] ;
 
 \ Create an execution token xt, enter compilation state, start
 \ the current definition, and produce colon-sys. Compile the
@@ -2750,7 +2769,7 @@ $____ value s\"ptr  ( -- c-addr )
 
 
 : defer  ( '<spaces>name' -- ) ( Exe: i*x -- j*x )
-  define postpone branch
+  defer-flag define postpone branch
   0 , ;
 
 \ Skip leading spaces and parse name delimited by a space. Cre-
@@ -2788,7 +2807,7 @@ $____ value s\"ptr  ( -- c-addr )
 
 
 : compile-only  ( -- )
-  deflink cell+ dup @ compile-mask or swap ! ;
+  deflink cell+ dup @ compile-only-flag or swap ! ;
 
 \ Make the most recent definition a compile-only word, which is
 \ a word that will cause the outer interpreter to abort and dis-
@@ -2796,15 +2815,15 @@ $____ value s\"ptr  ( -- c-addr )
 \ word in interpretation state.
 
 
-: define  ( '<spaces>name<space>' -- )
+: define  ( '<spaces>name<space>' x -- )
   parse-name
   here to deflink
-  dlink , dup , string,
+  dlink , third over or , string,
   align ;
 
 \ Skip leading spaces and parse name delimited by a space. Com-
 \ pile a dictionary header for a new dictionary definition using
-\ the parsed name.
+\ the cell x as the flags and the parsed name as the name.
 
 
 : findable  ( -- )  deflink to dlink ;
@@ -2834,7 +2853,7 @@ $____ value s\"ptr  ( -- c-addr )
 
 : |:  ( '<spaces>name' -- flag a-addr )
       ( Ini: i*x R: -- i*x R:a-addr ) ( Exe: i*x -- j*x )
-  define true here to defxt postpone branch
+  combined-flag define true here to defxt postpone branch
   here 0 , ] exit
 
 \ Description something something
@@ -2848,22 +2867,45 @@ $____ value s\"ptr  ( -- c-addr )
 \ Description something something
 
 
-$____ constant immediate-mask  ( -- x )
+$____ constant length-mask  ( -- x )
 
 \ x is a bit field that can mask the name length cell of a dic-
-\ tionary definition to obtain the "immediate" flag.
+\ tionary definition to obtain the length without the flags.
 
 
-$____ constant compile-mask  ( -- x )
-
-\ x is a bit field that can mask the name length cell of a dic-
-\ tionary definition to obtain the "compile-only" flag.
-
-
-$____ constant combined-mask  ( -- x )
+$____ constant flags-mask  ( -- x )
 
 \ x is a bit field that can mask the name length cell of a dic-
-\ tionary definition to obtain the "combined" flag.
+\ tionary definition to obtain the flags without the length.
+
+
+$____ constant immediate-flag  ( -- x )
+
+\ x is a cell with the bit position of the flag for immediate
+\ words set.
+
+
+$____ constant compile-only-flag  ( -- x )
+
+\ x is a cell with the bit position of the flag for compile-only
+\ words set.
+
+$____ constant combined-flag  ( -- x )
+
+\ x is a cell with the bit position of the flag for combined
+\ words set.
+
+
+$____ constant create-flag  ( -- x )
+
+\ x is a cell with the bit position of the flag for words defin-
+\ ed by CREATE set.
+
+
+$____ constant defer-flag  ( -- x )
+
+\ x is a cell with the bit position of the flag for words defin-
+\ ed by DEFER set.
 
 
 
