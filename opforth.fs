@@ -389,15 +389,19 @@
 
 \ Helper Definition
 
-\ compile-only    --
-\ define          '<spaces>name<space>' --
-\ findable        --
-\ dlink           -- a-addr
-\ deflink         -- a-addr
-\ defxt           -- xt
-\ |:              '<spaces>name' -- flag a-addr
-\                 Ini: i*x R: -- i*x R:a-addr  Exe: i*x -- j*x
-\ ;|              Com: flag a-addr -- flag  Run: R:a-addr -- R:
+\ compile-only      --
+\ define            '<spaces>name<space>' --
+\ findable          --
+\ dlink             -- a-addr
+\ deflink           -- a-addr
+\ defxt             -- xt
+\ |:                '<spaces>name' -- flag a-addr
+\                   Ini: i*x R: -- i*x R:a-addr  Exe: i*x -- j*x
+\ ;|                Com: flag a-addr -- flag
+\                   Run: R:a-addr -- R:
+\ immediate-mask    -- x
+\ compile-mask      -- x
+\ combined-mask     -- x
 
 
 \ Core Control Flow
@@ -2095,12 +2099,20 @@ $____ opcode execute  ( i*x xt -- j*x )
       over count third cell+ r@    \ Put both strings on stack
       compare 0=                   \ Test if strings match
       if
-        nip r> over + swap c@      \ Get xt, get immediate flag
-        $8000 and 0<> 1 or         \ Put 1 or -1 on stack
-        rdrop exit                 \ Exit (match was found)
+        nip dup r> +               \ Get data field address
+        swap @                     \ Get cell with flags
+        dup combined-mask and      \ Test if combined word
+        if
+          drop dup @               \ Get compilation xt offset
+          state @ and + 1+ 1       \ Add either offset or 1
+        else
+          immediate-mask and       \ Get immediate flag
+          0<> 1 or                 \ Put 1 or -1 on stack
+        then
+        rdrop exit                 \ Drop name length and exit
       then
     then
-    rdrop                          \ Discard name field address
+    drop rdrop                     \ Drop name addr and length
   again ;
 
 \ Determine if the counted string at c-addr matches the name of
@@ -2128,7 +2140,7 @@ $____ opcode execute  ( i*x xt -- j*x )
 \ Core-Ext Execution Token Words
 
 
-: defer@  ( xt1 -- xt2 )  >body cell+ @ ;
+: defer@  ( xt1 -- xt2 )  cell+ @ ;
 
 \ xt2 is the execution token xt1 is set to execute.
 
@@ -2137,7 +2149,7 @@ $____ opcode execute  ( i*x xt -- j*x )
 \ execute an xt.
 
 
-: defer!  ( xt1 xt2 -- )  swap >body cell+ ! ;
+: defer!  ( xt1 xt2 -- )  swap cell+ ! ;
 
 \ Set the word xt1 to execute xt2.
 
@@ -2584,7 +2596,8 @@ $____ value s\"ptr  ( -- c-addr )
 \ turn address nest-sys.
 
 
-: immediate  ( -- )  deflink cell+ dup @ $8000 or swap ! ;
+: immediate  ( -- )
+  deflink cell+ dup @ immediate-mask or swap ! ;
 
 \ Make the most recent definition an immediate word.
 
@@ -2774,7 +2787,8 @@ $____ value s\"ptr  ( -- c-addr )
 \ Helper Definition Words
 
 
-: compile-only  ( -- )  deflink cell+ dup @ $4000 or swap ! ;
+: compile-only  ( -- )
+  deflink cell+ dup @ compile-mask or swap ! ;
 
 \ Make the most recent definition a compile-only word, which is
 \ a word that will cause the outer interpreter to abort and dis-
@@ -2832,6 +2846,24 @@ $____ value s\"ptr  ( -- c-addr )
   dup if findable then [ ; immediate compile-only
 
 \ Description something something
+
+
+$____ constant immediate-mask  ( -- x )
+
+\ x is a bit field that can mask the name length cell of a dic-
+\ tionary definition to obtain the "immediate" flag.
+
+
+$____ constant compile-mask  ( -- x )
+
+\ x is a bit field that can mask the name length cell of a dic-
+\ tionary definition to obtain the "compile-only" flag.
+
+
+$____ constant combined-mask  ( -- x )
+
+\ x is a bit field that can mask the name length cell of a dic-
+\ tionary definition to obtain the "combined" flag.
 
 
 
