@@ -349,7 +349,6 @@
 \ Helper Compiler
 
 \ lit         -- x
-\ pc          -- a-addr
 \ dp          -- a-addr
 \ dpmax       -- a-addr
 \ 2,          x1 x2 --
@@ -394,7 +393,7 @@
 \ findable             --
 \ dlink                -- a-addr
 \ deflink              -- a-addr
-\ defxt                -- xt
+\ defaddr              -- a-addr
 \ |:                   '<spaces>name' -- flag a-addr
 \                      Ini: i*x R: -- i*x R:a-addr
 \                      Exe: i*x -- j*x
@@ -407,6 +406,8 @@
 \ combined-flag        -- x
 \ create-flag          -- x
 \ defer-flag           -- x
+\ value-flag           -- x
+\ 2value-flag          -- x
 
 
 \ Core Control Flow
@@ -1535,10 +1536,15 @@ $0020 constant bl  ( -- char )
 \ Core-Ext Text Display Words
 
 
-: .(  ( 'ccc<right-paren>' -- )
-  '"' parse type ; immediate
+: .(  ( 'ccc<right-paren>' -- )  ')' parse type ; immediate
 
-\ Parse ccc delimited by ) (right parenthesis). Display ccc.
+\ Interpretation: Perform the execution semantics described be-
+\ low.
+
+\ Compilation: Perform the execution semantics described below.
+
+\ Execution: Parse ccc delimited by ) (right parenthesis). Dis-
+\ play ccc.
 
 
 
@@ -2130,7 +2136,7 @@ $____ opcode execute  ( i*x xt -- j*x )
 
 
 : >body  ( xt -- a-addr )
-  create-flag and 0= if ( error-code ) throw then ;
+  create-flag and if 3 cells + else ( error-code ) throw then ;
 
 \ a-addr is the data field addressof the definition with execu-
 \ tion token xt.
@@ -2294,13 +2300,15 @@ variable state  ( -- a-addr )  false state !
 
 
 : postpone  ( Com: '<spaces>name' -- )
-  ' , ; immediate compile-only
+  state @
+  ] ['] ' execute
+  if drop , state ! else ( error-code ) throw then ;
 
 \ Skip leading spaces and parse name delimited by a space. Find
 \ name in the dictionary. Compile the compilation semantics of
 \ name.
 
-\ An ambiguous condition exists if name is not found.
+\ If name is not found, ( throw an error ).
 
 
 : literal  ( Com: x -- ) ( Run: -- x )
@@ -2327,7 +2335,7 @@ variable state  ( -- a-addr )  false state !
 
 
 : [']  ( Com: '<spaces>name' -- ) ( Run: -- xt )
-  ' 2literal ; immediate compile-only
+  [ ' ] 2literal ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2459,7 +2467,8 @@ variable state  ( -- a-addr )  false state !
 
 
 : compile,  ( Com: -- ) ( Exe: xt -- )
-  postpone 2, ; immediate compile-only
+  postpone drop
+  postpone , ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2469,14 +2478,19 @@ variable state  ( -- a-addr )  false state !
 \ represented by xt.
 
 
-: [compile]  ( Com: '<spaces>name' -- )  something ;
+: [compile]  ( Com: '<spaces>name' -- )
+  \ parse name
+  \ if xt represents an immediate or combined word
+  \   ..
+; immediate
 
 \ Interpretation: Undefined
 
 \ Compilation: Skip leading spaces and parse name delimited by a
 \ space. Find name in the dictionary. If name has other than de-
-\ fault compilation semantics, compile the compilation seman
-\ tics. Otherwise, compile the execution semantics of name.
+\ fault compilation semantics, compile the compilation seman-
+\ tics of name. Otherwise, compile the execution semantics of
+\ name.
 
 \ An ambiguous condition exists if name is not found.
 
@@ -2492,11 +2506,6 @@ $____ opcode lit  ( -- x )
 
 \ Put x, the contents of the next consecutive cell of memory,
 \ onto the stack.
-
-
-$____ opcode pc  ( -- a-addr )
-
-\ a-addr is the address of the next consecutive cell of memory.
 
 
 : 2,  ( x1 x2 -- )  swap , , ;
@@ -2581,7 +2590,7 @@ $____ value s\"ptr  ( -- c-addr )
 
 : :  ( '<spaces>name' -- flag )
      ( Ini: i*x R: -- i*x R:a-addr ) ( Exe: i*x -- j*x )
-  0 define true here to defxt ] exit
+  0 define true here to defaddr ] exit
 
 \ Skip leading spaces and parse name delimited by a space. Cre-
 \ ate a new definition for name. Enter compilation state, start
@@ -2647,7 +2656,9 @@ $____ value s\"ptr  ( -- c-addr )
 
 
 : create  ( '<spaces>name' -- ) ( Exe: -- a-addr )
-  create-flag define postpone pc ;
+  create-flag define
+  here 3 cells + literal
+  here to defaddr postpone exit ;
 
 \ Skip leading spaces and parse name delimited by a space. Cre-
 \ ate a definition for name with the execution semantics de-
@@ -2665,7 +2676,7 @@ $____ value s\"ptr  ( -- c-addr )
          ( Run: R:nest-sys1 -- R: )
          ( Ini: i*x R: -- i*x a-addr R:nest-sys2 )
          ( Exe: i*x -- j*x )
-  something ;
+  here defaddr ! postpone rdrop ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2845,15 +2856,19 @@ $____ value s\"ptr  ( -- c-addr )
 \ in the dictionary.
 
 
-0 value defxt  ( -- xt )
+0 value defaddr  ( -- a-addr )
 
-\ xt is the execution token of the most recent definition. DEFXT
-\ is used by RECURSE.
+\ If the current definition is being defined by :, |:, or
+\ :NONAME, a-addr is the starting address of the code within
+\ the definition so it RECURSE can compile a branch to it.
+
+\ If the current definition is being defined by CREATE, a-addr
+\ is the address of the EXIT so DOES> can overwrite it.
 
 
 : |:  ( '<spaces>name' -- flag a-addr )
       ( Ini: i*x R: -- i*x R:a-addr ) ( Exe: i*x -- j*x )
-  combined-flag define true here to defxt postpone branch
+  combined-flag define true here to defaddr postpone branch
   here 0 , ] exit
 
 \ Description something something
@@ -2906,6 +2921,18 @@ $____ constant defer-flag  ( -- x )
 
 \ x is a cell with the bit position of the flag for words defin-
 \ ed by DEFER set.
+
+
+$____ constant value-flag  ( -- x )
+
+\ x is a cell with the bit position of the flag for words defin-
+\ ed by VALUE set.
+
+
+$____ constant 2value-flag  ( -- x )
+
+\ x is a cell with the bit position of the flag for words defin-
+\ ed by 2VALUE set.
 
 
 
@@ -3156,7 +3183,7 @@ $____ opcode exit  ( Com: -- ) ( Exe: R:a-addr -- R: )
 \ loop parameters by executing UNLOOP.
 
 
-: recurse  ( Com: -- )  defxt compile, ;
+: recurse  ( Com: -- )  defaddr compile, ;
 
 \ Interpretation: Undefined
 
