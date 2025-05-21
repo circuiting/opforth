@@ -627,8 +627,6 @@ $____ opcode >r  ( Com: -- ) ( Exe: x R: -- R:x )
 
 \ Interpretation: Undefined
 
-\ Compilation: Compile the following execution semantics.
-
 \ Execution: Transfer the top data stack item to the return
 \ stack.
 
@@ -638,8 +636,6 @@ $____ opcode r>  ( Com: -- ) ( Exe: R:x -- x R: )
 
 \ Interpretation: Undefined
 
-\ Compilation: Compile the following execution semantics.
-
 \ Execution: Transfer the top return stack item to the data
 \ stack.
 
@@ -648,8 +644,6 @@ $____ opcode r@  ( Com: -- ) ( Exe: R:x -- x R:x )
   compile-only
 
 \ Interpretation: Undefined
-
-\ Compilation: Compile the following execution semantics.
 
 \ Execution: Put a copy of the top return stack item onto the
 \ data stack.
@@ -696,8 +690,6 @@ $____ opcode tuck  ( x1 x2 -- x2 x1 x2 )
 
 \ Interpretation: Undefined
 
-\ Compilation: Compile the following execution semantics.
-
 \ Execution: Transfer the cell pair on top of the data stack to
 \ the return stack.
 
@@ -708,8 +700,6 @@ $____ opcode tuck  ( x1 x2 -- x2 x1 x2 )
   postpone swap ; immediate compile-only
 
 \ Interpretation: Undefined
-
-\ Compilation: Compile the following execution semantics.
 
 \ Execution: Transfer the cell pair on top of the return stack
 \ to the data stack.
@@ -724,8 +714,6 @@ $____ opcode tuck  ( x1 x2 -- x2 x1 x2 )
   postpone swap ; immediate compile-only
 
 \ Interpretation: Undefined
-
-\ Compilation: Compile the following execution semantics.
 
 \ Execution: Put a copy of the cell pair on top of the return
 \ stack onto the data stack.
@@ -2300,8 +2288,7 @@ variable state  ( -- a-addr )  false state !
 
 
 : postpone  ( Com: '<spaces>name' -- )
-  state @
-  ] ['] ' execute
+  state @ ] ['] ' execute
   if drop , state ! else ( error-code ) throw then ;
 
 \ Skip leading spaces and parse name delimited by a space. Find
@@ -2472,17 +2459,12 @@ variable state  ( -- a-addr )  false state !
 
 \ Interpretation: Undefined
 
-\ Compilation: Compile the following execution semantics.
-
 \ Execution: Compile the execution semantics of the definition
 \ represented by xt.
 
 
 : [compile]  ( Com: '<spaces>name' -- )
-  \ parse name
-  \ if xt represents an immediate or combined word
-  \   ..
-; immediate
+  ' if drop , else ( error-code ) then ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2492,7 +2474,7 @@ variable state  ( -- a-addr )  false state !
 \ tics of name. Otherwise, compile the execution semantics of
 \ name.
 
-\ An ambiguous condition exists if name is not found.
+\ If name is not found, ( throw an error ).
 
 \ Note: This word is obsolescent and is included for compatibil-
 \ ity with existing Forth code.
@@ -3116,8 +3098,6 @@ synonym i  ( Com: -- ) ( Exe: R:n|u -- n|u R:n|u )  r@
 
 \ Interpretation: Undefined
 
-\ Compilation: Compile the following runtime semantics.
-
 \ Execution: Put a copy of the current (innermost) loop index
 \ onto the data stack. The loop index can be signed or unsigned.
 
@@ -3130,8 +3110,6 @@ $____ opcode j  ( Com: -- )  ( Exe: R:n1|u1 R:n2|u2 R:n3|u3 --
   compile-only
 
 \ Interpretation: Undefined
-
-\ Compilation: Compile the following runtime semantics.
 
 \ Execution: Put a copy of the next-outer loop index onto the
 \ data stack. The loop index can be signed or unsigned. An am-
@@ -3146,8 +3124,6 @@ $____ opcode j  ( Com: -- )  ( Exe: R:n1|u1 R:n2|u2 R:n3|u3 --
 
 \ Interpretation: Undefined
 
-\ Compilation: Compile the following runtime semantics.
-
 \ Execution: Discard the current loop parameters. Continue exe-
 \ cution immediately following the innermost syntactically en-
 \ closing DO...LOOP or DO...+LOOP.
@@ -3159,8 +3135,6 @@ $____ opcode j  ( Com: -- )  ( Exe: R:n1|u1 R:n2|u2 R:n3|u3 --
   rdrop rdrop ; immediate compile-only
 
 \ Interpretation: Undefined
-
-\ Compilation: Compile the following runtime semantics.
 
 \ Execution: Discard the loop parameters for the current nesting
 \ level. An UNLOOP is required for each nesting level before the
@@ -3174,8 +3148,6 @@ $____ opcode exit  ( Com: -- ) ( Exe: R:a-addr -- R: )
   compile-only
 
 \ Interpretation: Undefined
-
-\ Compilation: Compile the following runtime semantics.
 
 \ Execution: Return control the calling definition specified by
 \ the return address nest-sys. Before executing EXIT within a
@@ -3335,8 +3307,6 @@ $____ opcode ?loop  ( Com: -- )
   compile-only
 
 \ Interpretation: Undefined
-
-\ Compilation: Compile the execution semantics below.
 
 \ Execution: If the top data stack item n1 is less than the top
 \ return stack item, transfer n1 to the return stack and contin-
