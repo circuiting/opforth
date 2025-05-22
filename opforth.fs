@@ -281,7 +281,8 @@
 
 \ textinbuf       -- c-addr
 \ #textinbuf      -- u
-\ textindev       -- a-addr
+\ textindev       -- c-addr
+\ keydev          -- a-addr
 \ invalidchar?    char -- flag
 \ space?          char -- flag
 \ eol?            char -- flag
@@ -1942,6 +1943,12 @@ $____ constant textindev  ( -- c-addr )
 
 \ c-addr is the address of the text input device, which is typi-
 \ cally a keybord or a serial port.
+
+
+$____ constant keydev  ( -- a-addr )
+
+\ c-addr is the address of the hardware register that contains a
+\ flag indicating if a character is available.
 
 
 : invalidchar?  ( char -- flag )
@@ -3792,12 +3799,11 @@ $____ opcode m-  ( d1|ud1 n -- d2|ud2 )
 
 
 : sliteral  ( Com: c-addr1 u -- ) ( Run: -- c-addr2 u )
-  postpone branch            ( c-addr1 u )
-  here -rot 0 ,              ( a-addr c-addr1 u )
-  here swap dup chars allot  ( a-addr c-addr1 c-addr2 u )
-  2dup 2>r cmove             ( a-addr R:c-addr2 R:u )
-  here ! 2r>                 ( c-addr2 u )
-  2literal ; immediate compile-only
+  postpone branch                    ( c-addr1 u )
+  here 2dup cell+ literal literal    ( c-addr1 u a-addr1 )
+  >r dup >r 0 , string,              ( R:a-addr R:u )
+  r> r@ + 5 cells +                  ( a-addr2 R:a-addr1 )
+  r> ! ; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -3983,7 +3989,7 @@ $____ opcode m-  ( d1|ud1 n -- d2|ud2 )
 \ formed by the display device.
 
 
-: key?  ( -- flag )  something ;
+: key?  ( -- flag )  keydev @ ;
 
 \ If a character is available, flag is true. Otherwise flag is
 \ false. If non-character keyboard events are available before
