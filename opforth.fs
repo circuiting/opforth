@@ -3824,7 +3824,12 @@ $____ opcode m-  ( d1|ud1 n -- d2|ud2 )
 \ long.
 
 
-: -trailing  ( c-addr u1 -- c-addr u2 )  something ;
+: -trailing  ( c-addr u1 -- c-addr u2 )
+  begin
+    dup while
+    2dup + c@ bl <> while
+    char-
+  repeat then ;
 
 \ Standard Forth description (to be revised):
 
