@@ -3828,9 +3828,15 @@ $____ opcode m-  ( d1|ud1 n -- d2|ud2 )
 \ spaces, u2 is zero.
 
 
-: compare  ( c-addr1 u1 c-addr2 u2 -- n )  something ;
-
-\ Standard Forth description (to be revised):
+: compare  ( c-addr1 u1 c-addr2 u2 -- n )
+  begin
+    dup 0= if 2drop 0= negate nip exit then
+    third 0= if 2drop 2drop -1 exit then
+    /char >r >r >r /char
+    r> swap r> swap r>
+    2dup u< if 2drop 2drop -1 exit then
+    u> if 2drop 2drop 1 exit then
+  again ;
 
 \ Compare the string with address c-addr1 and length u1 to the
 \ string with address c-addr2 and length u2.
@@ -3854,7 +3860,7 @@ $____ opcode m-  ( d1|ud1 n -- d2|ud2 )
 
 \ Search the string specified by c-addr1 u1 for the string spec-
 \ ified by c-addr2 u2. If flag is true, a match was found at
-\ c-addr3 with u3 characters remaining. If flag is false there
+\ c-addr3 with u3 characters remaining. If flag is false, there
 \ was no match and c-addr3 is c-addr1 and u3 is u1.
 
 
