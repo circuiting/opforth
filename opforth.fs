@@ -219,10 +219,11 @@
 
 \ Helper Text Display
 
-\ text-y       -- a-addr
-\ text-x       -- a-addr
-\ text-ymax    -- u
-\ text-xmax    -- u
+\ textdisplay    -- c-addr
+\ text-x         -- a-addr
+\ text-y         -- a-addr
+\ text-xmax      -- u
+\ text-ymax      -- u
 
 
 \ Core Numeric String
@@ -1480,8 +1481,9 @@ synonym c!-  ( char c-addr1 -- c-addr2 )  !-
   dup validchar?
   if
     textdisplay c!
-    text-x dup @ dup text-xmax = and
-    swap 1+ swap !
+    text-x dup @ dup text-xmax =
+    if drop 0 cr else 1+ then
+    swap !
   then ;
 
 \ If x is a graphic character, display x.
@@ -1547,18 +1549,6 @@ $____ constant textdisplay  ( -- c-addr )
 \ the character to be displayed.
 
 
-$____ constant text-y  ( -- a-addr )
-
-\ a-addr is the hardware address of the text cursor y coordi-
-\ nate, which is the row where the next character will be dis-
-\ played. A program can get the y coordinate by reading the
-\ contents of a-addr, and a program can set the y coordinate
-\ by writing a number to a-addr. 
-
-\ An ambiguous condition exists if a program writes a number
-\ to a-addr that is less than zero or greater than TEXT-YMAX.
-
-
 $____ constant text-x  ( -- a-addr )
 
 \ a-addr is the hardware address of the text cursor x coordi-
@@ -1571,13 +1561,25 @@ $____ constant text-x  ( -- a-addr )
 \ to a-addr that is less than zero or greater than TEXT-XMAX.
 
 
-#64 value text-ymax  ( -- u )
+$____ constant text-y  ( -- a-addr )
+
+\ a-addr is the hardware address of the text cursor y coordi-
+\ nate, which is the row where the next character will be dis-
+\ played. A program can get the y coordinate by reading the
+\ contents of a-addr, and a program can set the y coordinate
+\ by writing a number to a-addr. 
+
+\ An ambiguous condition exists if a program writes a number
+\ to a-addr that is less than zero or greater than TEXT-YMAX.
+
+
+#64 value text-xmax  ( -- u )
 
 \ u is the number of columns available for displaying text char-
 \ acters.
 
 
-#20 value text-xmax  ( -- u )
+#20 value text-ymax  ( -- u )
 
 \ u is the number of rows available for displaying text charac-
 \ ters.
@@ -3988,7 +3990,12 @@ $____ opcode m-  ( d1|ud1 n -- d2|ud2 )
 \ Facility Words
 
 
-: page  ( -- )  something ;
+: page  ( -- )
+  0 0 at-xy
+  begin
+    text-xmax spaces cr
+    text-y while
+  repeat ;
 
 \ Standard Forth description (to be revised):
 
