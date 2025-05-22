@@ -93,9 +93,10 @@
 
 \ Helper Arithmetic
 
-\ ud/mod    ud1 u1 -- ud2 u2
-\ r>+       n1|u1 R:n2|u2 -- n3|u3 R:
-\ r>1+      R:n1|u1 -- n2|u2 R:
+\ non-restoring    ud u1 -- n u2
+\ ud/mod           ud1 u1 -- ud2 u2
+\ r>+              n1|u1 R:n2|u2 -- n3|u3 R:
+\ r>1+             R:n1|u1 -- n2|u2 R:
 
 
 \ Core Number Test
@@ -1420,8 +1421,20 @@ $____ opcode @+  ( a-addr1 -- a-addr2 x )
 
 $____ opcode !+  ( x a-addr1 -- a-addr2 )
 
-\ Write x to memory address a-addr1. Add one to a-addr1 and put
+\ Write x to memory address a-addr1. Add one to a-addr1, and put
 \ the result on top of the stack.
+
+
+$____ opcode @-  ( a-addr1 -- a-addr2 x )
+
+\ Read the cell located at a-addr1, add subtract one from
+\ a-addr1, and put the cell on top of the stack.
+
+
+$____ opcode !-  ( x a-addr1 -- a-addr2 )
+
+\ Write x to memory address a-addr1. Subtract one from a-addr1,
+\ and put the result on top of the stack.
 
 
 synonym c@+  ( c-addr1 -- c-addr2 char )  @+
