@@ -3865,7 +3865,20 @@ $____ opcode m-  ( d1|ud1 n -- d2|ud2 )
 
 
 : search  ( c-addr1 u1 c-addr2 u2 -- c-addr3 u3 flag )
-  something ;
+  third over u> if 2drop false exit then
+  2over >r >r 2dup >r >r
+  begin
+    third 0=
+    if
+      dup 0= while
+      2drop 2drop rdrop rdrop r> r> false exit
+    then
+    dup 0= while
+    /char >r 2swap /char >r 2swap r> r> <>
+    if 2drop r> r@ over >r then
+  repeat then
+  2drop rdrop swap r> - swap
+  rdrop rdrop true ;
 
 \ Standard Forth description (to be revised):
 
