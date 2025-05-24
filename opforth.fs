@@ -2765,9 +2765,20 @@ $____ value s\"ptr  ( -- c-addr )
 
 |: to  ( Int: '<spaces>name' i*x -- )
        ( Com: '<spaces>name' -- )
-  ' ( test if VALUE or 2VALUE ) something
+  ' dup value-flag and if cell+ ! then
+  2value-flag and if cell+ swap 2! then
 ;|
-  ' ( something )
+  ' dup value-flag and
+  if
+    postpone cell+
+    postpone !
+  then
+  2value-flag and
+  if
+    postpone cell+
+    postpone swap
+    postpone 2!
+  then
 ; immediate
 
 \ Interpretation: Skip leading spaces and parse name delimited
