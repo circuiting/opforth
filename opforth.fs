@@ -1239,7 +1239,7 @@ $____ opcode u2/  ( x1 -- x2 )
 \ unit.
 
 
-synonym cell+  ( a-addr1 -- a-addr2 )  1+
+synonym cell+ 1+  ( a-addr1 -- a-addr2 )
 
 \ Add the size of one cell in address units to the top stack
 \ item.
@@ -1250,7 +1250,7 @@ synonym cell+  ( a-addr1 -- a-addr2 )  1+
 \ size of greater than one address unit.
 
 
-synonym char+  ( c-addr1 -- c-addr2 )  1+
+synonym char+ 1+  ( c-addr1 -- c-addr2 )
 
 \ Add the size of one character in address units to the top
 \ stack item.
@@ -1282,7 +1282,7 @@ synonym char+  ( c-addr1 -- c-addr2 )  1+
 \ Helper Address Math Words
 
 
-synonym cell  ( -- n )  1
+synonym cell 1  ( -- n )
 
 \ n is the size of a cell in address units.
 
@@ -1290,7 +1290,7 @@ synonym cell  ( -- n )  1
 \ is no distinction between address units and characters.
 
 
-synonym cell-  ( a-addr1 -- a-addr2 )  1-
+synonym cell- 1-  ( a-addr1 -- a-addr2 )
 
 \ Subtract the size of one cell in address units from the top
 \ stack item.
@@ -1323,7 +1323,7 @@ $____ opcode @  ( a-addr -- x )
 \ removed.
 
 
-synonym c@  ( c-addr -- char )  @
+synonym c@ @  ( c-addr -- char )
 
 \ Read the character located at memory address c-addr and put
 \ the character on the stack in place of c-addr.
@@ -1331,7 +1331,7 @@ synonym c@  ( c-addr -- char )  @
 \ In Opforth, characters and cells are the same size.
 
 
-synonym c!  ( char c-addr -- )  !
+synonym c! !  ( char c-addr -- )
 
 \ Write char to memory address c-addr.
 
@@ -1437,7 +1437,7 @@ $____ opcode !-  ( x a-addr1 -- a-addr2 )
 \ and put the result on top of the stack.
 
 
-synonym c@+  ( c-addr1 -- c-addr2 char )  @+
+synonym c@+ @+  ( c-addr1 -- c-addr2 char )
 
 \ Read the character located at a-addr1, add one to a-addr1, and
 \ put the character on top of the stack.
@@ -1445,7 +1445,7 @@ synonym c@+  ( c-addr1 -- c-addr2 char )  @+
 \ In Opforth, characters and cells are the same size.
 
 
-synonym c!+  ( char c-addr1 -- c-addr2 )  !+
+synonym c!+ !+  ( char c-addr1 -- c-addr2 )
 
 \ Write char to memory address c-addr1. Add one to c-addr1 and
 \ put the result on top of the stack.
@@ -1453,7 +1453,7 @@ synonym c!+  ( char c-addr1 -- c-addr2 )  !+
 \ In Opforth, characters and cells are the same size.
 
 
-synonym c@-  ( c-addr1 -- c-addr2 char )  @-
+synonym c@- @-  ( c-addr1 -- c-addr2 char )
 
 \ Read the character located at c-addr1, subtract one from
 \ c-addr1, and put the character on top of the stack.
@@ -1461,7 +1461,7 @@ synonym c@-  ( c-addr1 -- c-addr2 char )  @-
 \ In Opforth, characters and cells are the same size.
 
 
-synonym c!-  ( char c-addr1 -- c-addr2 )  !-
+synonym c!- !-  ( char c-addr1 -- c-addr2 )
 
 \ Write char to memory addres c-addr1. Subtract one from
 \ c-addr1 and put the result on top of the stack.
@@ -2254,7 +2254,7 @@ $____ opcode execute  ( i*x xt -- j*x )
 \ aligned prior to the execution of ,.
 
 
-synonym c,  ( char -- )  ,
+synonym c, ,  ( char -- )
 
 \ Reserve space for one character in the dictionary and store
 \ char in the space. If the dictionary pointer is character-
@@ -3127,7 +3127,7 @@ $____ constant 2value-flag  ( -- x )
 \ when the loop parameters are unavailable.
 
 
-synonym i  ( Com: -- ) ( Exe: R:n|u -- n|u R:n|u )  r@
+synonym i r@  ( Com: -- ) ( Exe: R:n|u -- n|u R:n|u )
 
 \ Interpretation: Undefined
 
@@ -3579,7 +3579,7 @@ $____ opcode m+  ( d1|ud1 n -- d2|ud2 )
 \ ud is the absolute value of d.
 
 
-synonym d>s  ( d -- n )  drop
+synonym d>s drop  ( d -- n )
 
 \ n is the result of converting the double-cell signed integer d
 \ to a single-cell signed integer with the same numeric value.
