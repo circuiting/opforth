@@ -323,6 +323,12 @@
 \              Com: '<spaces>name' --  Run: -- xt
 
 
+\ Helper Execution Token
+
+\ interpretation    Com: -- a-addr
+\ compilation       Com: a-addr --
+
+
 \ Core Compiler
 
 \ here        -- addr
@@ -397,11 +403,6 @@
 \ dlink                -- a-addr
 \ deflink              -- a-addr
 \ defaddr              -- a-addr
-\ |:                   '<spaces>name' -- flag a-addr
-\                      Ini: i*x R: -- i*x R:a-addr
-\                      Exe: i*x -- j*x
-\ ;|                   Com: flag a-addr -- flag
-\                      Run: R:a-addr -- R:
 \ length-mask          -- x
 \ flags-mask           -- x
 \ immediate-flag       -- x
@@ -593,12 +594,14 @@ $____ opcode ?dup  ( x -- x x | 0 )
 \ Duplicate the top stack item if it is nonzero.
 
 
-|: 2drop  ( Int: x1 x2 -- )
-          ( Com: -- ) ( Run: x1 x2 -- )
-  drop drop
-;|
-  postpone drop
-  postpone drop ; immediate
+: 2drop  ( Int: x1 x2 -- )
+         ( Com: -- ) ( Run: x1 x2 -- )
+  interpretation
+    drop drop
+  compilation
+    postpone drop
+    postpone drop
+; immediate
 
 \ Remove the top two stack items.
 
@@ -2232,6 +2235,40 @@ $____ opcode execute  ( i*x xt -- j*x )
 
 
 
+\ Helper Execution Token Words
+
+
+: interpretation  ( Com: -- a-addr )
+  deflink dup @ combined-flag or swap !  \ Set combined flag
+  postpone branch                        \ Compile a branch
+  here 0 ,                               \ Push branch field
+; immediate compile-only
+
+\ Make the current definition a combined word by setting the
+\ combined flag and compiling a branch to the compilation seman-
+\ tics. a-addr is the address of the branch field, which will be
+\ resolved by COMPILATION.
+
+\ The words compiled into the body of the definition after
+\ INTERPRETATION are the interpretation semantics of the combin-
+\ ed word.
+
+
+: compilation  ( Com: a-addr -- )
+  postpone exit  \ Compile an exit
+  here swap !    \ Resolve the branch field of INTERPRETATION
+; immediate compile-only
+
+\ Inside the definition of a combined word, end the interpreta-
+\ tion section by compiling an exit and resolving the branch
+\ field that was compiled by INTERPRETATION.
+
+\ The words compiled into the body of the definition after
+\ COMPILATION are the compilation semantics of the combined
+\ word.
+
+
+
 \ Core Compiler Words
 
 
@@ -2594,7 +2631,9 @@ $____ value s\"ptr  ( -- c-addr )
 
 : :  ( '<spaces>name' -- flag )
      ( Ini: i*x R: -- i*x R:a-addr ) ( Exe: i*x -- j*x )
-  0 define true here to defaddr ] exit
+  0 define true    \ Compile header, push findable flag
+  here to defaddr  \ Save code field address
+  ] ;              \ Enter compilation state
 
 \ Skip leading spaces and parse name delimited by a space. Cre-
 \ ate a new definition for name. Enter compilation state, start
@@ -2879,22 +2918,6 @@ $____ value s\"ptr  ( -- c-addr )
 
 \ If the current definition is being defined by CREATE, a-addr
 \ is the address of the EXIT so DOES> can overwrite it.
-
-
-: |:  ( '<spaces>name' -- flag a-addr )
-      ( Ini: i*x R: -- i*x R:a-addr ) ( Exe: i*x -- j*x )
-  combined-flag define true here to defaddr postpone branch
-  here 0 , ] exit
-
-\ Description something something
-
-
-: ;|  ( Com: flag a-addr -- flag ) ( Run: R:a-addr -- R: )
-  postpone exit
-  here swap !
-  dup if findable then [ ; immediate compile-only
-
-\ Description something something
 
 
 $____ constant length-mask  ( -- x )
