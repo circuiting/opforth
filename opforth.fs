@@ -4001,7 +4001,10 @@ $____ opcode m-  ( d1|ud1 n -- d2|ud2 )
 : /char  ( c-addr1 u1 -- c-addr2 u2 char )
   char- >r c@+ r> swap ;
 
-\ Description something something
+\ Trim the first character from the string with address c-addr1
+\ and length u1. char is the trimmed character, c-addr2 is the
+\ next consecutive address after c-addr1, and u2 is u1 minus
+\ one.
 
 
 : string,  ( c-addr u -- )  here over chars allot swap cmove ;
