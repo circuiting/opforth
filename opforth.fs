@@ -397,8 +397,9 @@
 
 \ Helper Definition
 
-\ compile-only         --
 \ define               '<spaces>name<space>' x --
+\ opcode               '<spaces>name<space>' x --
+\ compile-only         --
 \ findable             --
 \ dlink                -- a-addr
 \ deflink              -- a-addr
@@ -606,12 +607,14 @@ $____ opcode ?dup  ( x -- x x | 0 )
 \ Remove the top two stack items.
 
 
-|: 2dup  ( Int: x1 x2 -- x1 x2 x1 x2 )
-         ( Com: -- ) ( Run: x1 x2 -- x1 x2 x1 x2 )
-  over over
-;|
-  postpone over
-  postpone over ; immediate
+: 2dup  ( Int: x1 x2 -- x1 x2 x1 x2 )
+        ( Com: -- ) ( Run: x1 x2 -- x1 x2 x1 x2 )
+  interpretation
+    over over
+  compilation
+    postpone over
+    postpone over
+; immediate
 
 \ Duplicate the cell pair on top of the stack.
 
@@ -692,7 +695,8 @@ $____ opcode tuck  ( x1 x2 -- x2 x1 x2 )
 : 2>r  ( Com: -- ) ( Exe: x1 x2 R: -- R:x1 R:x2 )
   postpone swap
   postpone >r
-  postpone >r ; immediate compile-only
+  postpone >r
+; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -703,7 +707,8 @@ $____ opcode tuck  ( x1 x2 -- x2 x1 x2 )
 : 2r>  ( Com: -- ) ( Exe: R:x1 R:x2 -- x1 x2 R: )
   postpone r>
   postpone r>
-  postpone swap ; immediate compile-only
+  postpone swap
+; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -717,7 +722,8 @@ $____ opcode tuck  ( x1 x2 -- x2 x1 x2 )
   postpone 2dup
   postpone >r
   postpone >r
-  postpone swap ; immediate compile-only
+  postpone swap
+; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -1314,12 +1320,13 @@ $____ opcode @  ( a-addr -- x )
 \ cell on the stack in place of a-addr.
 
 
-|: !  ( Int: x a-addr -- )
-      ( Com: -- ) ( Run: x a-addr -- )
-  tuck! drop
-;|
-  postpone tuck!
-  postpone drop
+: !  ( Int: x a-addr -- )
+     ( Com: -- ) ( Run: x a-addr -- )
+  interpretation
+    tuck! drop
+  compilation
+    postpone tuck!
+    postpone drop
 ; immediate
 
 \ Write x to memory address a-addr. The top two stack items are
@@ -1476,12 +1483,13 @@ synonym c!- !-  ( char c-addr1 -- c-addr2 )
 \ Core Text Display Words
 
 
-|: ."  ( Int: 'ccc<quote>' -- )
-       ( Com: 'ccc<quote>' -- ) ( Run: -- )
-  '"' parse type
-;|
-  '"' parse postpone sliteral
-  postpone type
+: ."  ( Int: 'ccc<quote>' -- )
+      ( Com: 'ccc<quote>' -- ) ( Run: -- )
+  interpretation
+    '"' parse type
+  compilation
+    '"' parse postpone sliteral
+    postpone type
 ; immediate
 
 \ Interpretation: Parse ccc delimited by " (double-quote). Dis-
@@ -1777,11 +1785,12 @@ $____ constant holdbuf  ( -- c-addr )
 \ Core Text Input Words
 
 
-|: (  ( Int: 'ccc<right-paren>' -- )
-   ( Com: 'ccc<right-paren>' -- ) ( Run: -- )
-  ')' parse
-;|
-  ')' postpone parse
+: (  ( Int: 'ccc<right-paren>' -- )
+     ( Com: 'ccc<right-paren>' -- ) ( Run: -- )
+  interpretation
+    ')' parse
+  compilation
+    ')' postpone parse
 ; immediate
 
 \ Parse ccc delimited by ) (right parenthesis). This causes the
@@ -2185,13 +2194,14 @@ $____ opcode execute  ( i*x xt -- j*x )
 \ If xt1 is not for a word defined by DEFER, ( throw an error ).
 
 
-|: is  ( Int: '<spaces>name' xt -- )
-       ( Com: '<spaces>name' -- ) ( Run: xt -- )
-  defer-flag and
-  if ' cell+ ! else ( error-code ) throw then
-;|
-  defer-flag and
-  if ' cell+ literal postpone ! else ( error-code ) throw then
+: is  ( Int: '<spaces>name' xt -- )
+      ( Com: '<spaces>name' -- ) ( Run: xt -- )
+  interpretation
+    defer-flag and
+    if ' cell+ ! else ( error-code ) throw then
+  compilation
+    defer-flag and
+    if ' cell+ literal postpone ! else ( error-code ) throw then
 ; immediate
 
 \ Interpretation: Skip leading spaces and parse name delimited
@@ -2208,13 +2218,14 @@ $____ opcode execute  ( i*x xt -- j*x )
 \ ' is applied to IS.
 
 
-:| action-of  ( Int: '<spaces>name' -- xt )
-              ( Com: '<spaces>name' -- ) ( Run: -- xt )
-  defer-flag ( test if xt has been set ) or and
-  if ' cell+ @ else ( error-code ) throw then
-;|
-  defer-flag ( test if xt has been set ) or and
-  if ' cell+ literal postpone @ else ( error-code ) throw then
+: action-of  ( Int: '<spaces>name' -- xt )
+             ( Com: '<spaces>name' -- ) ( Run: -- xt )
+  interpretation
+    defer-flag ( test if xt has been set ) or and
+    if ' cell+ @ else ( error-code ) throw then
+  compilation
+    defer-flag ( test if xt has been set ) or and
+    if ' cell+ literal postpone @ else ( error-code ) throw then
 ; immediate
 
 \ Interpretation: Skip leading spaces and parse name delimited
@@ -2359,7 +2370,8 @@ variable state  ( -- a-addr )  false state !
 
 : literal  ( Com: x -- ) ( Run: -- x )
   postpone lit
-  , ; immediate compile-only
+  ,
+; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2369,7 +2381,8 @@ variable state  ( -- a-addr )  false state !
 
 
 : [char]  ( Com: '<spaces>name' -- ) ( Run: -- char )
-  parse-name drop c@ literal ; immediate compile-only
+  parse-name drop c@ literal
+; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2381,7 +2394,8 @@ variable state  ( -- a-addr )  false state !
 
 
 : [']  ( Com: '<spaces>name' -- ) ( Run: -- xt )
-  [ ' ] 2literal ; immediate compile-only
+  [ ' ] 2literal
+; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2397,12 +2411,13 @@ variable state  ( -- a-addr )  false state !
 \ An ambiguous condition exists if name is not found.
 
 
-|: s"  ( Int: 'ccc<quote>' -- c-addr u )
-       ( Com: 'ccc<quote>' -- ) ( Run: -- c-addr u )
-  '"' parse
-  2dup s"buf swap cmove
-;|
-  '"' parse postpone sliteral
+: s"  ( Int: 'ccc<quote>' -- c-addr u )
+      ( Com: 'ccc<quote>' -- ) ( Run: -- c-addr u )
+  interpretation
+    '"' parse
+    2dup s"buf swap cmove
+  compilation
+    '"' parse postpone sliteral
 ; immediate
 
 \ Interpretation: Parse ccc delimited by " (double-quote). Store
@@ -2421,44 +2436,45 @@ variable state  ( -- a-addr )  false state !
 \ Core-Ext Compiler Words
 
 
-|: s\"  ( Int: 'ccc<quote>' -- c-addr u )
+: s\"  ( Int: 'ccc<quote>' -- c-addr u )
         ( Com: 'ccc<quote>' -- ) ( Run: -- c-addr u )
-  s\"buf to s\"ptr parse-area
-  begin
-    dup 0<> while
-    /char '"' <> while
-    over c@ dup '\'
-    if
-      over 0<>
+  interpretation
+    s\"buf to s\"ptr parse-area
+    begin
+      dup 0<> while
+      /char '"' <> while
+      over c@ dup '\'
       if
-        drop /char
-        case
-        'x' of
-          dup 2 u< while
-          foo
-        endof
-        'a' of $07 endof
-        'b' of $08 endof
-        'e' of $1b endof
-        'f' of $0c endof
-        'l' of $0a endof
-        'm' of $0d s\"append $0a endof
-        'n' of $0a endof
-        'q' of $22 endof
-        'r' of $0d endof
-        't' of $09 endof
-        'v' of $0b endof
-        'z' of $00 endof
-        '\' of $5c endof
-        '"' of $22 endof
-        ( default ) third char- c@ s\"append
-        endcase
+        over 0<>
+        if
+          drop /char
+          case
+          'x' of
+            dup 2 u< while
+            foo
+          endof
+          'a' of $07 endof
+          'b' of $08 endof
+          'e' of $1b endof
+          'f' of $0c endof
+          'l' of $0a endof
+          'm' of $0d s\"append $0a endof
+          'n' of $0a endof
+          'q' of $22 endof
+          'r' of $0d endof
+          't' of $09 endof
+          'v' of $0b endof
+          'z' of $00 endof
+          '\' of $5c endof
+          '"' of $22 endof
+          ( default ) third char- c@ s\"append
+          endcase
+        then
       then
-    then
-    s\"append
-  repeat then then
-;|
-  [ s\" ] postpone sliteral
+      s\"append
+    repeat then then
+  compilation
+    [ s\" ] postpone sliteral  \ not findable yet?
 ; immediate
 
 \ Interpretation: Undefined
@@ -2500,7 +2516,8 @@ variable state  ( -- a-addr )  false state !
 
 
 : c"  ( Com: 'ccc<quote>' -- ) ( Run: -- c-addr )
-  '"' word ; immediate compile-only
+  '"' word
+; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2514,7 +2531,8 @@ variable state  ( -- a-addr )  false state !
 
 : compile,  ( Com: -- ) ( Exe: xt -- )
   postpone drop
-  postpone , ; immediate compile-only
+  postpone ,
+; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2523,7 +2541,8 @@ variable state  ( -- a-addr )  false state !
 
 
 : [compile]  ( Com: '<spaces>name' -- )
-  ' if drop , else ( error-code ) then ; immediate compile-only
+  ' if drop , else ( error-code ) then
+; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2653,7 +2672,8 @@ $____ value s\"ptr  ( -- c-addr )
 
 : ;  ( Com: flag -- ) ( Run: R:a-addr -- R: )
   postpone exit
-  if findable then [ ; immediate compile-only
+  if findable then [
+; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2719,7 +2739,8 @@ $____ value s\"ptr  ( -- c-addr )
          ( Run: R:nest-sys1 -- R: )
          ( Ini: i*x R: -- i*x a-addr R:nest-sys2 )
          ( Exe: i*x -- j*x )
-  here defaddr ! postpone rdrop ; immediate compile-only
+  here defaddr ! postpone rdrop
+; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2802,22 +2823,23 @@ $____ value s\"ptr  ( -- c-addr )
 \ TO name Runtime: Write x to the data field of name.
 
 
-|: to  ( Int: '<spaces>name' i*x -- )
-       ( Com: '<spaces>name' -- )
-  ' dup value-flag and if cell+ ! then
-  2value-flag and if cell+ swap 2! then
-;|
-  ' dup value-flag and
-  if
-    postpone cell+
-    postpone !
-  then
-  2value-flag and
-  if
-    postpone cell+
-    postpone swap
-    postpone 2!
-  then
+: to  ( Int: '<spaces>name' i*x -- )
+      ( Com: '<spaces>name' -- )
+  interpretation
+    ' dup value-flag and if cell+ ! then
+    2value-flag and if cell+ swap 2! then
+  compilation
+    ' dup value-flag and
+    if
+      postpone cell+
+      postpone !
+    then
+    2value-flag and
+    if
+      postpone cell+
+      postpone swap
+      postpone 2!
+    then
 ; immediate
 
 \ Interpretation: Skip leading spaces and parse name delimited
@@ -2871,15 +2893,6 @@ $____ value s\"ptr  ( -- c-addr )
 \ Helper Definition Words
 
 
-: compile-only  ( -- )
-  deflink cell+ dup @ compile-only-flag or swap ! ;
-
-\ Make the most recent definition a compile-only word, which is
-\ a word that will cause the outer interpreter to abort and dis-
-\ play an error message if an attempt is made to execute the
-\ word in interpretation state.
-
-
 : define  ( '<spaces>name<space>' x -- )
   parse-name
   here to deflink
@@ -2889,6 +2902,20 @@ $____ value s\"ptr  ( -- c-addr )
 \ Skip leading spaces and parse name delimited by a space. Com-
 \ pile a dictionary header for a new dictionary definition using
 \ the cell x as the flags and the parsed name as the name.
+
+
+: opcode  ( '<spaces>name<space>' x -- )  0 define , ;
+
+\ Definition something something
+
+
+: compile-only  ( -- )
+  deflink cell+ dup @ compile-only-flag or swap ! ;
+
+\ Make the most recent definition a compile-only word, which is
+\ a word that will cause the outer interpreter to abort and dis-
+\ play an error message if an attempt is made to execute the
+\ word in interpretation state.
 
 
 : findable  ( -- )  deflink to dlink ;
@@ -2912,9 +2939,9 @@ $____ value s\"ptr  ( -- c-addr )
 
 0 value defaddr  ( -- a-addr )
 
-\ If the current definition is being defined by :, |:, or
-\ :NONAME, a-addr is the starting address of the code within
-\ the definition so it RECURSE can compile a branch to it.
+\ If the current definition is being defined by : or :NONAME,
+\ a-addr is the starting address of the code within the defini-
+\ tion so it RECURSE can compile a branch to it.
 
 \ If the current definition is being defined by CREATE, a-addr
 \ is the address of the EXIT so DOES> can overwrite it.
@@ -2979,7 +3006,8 @@ $____ constant 2value-flag  ( -- x )
 
 : if  ( Com: -- orig ) ( Run: x -- )
   postpone ?branch
-  here 0 , ; immediate compile-only
+  here 0 ,
+; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -2993,7 +3021,8 @@ $____ constant 2value-flag  ( -- x )
 
 
 : then  ( Com: orig -- ) ( Run: -- )
-  here swap ! ; immediate compile-only
+  here swap !
+; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -3007,7 +3036,8 @@ $____ constant 2value-flag  ( -- x )
 : else  ( Com: orig1 -- orig2 ) ( Run: -- )
   postpone then
   postpone branch
-  here 0 , ; immediate compile-only
+  here 0 ,
+; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -3022,7 +3052,8 @@ $____ constant 2value-flag  ( -- x )
 
 
 : begin  ( Com: -- dest ) ( Run: -- )
-  here ; immediate compile-only
+  here
+; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -3034,7 +3065,8 @@ $____ constant 2value-flag  ( -- x )
 
 : until  ( Com: dest -- ) ( Run: x -- )
   postpone ?branch
-  , ; immediate compile-only
+  ,
+; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -3047,7 +3079,8 @@ $____ constant 2value-flag  ( -- x )
 
 : while  ( Com: dest -- orig dest ) ( Run: x -- )
   postpone if
-  swap ; immediate compile-only
+  swap
+; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -3062,7 +3095,8 @@ $____ constant 2value-flag  ( -- x )
 
 : repeat  ( Com: orig dest -- ) ( Run: -- )
   postpone again
-  postpone then ; immediate compile-only
+  postpone then
+; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -3077,7 +3111,8 @@ $____ constant 2value-flag  ( -- x )
 : do  ( Com: -- false a-addr )
       ( Run: n1|u1 n2|u2 R: -- R:n1|u1 R:n2|u2 )
   0 postpone 2>r
-  here ; immediate compile-only
+  here
+; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -3102,7 +3137,8 @@ $____ constant 2value-flag  ( -- x )
   postpone r>1+
   postpone ?loop
   , dup if here swap ! else drop then
-  resolve-leave ; immediate compile-only
+  resolve-leave
+; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -3131,7 +3167,8 @@ $____ constant 2value-flag  ( -- x )
   postpone 0=
   postpone ?branch
   , dup if here swap ! else drop then
-  resolve-leave ; immediate compile-only
+  resolve-leave
+; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -3176,7 +3213,8 @@ $____ opcode j  ( Com: -- )  ( Exe: R:n1|u1 R:n2|u2 R:n3|u3 --
 : leave  ( Com: -- ) ( Exe: R:n1|u1 R:n2|u2 -- R: )
   postpone unloop
   postpone branch
-  here leave-link , to leave-link ; immediate compile-only
+  here leave-link , to leave-link
+; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -3188,7 +3226,8 @@ $____ opcode j  ( Com: -- )  ( Exe: R:n1|u1 R:n2|u2 R:n3|u3 --
 
 
 : unloop  ( Com: -- ) ( Exe: R:n1|u1 R:n2|u2 -- R: )
-  rdrop rdrop ; immediate compile-only
+  rdrop rdrop
+; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -3228,7 +3267,8 @@ $____ opcode exit  ( Com: -- ) ( Exe: R:a-addr -- R: )
 
 : again  ( Com: dest -- ) ( Run: -- )
   postpone branch
-  , ; immediate compile-only
+  ,
+; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -3246,7 +3286,8 @@ $____ opcode exit  ( Com: -- ) ( Exe: R:a-addr -- R: )
   postpone =
   postpone if
   postpone 2>r
-  here ; immediate compile-only
+  here
+; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -3271,7 +3312,8 @@ $____ opcode exit  ( Com: -- ) ( Exe: R:a-addr -- R: )
 
 
 : case  ( Com: -- case-sys ) ( Run: -- )
-  0 ; immediate compile-only
+  0
+; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -3285,7 +3327,8 @@ $____ opcode exit  ( Com: -- ) ( Exe: R:a-addr -- R: )
   postpone over
   postpone =
   postpone ?branch
-  here 0 , postpone drop ; immediate compile-only
+  here 0 , postpone drop
+; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -3302,7 +3345,8 @@ $____ opcode exit  ( Com: -- ) ( Exe: R:a-addr -- R: )
 
 : endof  ( Com: case-sys1 of-sys -- case-sys2 ) ( Run: -- )
   postpone branch
-  here rot , here rot ! ; immediate compile-only
+  here rot , here rot !
+; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -3384,7 +3428,8 @@ $____ opcode ?loop  ( Com: -- )
     dup while
     2dup ! @
   repeat
-  nip to leave-link ; immediate compile-only
+  nip to leave-link
+; immediate compile-only
 
 \ As part of the compilation of a counted loop, resolve all oc-
 \ currences of LEAVE by writing the dictionary pointer to the
@@ -3432,7 +3477,8 @@ $____ opcode ?loop  ( Com: -- )
   postpone sliteral
   postpone type
   -2 literal postpone throw
-  postpone then ; immediate compile-only
+  postpone then
+; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -3625,23 +3671,25 @@ synonym d>s drop  ( d -- n )
 \ integer.
 
 
-|: d0=  ( Int: xd -- flag )
-        ( Com: -- ) ( Run: xd -- flag )
-  or 0=
-;|
-  postpone or
-  postpone 0=
+: d0=  ( Int: xd -- flag )
+       ( Com: -- ) ( Run: xd -- flag )
+  interpretation
+    or 0=
+  compilation
+    postpone or
+    postpone 0=
 ; immediate
 
 \ If xd is equal to zero, flag is true. Otherwise flag is false.
 
 
-|: d0<  ( Int: d -- flag )
-        ( Com: -- ) ( Run: d -- flag )
-  0< nip
-;|
-  postpone 0<
-  postpone nip
+: d0<  ( Int: d -- flag )
+       ( Com: -- ) ( Run: d -- flag )
+  interpretation
+    0< nip
+  compilation
+    postpone 0<
+    postpone nip
 ; immediate
 
 \ If d is less than zero, flag is true. Otherwise flag is false.
@@ -3713,7 +3761,8 @@ synonym d>s drop  ( d -- n )
 
 
 : 2literal  ( Com: x1 x2 -- ) ( -- x1 x2 )
-  swap literal literal ; immediate compile-only
+  swap literal literal
+; immediate compile-only
 
 \ Interpretation: Undefined
 
@@ -3848,11 +3897,12 @@ $____ opcode m-  ( d1|ud1 n -- d2|ud2 )
 
 
 : sliteral  ( Com: c-addr1 u -- ) ( Run: -- c-addr2 u )
-  postpone branch                    ( c-addr1 u )
-  here 2dup cell+ literal literal    ( c-addr1 u a-addr1 )
-  >r dup >r 0 , string,              ( R:a-addr R:u )
-  r> r@ + 5 cells +                  ( a-addr2 R:a-addr1 )
-  r> ! ; immediate compile-only
+  postpone branch                  ( c-addr1 u )
+  here 2dup cell+ literal literal  ( c-addr1 u a-addr1 )
+  >r dup >r 0 , string,            ( R:a-addr R:u )
+  r> r@ + 5 cells +                ( a-addr2 R:a-addr1 )
+  r> !
+; immediate compile-only
 
 \ Interpretation: Undefined
 
