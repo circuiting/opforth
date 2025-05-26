@@ -683,10 +683,9 @@ $____ opcode tuck  ( x1 x2 -- x2 x1 x2 )
 
 
 : roll  ( xu xu-1...x0 u -- xu-1...x0 xu )
-  dup
-  if
-    swap >r 1- recurse r> swap exit
-  then drop ;
+  dup if
+  swap >r 1- recurse r> swap exit then
+  drop ;
 
 \ Remove u and rotate the top u+1 stack items to bring xu to the
 \ top.
