@@ -901,8 +901,8 @@ $____ opcode s>d  ( n -- d )
 : sm/rem  ( d n1 -- n2 n3 )
   dup 0< >r abs dup >r
   non-restoring
-  over r@ + 0=
-  if 1- swap r@ + swap then
+  over r@ + 0= if
+  1- swap r@ + swap then
   rdrop r> if negate then ;
 
 \ Divide d by n1. n2 is the remainder and n3 is the quotient. If
@@ -916,8 +916,8 @@ $____ opcode s>d  ( n -- d )
 : fm/mod  ( d n1 -- n2 n3 )
   2dup >r >r
   sm/rem
-  over 0<> r> 0< r@ 0< xor and
-  if 1- swap r@ + swap then
+  over 0<> r> 0< r@ 0< xor and if
+  1- swap r@ + swap then
   rdrop ;
 
 \ Divide d by n1. n2 is the remainder and n3 is the quotient. If
@@ -2174,8 +2174,8 @@ $____ opcode execute  ( i*x xt -- j*x )
 
 
 : defer@  ( xt1 -- xt2 )
-  defer-flag ( test if xt1 has been set ) or and
-  if cell+ @ else ( error-code ) throw then ;
+  defer-flag ( test if xt1 has been set ) or and if
+  cell+ @ else ( error-code ) throw then ;
 
 \ xt2 is the execution token xt1 is set to execute.
 
@@ -2185,8 +2185,8 @@ $____ opcode execute  ( i*x xt -- j*x )
 
 
 : defer!  ( xt1 xt2 -- )
-  defer-flag and
-  if swap cell+ ! else ( error-code ) throw then ;
+  defer-flag and if
+  swap cell+ ! else ( error-code ) throw then ;
 
 \ Set the word xt1 to execute xt2.
 
@@ -2196,11 +2196,11 @@ $____ opcode execute  ( i*x xt -- j*x )
 : is  ( Int: '<spaces>name' xt -- )
       ( Com: '<spaces>name' -- ) ( Run: xt -- )
   interpretation
-    defer-flag and
-    if ' cell+ ! else ( error-code ) throw then
+    defer-flag and if
+    ' cell+ ! else ( error-code ) throw then
   compilation
-    defer-flag and
-    if ' cell+ literal postpone ! else ( error-code ) throw then
+    defer-flag and if
+    ' cell+ literal postpone ! else ( error-code ) throw then
 ; immediate
 
 \ Interpretation: Skip leading spaces and parse name delimited
@@ -2220,11 +2220,11 @@ $____ opcode execute  ( i*x xt -- j*x )
 : action-of  ( Int: '<spaces>name' -- xt )
              ( Com: '<spaces>name' -- ) ( Run: -- xt )
   interpretation
-    defer-flag ( test if xt has been set ) or and
-    if ' cell+ @ else ( error-code ) throw then
+    defer-flag ( test if xt has been set ) or and if
+    ' cell+ @ else ( error-code ) throw then
   compilation
-    defer-flag ( test if xt has been set ) or and
-    if ' cell+ literal postpone @ else ( error-code ) throw then
+    defer-flag ( test if xt has been set ) or and if
+    ' cell+ literal postpone @ else ( error-code ) throw then
 ; immediate
 
 \ Interpretation: Skip leading spaces and parse name delimited
@@ -2357,8 +2357,8 @@ variable state  ( -- a-addr )  false state !
 
 
 : postpone  ( Com: '<spaces>name' -- )
-  state @ ] ['] ' execute
-  if drop , state ! else ( error-code ) throw then ;
+  state @ ] ['] ' execute if
+  drop , state ! else ( error-code ) throw then ;
 
 \ Skip leading spaces and parse name delimited by a space. Find
 \ name in the dictionary. Compile the compilation semantics of
@@ -2618,10 +2618,8 @@ $____ value s\"ptr  ( -- c-addr )
 : \x  ( c-addr1 u1 -- c-addr2 u2 | c-addr2 u2 char )
   /char dup hex?
   if
-    drop over c@ dup hex?
-    if
-      drop over 0 swap 0 swap 2 >number 2drop drop
-    then
+    drop over c@ dup hex? if
+    drop over 0 swap 0 swap 2 >number 2drop drop then
   else
     s\"append /char
   then ;
@@ -2670,8 +2668,8 @@ $____ value s\"ptr  ( -- c-addr )
 
 
 : ;  ( Com: flag -- ) ( Run: R:a-addr -- R: )
-  postpone exit
-  if findable then [
+  postpone exit if
+  findable then [
 ; immediate compile-only
 
 \ Interpretation: Undefined
