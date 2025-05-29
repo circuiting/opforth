@@ -2903,7 +2903,9 @@ $____ value s\"ptr  ( -- c-addr )
 
 : opcode  ( '<spaces>name<space>' x -- )  0 define , ;
 
-\ Definition something something
+\ Skip leading spaces and parse name delimited by a space. Cre-
+\ ate a dictionary definition for built-in machine language in-
+\ struction.
 
 
 : compile-only  ( -- )
@@ -3522,7 +3524,9 @@ $____ opcode ?loop  ( Com: -- )
     then
   repeat ;
 
-\ Description something something
+\ Perform the semantics of the Forth outer interpreter by pars-
+\ ing the words in the input stream from left to right and
+\ ( something )
 
 
 
