@@ -560,6 +560,12 @@
 \ key?     -- flag
 
 
+\ Block
+
+\ blk      -- a-addr
+\ block    u -- a-addr
+
+
 
 \ Core Stack Words
 
@@ -4126,3 +4132,48 @@ $____ opcode m-  ( d1|ud1 n -- d2|ud2 )
 \ After KEY? returns with a value of true, subsequent executions
 \ of KEY? prior to the execution of KEY or EKEY also return true
 \ without discarding keyboard events.
+
+
+
+\ Block Words
+
+
+variable blk  ( -- a-addr )  0 blk !
+
+\ Standard Forth description (to be revised):
+
+\ a-addr is the address of a cell containing zero or the number
+\ of the mass-storage block being interpreted. If BLK contains
+\ zero, the input source is not a block and can be identified by
+\ SOURCE-ID.
+
+\ An ambiguous condition exists if a program directly alters the
+\ contents of BLK.
+
+
+: block  ( u -- a-addr )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ a-addr is the address of the first character of the block as-
+\ signed to mass storage block u.
+
+\ If block u is already in a block buffer, a-addr is the address
+\ of that block buffer.
+
+\ If block u is not already in memory and there is an unassigned
+\ block buffer, transfer block u from mass storage to an unas-
+\ signed block buffer. a-addr is the address of that block buf-
+\ fer.
+
+\ If block u is not already in memory and there are no unassign-
+\ ed block buffers, unassign a block buffer. If the block in
+\ that buffer has been UPDATEd, transfer the block to mass stor-
+\ age and transfer block u from mass storage into that buffer.
+\ a-addr is the address of that block buffer.
+
+\ At the conclusion of the operation, the block buffer pointed
+\ to by a-addr is the current block buffer and is assigned to u.
+
+\ An ambiguous condition exists if u is not an available block
+\ number.
