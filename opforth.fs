@@ -562,8 +562,13 @@
 
 \ Block
 
-\ blk      -- a-addr
-\ block    u -- a-addr
+\ blk             -- a-addr
+\ block           u -- a-addr
+\ buffer          u -- a-addr
+\ flush           --
+\ load            i*x u -- j*x
+\ save-buffers    --
+\ update          --
 
 
 
@@ -3503,11 +3508,11 @@ $____ opcode ?loop  ( Com: -- )
   restore-input ;
 
 \ Save the current input source specification, store -1 in
-\ SOURCE-ID, make the string with address c-addr and length u
-\ both the input source and the input buffer, set >IN to zero,
-\ and interpret. When the parse area is empty, restore the prior
-\ input source specification. Other stack effects are due to the
-\ words EVALUATEd.
+\ SOURCE-ID, store zero in BLK, make the string with address
+\ c-addr and length u both the input source and the input buf-
+\ fer, set >IN to zero, and interpret. When the parse area is
+\ empty, restore the prior input source specification. Other
+\ stack effects are due to the words EVALUATEd.
 
 
 
@@ -4177,3 +4182,71 @@ variable blk  ( -- a-addr )  0 blk !
 
 \ An ambiguous condition exists if u is not an available block
 \ number.
+
+
+: buffer  ( u -- a-addr )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ a-addr is the address of the first character of the block buf-
+\ fer assigned to block u. The contents of the block are unspec-
+\ ified.
+
+\ If block u is already in a block buffer, a-addr is the address
+\ of that block buffer.
+
+\ If block u is not already in memory and there is an unassigned
+\ block buffer, a-addr is the address of that block buffer.
+
+\ If block u is not already in memory and there are no unassign-
+\ ed block buffers, unassign a block buffer. If the block in
+\ that buffer has been UPDATEd, transfer the block to mass stor-
+\ age. a-addr is the address of that block buffer.
+
+\ At the conclusion of the operation, the block buffer pointed
+\ to by a-addr is the current block buffer and is assigned to u.
+
+\ An ambiguous condition exists if u is not an available block
+\ number.
+
+
+: flush  ( -- )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Perform the function of SAVE-BUFFERS, then unassign all block
+\ buffers.
+
+
+: load  ( i*x u -- j*x )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Save the current input source specification. Store u in BLK
+\ (thus making block u the input source and setting the input
+\ buffer to encompass its contents), set >IN to zero, and inter-
+\ pret. When the parse area is exhausted, restore the prior in-
+\ put source specification. Other stack effects are due to the
+\ words LOADed.
+
+\ An ambiguous condition exists if u is zero or is not a valid
+\ block number.
+
+
+: save-buffers  ( -- )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Transfer the contents of each UPDATEd block buffer to mass
+\ storage. Mark all buffers as unmodified.
+
+
+: update  ( -- ) something ;
+
+\ Standard Forth description (to be revised):
+
+\ Mark the current block buffer as modified. UPDATE does not im-
+\ mediately cause I/O.
+
+\ An ambiguous condition exists if there is no current block
+\ buffer.
