@@ -270,7 +270,7 @@
 
 \ Core-Ext Text Input
 
-\ \                'ccc<eol>' --  Run: --
+\ \                Com,Exe: 'ccc<eol>' --
 \ parse            'ccc<char>' char -- c-addr u
 \ parse-name       '<spaces>name<space>' -- c-addr u
 \ source-id        -- 0 | -1
@@ -569,6 +569,14 @@
 \ load            i*x u -- j*x
 \ save-buffers    --
 \ update          --
+
+
+\ Block-Ext
+
+\ empty-buffers    --
+\ list             --
+\ scr              -- a-addr
+\ thru             i*x u1 u2 -- j*x
 
 
 
@@ -1882,11 +1890,16 @@ variable >in  ( -- a-addr )  0 >in !
 \ Core-Ext Text Input Words
 
 
-: \  ( 'ccc<eol>' -- ) ( Run: -- )  0 to #textinbuf ;
+: \  ( Com,Exe: 'ccc<eol>' -- )  0 to #textinbuf ; immediate
 
-\ Parse the remainder of the parse area. This causes the outer
-\ interpreter to skip past all the text from the backslash to
-\ the end of the line.
+\ Standard Forth description (to be revised):
+
+\ Compilation: Perform the execution semantics below.
+
+\ Execution: If BLK contains zero, parse and discard the remain-
+\ der of the parse area; otherwise parse and discard the portion
+\ of the parse area corresponding to the remainder of the cur-
+\ rent line. \ is an immediate word. 
 
 
 : parse  ( 'ccc<char>' char -- c-addr u )
@@ -1958,6 +1971,11 @@ variable >in  ( -- a-addr )  0 >in !
 
 \ When the input source is a string via EVALUATE, flag is false
 \ and no other action is performed.
+
+\ When the input source is a block, make the next block the in-
+\ put source and current input buffer by adding one to the value
+\ of BLK and setting >IN to zero. If the new value of BLK is a
+\ valid block number, flag is true. Otherwise flag is false.
 
 
 
@@ -4241,7 +4259,7 @@ variable blk  ( -- a-addr )  0 blk !
 \ storage. Mark all buffers as unmodified.
 
 
-: update  ( -- ) something ;
+: update  ( -- )  something ;
 
 \ Standard Forth description (to be revised):
 
@@ -4250,3 +4268,39 @@ variable blk  ( -- a-addr )  0 blk !
 
 \ An ambiguous condition exists if there is no current block
 \ buffer.
+
+
+
+\ Block-Ext Words
+
+
+: empty-buffers  ( -- )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Unassign all block buffers. Do not transfer the contents of
+\ any UPDATEd block buffer to mass storage.
+
+
+: list  ( -- )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Display block u in an implementation-defined format. Store u
+\ in SCR.
+
+
+variable scr  ( -- )  0 scr !
+
+\ Standard Forth description (to be revised):
+
+\ a-addr is the address of a cell containing the block number of
+\ the block most recently LISTed.
+
+
+: thru  ( i*x u1 u2 -- j*x )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ LOAD the mass storage blocks numbered u1 through u2 in se-
+\ quence. Other stack effects are due to the words LOADed.
