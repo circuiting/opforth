@@ -1246,14 +1246,14 @@ $____ opcode u2/  ( x1 -- x2 )
 \ Core Address Math Words
 
 
-: cells  ( n1 -- n2 )  ; immediate
+synonym cells 2*  ( n1 -- n2 )
 
 \ n2 is the size in address units of n1 cells.
 
-\ In Opforth, the size of a cell is one address unit, and there
+\ In Opforth, the size of a cell is two address units, and there
 \ is no distinction between address units and characters. CELLS
-\ is used for compatibility with Forth systems that have a cell
-\ size of greater than one address unit.
+\ is used for compatibility with Forth systems that have differ-
+\ ent cell sizes.
 
 
 : chars  ( n1 -- n2 )  ; immediate
@@ -1266,15 +1266,15 @@ $____ opcode u2/  ( x1 -- x2 )
 \ unit.
 
 
-synonym cell+ 1+  ( a-addr1 -- a-addr2 )
+synonym cell+ 2+  ( a-addr1 -- a-addr2 )
 
 \ Add the size of one cell in address units to the top stack
 \ item.
 
-\ In Opforth, characters and cells are the same size, and there
+\ In Opforth, the size of a cell is two address units, and there
 \ is no distinction between address units and characters. CELL+
-\ is used for compatibility with Forth systems that have a cell
-\ size of greater than one address unit.
+\ is used for compatibility with Forth systems that have differ-
+\ ent cell sizes.
 
 
 synonym char+ 1+  ( c-addr1 -- c-addr2 )
@@ -1287,7 +1287,7 @@ synonym char+ 1+  ( c-addr1 -- c-addr2 )
 \ that have a character size of greater than one address unit.
 
 
-: aligned  ( addr -- a-addr )  ; immediate
+: aligned  ( addr -- a-addr )  dup odd if 1+ then ;
 
 \ a-addr is the first aligned address greater than or equal to
 \ addr.
@@ -1309,23 +1309,23 @@ synonym char+ 1+  ( c-addr1 -- c-addr2 )
 \ Helper Address Math Words
 
 
-synonym cell 1  ( -- n )
+synonym cell 2  ( -- n )
 
 \ n is the size of a cell in address units.
 
-\ In Opforth, the size of a cell is one address unit, and there
+\ In Opforth, the size of a cell is two address units, and there
 \ is no distinction between address units and characters.
 
 
-synonym cell- 1-  ( a-addr1 -- a-addr2 )
+synonym cell- 2-  ( a-addr1 -- a-addr2 )
 
 \ Subtract the size of one cell in address units from the top
 \ stack item.
 
-\ In Opforth, characters and cells are the same size, and there
+\ In Opforth, the size of a cell is two address units, and there
 \ is no distinction between address units and characters. CELL+
-\ is used for compatibility with Forth systems that have a cell
-\ size of greater than one address unit.
+\ is used for compatibility with Forth systems that have differ-
+\ ent cell sizes.
 
 
 
@@ -1351,19 +1351,15 @@ $____ opcode @  ( a-addr -- x )
 \ removed.
 
 
-synonym c@ @  ( c-addr -- char )
+$____ opcode c@  ( c-addr -- char )
 
 \ Read the character located at memory address c-addr and put
 \ the character on the stack in place of c-addr.
 
-\ In Opforth, characters and cells are the same size.
 
-
-synonym c! !  ( char c-addr -- )
+$____ opcode c!  ( char c-addr -- )
 
 \ Write char to memory address c-addr.
-
-\ In Opforth, characters and cells are the same size.
 
 
 : 2@  ( a-addr -- x1 x2 )  dup cell+ @ swap @ ;
@@ -1465,12 +1461,10 @@ $____ opcode !-  ( x a-addr1 -- a-addr2 )
 \ and put the result on top of the stack.
 
 
-synonym c@+ @+  ( c-addr1 -- c-addr2 char )
+$____ opcode c@+  ( c-addr1 -- c-addr2 char )
 
 \ Read the character located at a-addr1, add one to a-addr1, and
 \ put the character on top of the stack.
-
-\ In Opforth, characters and cells are the same size.
 
 
 synonym c!+ !+  ( char c-addr1 -- c-addr2 )
@@ -1478,15 +1472,11 @@ synonym c!+ !+  ( char c-addr1 -- c-addr2 )
 \ Write char to memory address c-addr1. Add one to c-addr1 and
 \ put the result on top of the stack.
 
-\ In Opforth, characters and cells are the same size.
 
-
-synonym c@- @-  ( c-addr1 -- c-addr2 char )
+$____ opcode c@-  ( c-addr1 -- c-addr2 char )
 
 \ Read the character located at c-addr1, subtract one from
 \ c-addr1, and put the character on top of the stack.
-
-\ In Opforth, characters and cells are the same size.
 
 
 synonym c!- !-  ( char c-addr1 -- c-addr2 )
