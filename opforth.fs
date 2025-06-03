@@ -1484,8 +1484,6 @@ synonym c!- !-  ( char c-addr1 -- c-addr2 )
 \ Write char to memory addres c-addr1. Subtract one from
 \ c-addr1 and put the result on top of the stack.
 
-\ In Opforth, characters and cells are the same size.
-
 
 
 \ Core Text Display Words
@@ -2074,7 +2072,7 @@ $____ constant keydev  ( -- a-addr )
   [ s" /COUNTED-STRING" ] compare of $fffe endof
   [ s" /HOLD " ] compare of $0100 endof
   [ s" /PAD " ] compare of $0100 endof
-  [ s" ADDRESS-UNIT-BITS" ] compare of #16 endof
+  [ s" ADDRESS-UNIT-BITS" ] compare of 8 endof
   [ s" FLOORED" ] compare of false endof
   [ s" MAX-CHAR" ] compare of $7e endof
   [ s" MAX-D" ] compare of $efffffff. endof
@@ -2306,7 +2304,7 @@ $____ opcode execute  ( i*x xt -- j*x )
 \ addr is the dictionary pointer.
 
 
-: ,  ( x -- )  1 cells allot here ! ;
+: ,  ( x -- )  cell allot here ! ;
 
 \ Reserve one cell of dictionary space and store x in the cell.
 \ If the dictionary pointer is aligned when , begins execution,
@@ -2320,20 +2318,16 @@ $____ opcode execute  ( i*x xt -- j*x )
 \ aligned prior to the execution of ,.
 
 
-synonym c, ,  ( char -- )
+: c,  ( char -- )  1 chars allot here c! ;
 
 \ Reserve space for one character in the dictionary and store
 \ char in the space. If the dictionary pointer is character-
 \ aligned when C, begins execution, it will remain character-
 \ aligned when C, finishes execution.
 
-\ In Opforth, characters and cells are the same size and all ad-
-\ dresses are character-aligned. This implementation of C, is
-\ compatible with Forth systems that may have non-character-
-\ aligned addresses.
-
-\ An ambiguous condition exists if the dictionary pointer is not
-\ character-aligned prior to the execution of C,.
+\ In Opforth, the size of a cell is two characters, there is no
+\ distinction between address units and characters, and all ad-
+\ dresses are character-aligned.
 
 
 : allot  ( n -- )  dp @ tuck + dp ! ;
@@ -2346,14 +2340,13 @@ synonym c, ,  ( char -- )
 \ will remain aligned when ALLOT finishes execution.
 
 
-: align  ( -- )  ; immediate
+: align  ( -- )  here odd 1 and + ;
 
 \ If the dictionary pointer is not aligned, reserve enough space
 \ to align it.
 
-\ In Opforth, all addresses are aligned addresses. ALIGN is used
-\ for compatibility with Forth systems that may have non-aligned
-\ addresses.
+\ In Opforth, the size of a cell is two characters, and there is
+\ no distinction between characters and address units.
 
 
 : [  ( -- )  false state ! ; immediate
@@ -2593,9 +2586,7 @@ $____ opcode lit  ( -- x )
 \ pointer is aligned when 2, begins execution, it will remain
 \ aligned when 2, finishes execution.
 
-\ In Opforth, all addresses are aligned addresses. This imple-
-\ mentation of 2, is compatible with Forth systems that may have
-\ non-aligned addresses.
+\ In Opforth, the size of a cell is two characters.
 
 \ An ambiguous condition exists if the dictionary pointer is not
 \ aligned prior to the execution of 2,.
