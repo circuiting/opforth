@@ -579,6 +579,15 @@
 \ thru             i*x u1 u2 -- j*x
 
 
+\ Tools
+
+\ .s      --
+\ ?       a-addr --
+\ dump    addr u --
+\ see     '<spaces>name' --
+\ words   --
+
+
 
 \ Core Stack Words
 
@@ -4243,3 +4252,60 @@ variable scr  ( -- )  0 scr !
 
 \ LOAD the mass storage blocks numbered u1 through u2 in se-
 \ quence. Other stack effects are due to the words LOADed.
+
+
+
+\ Tools Words
+
+
+: .s  ( -- )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Copy and display the values currently on the data stack.
+
+\ If .S is implemented using pictured numeric output words, its
+\ use may corrupt the transient region identified by #>.
+
+
+: ?  ( a-addr -- )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Display the value stored at a-addr.
+
+\ If ? is implemented using pictured numeric output words, its
+\ use may corrupt the transient region identified by #>.
+
+
+: dump  ( addr u -- )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Display the contents of u consecutive addresses starting at
+\ addr.
+
+\ If DUMP is implemented using pictured numeric output words,
+\ its use may corrupt the transient region identified by #>.
+
+
+: see  ( '<spaces>name' -- )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Display a human-readable representation of the named word's
+\ definition.
+
+\ If SEE is implemented using pictured numeric output words, its
+\ use may corrupt the transient region identified by #>.
+
+
+: words  ( -- )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ List the definition names in the first word list of the search
+\ order.
+
+\ If WORDS is implemented using pictured numeric output words,
+\ its use may corrupt the transient region identified by #>.
