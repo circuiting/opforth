@@ -588,6 +588,10 @@
 \ words   --
 
 
+\ Tools-Ext
+
+\ synonym    '<spaces>newname' '<spaces>oldname' --
+
 
 \ Core Stack Words
 
@@ -4309,3 +4313,28 @@ variable scr  ( -- )  0 scr !
 
 \ If WORDS is implemented using pictured numeric output words,
 \ its use may corrupt the transient region identified by #>.
+
+
+
+\ Tools-Ext Words
+
+
+: synonym  ( '<spaces>newname' -- '<spaces>oldname' -- )
+  something ;
+
+\ Standard Forth description (to be revised):
+
+\ For both strings skip leading space delimiters. Parse newname
+\ and oldname delimited by a space. Create a definition for
+\ newname with the semantics defined below. newname may be the
+\ same as oldname; when looking up oldname, newname shall not be
+\ found.
+
+\ An ambiguous condition exists if oldname cannot be found or
+\ IMMEDIATE is applied to newname.
+
+\ newname Interpretation: Perform the interpretation semantics
+\ of oldname.
+
+\ newname Compilation: Perform the compilation semantics of
+\ oldname.
