@@ -35,8 +35,7 @@
 \ over     x1 x2 -- x1 x2 x1
 \ rot      x1 x2 x3 -- x2 x3 x1
 \ ?dup     x -- x x | 0
-\ 2drop    Int: x1 x2 --
-\          Com: --  Run: x1 x2 --
+\ 2drop    x1 x2 --
 \ 2dup     Int: x1 x2 -- x1 x2 x1 x2
 \          Com: --  Run: x1 x2 -- x1 x2 x1 x2
 \ 2swap    x1 x2 x3 x4 -- x3 x4 x1 x2
@@ -97,6 +96,8 @@
 \ ud/mod           ud1 u1 -- ud2 u2
 \ r>+              n1|u1 R:n2|u2 -- n3|u3 R:
 \ r>1+             R:n1|u1 -- n2|u2 R:
+\ +c               n1|u2 n2|u2 -- n3|u3 0|1
+\ -c               n1|u2 n2|u2 -- n3|u3 0|-1
 
 
 \ Core Number Test
@@ -627,13 +628,7 @@ $____ opcode ?dup  ( x -- x x | 0 )
 \ Duplicate the top stack item if it is nonzero.
 
 
-: 2drop  ( Int: x1 x2 -- )
-         ( Com: -- ) ( Run: x1 x2 -- )
-  interpretation
-    drop drop
-  compilation
-    postpone drop
-    postpone drop ; immediate
+$____ opcode 2drop  ( x1 x2 -- )
 
 \ Remove the top two stack items.
 
@@ -1033,6 +1028,21 @@ $____ opcode r>1+  ( R:n1|u1 -- n2|u2 R: )
 
 \ Remove the top data stack item, add one to it, and put the re-
 \ sult on the data stack. The number may be signed or unsigned.
+
+
+$____ opcode +c  ( n1|u1 n2|u2 -- n3|u3 0|1 )
+
+\ Add the top two stack items. Replace the second stack item
+\ with the sum, and replace the top stack item with the carry.
+\ The numbers may be signed or unsigned.
+
+
+$____ opcode -c  ( n1|u1 n2|u2 -- n3|u3 0|-1 )
+
+\ Subtract the top stack item from the second stack item. Re-
+\ place the second stack item with the sum, and replace the top
+\ stack item with the carry. The numbers may be signed or un-
+\ signed.
 
 
 
