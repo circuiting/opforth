@@ -3613,7 +3613,7 @@ $____ constant errorbuf  ( -- c-addr )
 \ Double Words
 
 
-$____ opcode m+  ( d1|ud1 n -- d2|ud2 )
+: m+  ( d1|ud1 n -- d2|ud2 )  rot +c rot + ;
 
 \ Add a single-cell signed integer to a double-cell integer to
 \ produce a double-cell result. Either or both of the double-
@@ -3827,7 +3827,7 @@ synonym d>s drop  ( d -- n )
 \ Helper Double Words
 
 
-$____ opcode m-  ( d1|ud1 n -- d2|ud2 )
+: m-  ( d1|ud1 n -- d2|ud2 )  rot -c rot + ;
 
 \ Subtract single-cell signed integer from a double-cell integer
 \ to produce a double-cell result. Either or both of the double-
