@@ -58,14 +58,15 @@
 
 \ Helper Stack
 
-\ -rot     x1 x2 x3 -- x3 x1 x2
-\ third    x1 x2 x3 -- x1 x2 x3 x1
-\ sp0      -- +n
-\ rp0      -- +n
-\ sp@      -- +n
-\ rp@      -- +n
-\ sp!      i*x +n -- j*x
-\ rp!      +n R:i*x -- R:j*x
+\ swaprot    x1 x2 x3 -- x3 x2 x1
+\ -rot       x1 x2 x3 -- x3 x1 x2
+\ third      x1 x2 x3 -- x1 x2 x3 x1
+\ sp0        -- +n
+\ rp0        -- +n
+\ sp@        -- +n
+\ rp@        -- +n
+\ sp!        i*x +n -- j*x
+\ rp!        +n R:i*x -- R:j*x
 
 
 \ Core Arithmetic
@@ -756,7 +757,12 @@ $____ opcode tuck  ( x1 x2 -- x2 x1 x2 )
 \ Helper Stack Words
 
 
-$____ opcode -rot  ( x1 x2 x3 -- x3 x1 x2 )
+$____ opcode swaprot  ( x1 x2 x3 -- x3 x2 x1 )
+
+\ Exchange the top stack item and the third stack item.
+
+
+: -rot  ( x1 x2 x3 -- x3 x1 x2 )  rot swaprot ;
 
 \ Rotate the top three stack items to put the top item in the
 \ third position.
