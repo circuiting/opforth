@@ -58,7 +58,6 @@
 
 \ Helper Stack
 
-\ swaprot    x1 x2 x3 -- x3 x2 x1
 \ -rot       x1 x2 x3 -- x3 x1 x2
 \ third      x1 x2 x3 -- x1 x2 x3 x1
 \ sp0        -- +n
@@ -618,7 +617,14 @@ $____ opcode over  ( x1 x2 -- x1 x2 x1 )
 \ Put a copy of the second stack item on top of the stack.
 
 
-$____ opcode rot  ( x1 x2 x3 -- x2 x3 x1 )
+: rot  ( x1 x2 x3 -- x2 x3 x1 )
+  interpretation
+    >r swap r> swap
+  compilation
+    postpone >r
+    postpone swap
+    postpone r>
+    postpone swap ; immediate
 
 \ Rotate the top three stack items to bring the third item to
 \ the top.
@@ -693,7 +699,12 @@ $____ opcode nip  ( x1 x2 -- x2 )
 \ Remove the second stack item.
 
 
-$____ opcode tuck  ( x1 x2 -- x2 x1 x2 )
+: tuck  ( x1 x2 -- x2 x1 x2 )
+  interpretation
+    swap over
+  compilation
+    postpone swap
+    postpone over ; immediate
 
 \ Insert a copy of the top stack item under the second stack
 \ item.
@@ -757,12 +768,14 @@ $____ opcode tuck  ( x1 x2 -- x2 x1 x2 )
 \ Helper Stack Words
 
 
-$____ opcode swaprot  ( x1 x2 x3 -- x3 x2 x1 )
-
-\ Exchange the top stack item and the third stack item.
-
-
-: -rot  ( x1 x2 x3 -- x3 x1 x2 )  rot swaprot ;
+: -rot  ( x1 x2 x3 -- x3 x1 x2 )
+  interpretation
+    swap >r swap r>
+  compilation
+    postpone swap
+    postpone >r
+    postpone swap
+    postpone r> ; immediate
 
 \ Rotate the top three stack items to put the top item in the
 \ third position.
