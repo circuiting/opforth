@@ -58,14 +58,17 @@
 
 \ Helper Stack
 
-\ -rot       x1 x2 x3 -- x3 x1 x2
-\ third      x1 x2 x3 -- x1 x2 x3 x1
-\ sp0        -- +n
-\ rp0        -- +n
-\ sp@        -- +n
-\ rp@        -- +n
-\ sp!        i*x +n -- j*x
-\ rp!        +n R:i*x -- R:j*x
+\ -rot      x1 x2 x3 -- x3 x1 x2
+\ third     x1 x2 x3 -- x1 x2 x3 x1
+\ swap>r    x1 x2 R: -- x2 R:x1
+\ r>swap    x1 R:x2 -- x2 x1 R:
+\ rdrop     R:x -- R:
+\ sp0       -- +n
+\ rp0       -- +n
+\ sp@       -- +n
+\ rp@       -- +n
+\ sp!       i*x +n -- j*x
+\ rp!       +n R:i*x -- R:j*x
 
 
 \ Core Arithmetic
@@ -619,12 +622,11 @@ $____ opcode over  ( x1 x2 -- x1 x2 x1 )
 
 : rot  ( x1 x2 x3 -- x2 x3 x1 )
   interpretation
-    >r swap r> swap
+    >r swap r>swap
   compilation
     postpone >r
     postpone swap
-    postpone r>
-    postpone swap ; immediate
+    postpone r>swap ; immediate
 
 \ Rotate the top three stack items to bring the third item to
 \ the top.
@@ -699,12 +701,7 @@ $____ opcode nip  ( x1 x2 -- x2 )
 \ Remove the second stack item.
 
 
-: tuck  ( x1 x2 -- x2 x1 x2 )
-  interpretation
-    swap over
-  compilation
-    postpone swap
-    postpone over ; immediate
+$____ opcode tuck  ( x1 x2 -- x2 x1 x2 )
 
 \ Insert a copy of the top stack item under the second stack
 \ item.
@@ -770,10 +767,9 @@ $____ opcode nip  ( x1 x2 -- x2 )
 
 : -rot  ( x1 x2 x3 -- x3 x1 x2 )
   interpretation
-    swap >r swap r>
+    swap>r swap r>
   compilation
-    postpone swap
-    postpone >r
+    postpone swap>r
     postpone swap
     postpone r> ; immediate
 
@@ -784,6 +780,21 @@ $____ opcode nip  ( x1 x2 -- x2 )
 : third  ( x1 x2 x3 -- x1 x2 x3 x1 )  >r over r> swap ;
 
 \ Put a copy of the third stack item on top of the stack.
+
+
+$____ opcode swap>r  ( x1 x2 R: -- x2 R:x1 )
+
+\ Put the second data stack item on top of the return stack.
+
+
+$____ opcode r>swap  ( x1 R:x2 -- x2 x1 R: )
+
+\ Put the top return stack item under the top data stack item.
+
+
+$____ opcode rdrop  ( R:x -- R: )
+
+\ Remove the top return stack item.
 
 
 $____ value sp0  ( -- +n )
