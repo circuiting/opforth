@@ -97,8 +97,6 @@
 
 \ non-restoring    ud u1 -- n u2
 \ ud/mod           ud1 u1 -- ud2 u2
-\ r>+              n1|u1 R:n2|u2 -- n3|u3 R:
-\ r>1+             R:n1|u1 -- n2|u2 R:
 \ +c               n1|u2 n2|u2 -- n3|u3 0|1
 \ -c               n1|u2 n2|u2 -- n3|u3 0|-1
 
@@ -1044,20 +1042,6 @@ $____ opcode s>d  ( n -- d )
 
 \ Divide ud1 by u1. u2 is the remainder and ud2 is the quotient.
 \ All integers and arithmetic are unsigned.
-
-
-$____ opcode r>+  ( n1|u1 R:n2|u2 -- n3|u3 R: )
-  compile-only
-
-\ Remove the top return stack item and add it to the top data
-\ stack item. Any of the numbers may be signed or unsigned.
-
-
-$____ opcode r>1+  ( R:n1|u1 -- n2|u2 R: )
-  compile-only
-
-\ Remove the top data stack item, add one to it, and put the re-
-\ sult on the data stack. The number may be signed or unsigned.
 
 
 $____ opcode +c  ( n1|u1 n2|u2 -- n3|u3 0|1 )
@@ -3169,7 +3153,8 @@ $____ constant 2value-flag  ( -- x )
 
 : loop  ( Com: flag a-addr -- )
         ( Run: R:n1|u1 R:n2|u2 -- R:|n1|u1 R:|n3|u3 )
-  postpone r>1+
+  postpone r>
+  postpone 1+
   postpone ?loop
   , dup if here swap ! else drop then
   resolve-leave ; immediate compile-only
