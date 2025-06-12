@@ -1073,7 +1073,12 @@ $____ opcode 0<  ( n -- flag )
 \ If n is less than zero, flag is true. Otherwise flag is false.
 
 
-$____ opcode =  ( x1 x2 -- flag )
+: =  ( x1 x2 -- flag )
+  interpretation
+    - 0=
+  compilation
+    postpone -
+    postpone = ; immediate
 
 \ If x1 is bit-for-bit the same as x2, flag is true. Otherwise
 \ flag is false.
@@ -1102,7 +1107,12 @@ $____ opcode =  ( x1 x2 -- flag )
 \ false.
 
 
-$____ opcode u<  ( u1 u2 -- flag )
+: u<  ( u1 u2 -- flag )
+  interpretation
+    - 0<
+  compilation
+    postpone -
+    postpone 0< ; immediate
 
 \ If u1 is less than u2, flag is true. Otherwise flag is false.
 
