@@ -192,7 +192,6 @@
 
 \ Helper Memory
 
-\ tuck!    x a-addr -- a-addr
 \ @+       a-addr1 -- a-addr2 x
 \ !+       x a-addr1 -- a-addr2
 \ @-       a-addr1 -- a-addr2 x
@@ -1383,9 +1382,9 @@ $____ opcode @  ( a-addr -- x )
 : !  ( Int: x a-addr -- )
      ( Com: -- ) ( Run: x a-addr -- )
   interpretation
-    tuck! drop
+    !+ drop
   compilation
-    postpone tuck!
+    postpone !+
     postpone drop ; immediate
 
 \ Write x to memory address a-addr. The top two stack items are
@@ -1472,12 +1471,6 @@ $____ constant pad  ( -- c-addr )
 \ Helper Memory Words
 
 
-$____ opcode tuck!  ( x a-addr -- a-addr )
-
-\ Write x to memory address a-addr. x is removed from the stack,
-\ but a-addr remains.
-
-
 $____ opcode @+  ( a-addr1 -- a-addr2 x )
 
 \ Read the cell located at a-addr1, add one to a-addr1, and put
@@ -1560,7 +1553,7 @@ synonym c!- !-  ( char c-addr1 -- c-addr2 )
 
 
 : type  ( c-addr u -- )
-  dup 0>= and 0
+  dup 0> and 0
   ?do dup c@ emit char+ loop
   drop ;
 
