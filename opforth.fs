@@ -126,8 +126,6 @@
 
 \ 0<=    n -- flag
 \ 0>=    n -- flag
-\ u<=    u1 u2 -- flag
-\ u>=    u1 u2 -- flag
 \ odd    n|u -- flag
 
 
@@ -1086,7 +1084,7 @@ $____ opcode 0<  ( n -- flag )
 : <  ( n1 n2 -- flag )
   2dup 0<
   if
-    0< if u>= else false then
+    0< if swap u< else false then
   else
     0< if u< else true then
   then ;
@@ -1099,7 +1097,7 @@ $____ opcode 0<  ( n -- flag )
   if
     0< if u< else true then
   else
-    0< if u>= else false then
+    0< if swap u< else false then
   then ;
 
 \ If n1 is greater than n2, flag is true. Otherwise flag is
@@ -1168,7 +1166,7 @@ $____ opcode 0>  ( n -- flag )
 
 
 : within  ( n1 n2 n3 | u1 u2 u3 -- flag )
-  third u> >r u>= r> and ;
+  third u> >r swap u< r> and ;
 
 \ flag is true if either of the following is true:
 
@@ -1195,18 +1193,6 @@ $____ opcode 0<=  ( n -- flag )
 $____ opcode 0>=  ( n -- flag )
 
 \ If n is greater than or equal to zero, flag is true. Otherwise
-\ flag is false.
-
-
-$____ opcode u<=  ( u1 u2 -- flag )
-
-\ If u1 is less than or equal to u2, flag is true. Otherwise
-\ flag is false.
-
-
-$____ opcode u>=  ( u1 u2 -- flag )
-
-\ If u1 is greater than or equal to u2, flag is true. Otherwise
 \ flag is false.
 
 
