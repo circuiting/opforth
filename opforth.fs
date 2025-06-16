@@ -149,7 +149,9 @@
 
 \ Helper Bitwise Logic
 
-\ u2/    x1 -- x2
+\ u2/     x1 -- x2
+\ 2*<<    x1 x2 -- x1 x3
+\ >>2/    x1 x2 -- x1 x3
 
 
 \ Core Address Math
@@ -524,6 +526,7 @@
 \ Helper Double
 
 \ m-      d1|ud1 n -- d2|ud2
+\ ud2/    xd1 -- xd2
 \ ud.r    ud n --
 
 
@@ -1278,6 +1281,20 @@ $____ opcode u2/  ( x1 -- x2 )
 \ x2 is the result of shifting all bits of x1 to the right by
 \ one bit position. The vacated most significant bit becomes ze-
 \ ro.
+
+
+$____ opcode 2*<<  ( x1 x2 -- x1 x3 )
+
+\ x3 is the result of shifting all bits of x2 to the left by
+\ one bit position. The vacated least significant bit of x3 is
+\ filled with the value of the most significant bit of x1.
+
+
+$____ opcode >>2/  ( x1 x2 -- x1 x3 )
+
+\ x3 is the result of shifting all bits of x2 to the right by
+\ one bit position. The vacated most significant bit of x3 is
+\ filled with the value of the least significant bit of x1.
 
 
 
@@ -3737,14 +3754,28 @@ synonym d>s drop  ( d -- n )
 \ infinity).
 
 
-: d2*  ( xd1 -- xd2 )  2* over 0< 1 and or swap 2* swap ;
+: d2*  ( xd1 -- xd2 )
+  interpretation
+    2*<< swap 2* swap
+  compilation
+    postpone 2*<<
+    postpone swap
+    postpone 2*
+    postpone swap ; immediate
 
 \ xd2 is the result of shifting all bits of xd1 to the left by
 \ one bit position. The vacated least significant bit becomes
 \ zero.
 
 
-: d2/  ( xd1 -- xd2 )  dup odd $8000 and rot u2/ or swap 2/ ;
+: d2/  ( xd1 -- xd2 )
+  interpretation
+    swap >>2/ swap 2/
+  compilation
+    postpone swap
+    postpone >>2/
+    postpone swap
+    postpone 2/ ; immediate
 
 \ xd2 is the result of shifting all bits of xd1 to the right by
 \ one bit position. The vacated most significant bit is un-
@@ -3847,6 +3878,16 @@ synonym d>s drop  ( d -- n )
 \ Subtract single-cell signed integer from a double-cell integer
 \ to produce a double-cell result. Either or both of the double-
 \ cell numbers may be signed or unsigned.
+
+
+: ud2/  ( xd1 -- xd2 )
+  interpretation
+    swap >>2/ swap u2/
+  compilation
+    postpone swap
+    postpone >>2/
+    postpone swap
+    postpone u2/ ; immediate
 
 
 : ud.r  ( ud n -- )  >r <# #s #> r> over - spaces type ;
