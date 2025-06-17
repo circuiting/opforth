@@ -1515,7 +1515,7 @@ $____ opcode c@+  ( c-addr1 -- c-addr2 char )
 \ put the character on top of the stack.
 
 
-synonym c!+ !+  ( char c-addr1 -- c-addr2 )
+$____ opcode c!+  ( char c-addr1 -- c-addr2 )
 
 \ Write char to memory address c-addr1. Add one to c-addr1 and
 \ put the result on top of the stack.
@@ -1527,7 +1527,7 @@ $____ opcode c@-  ( c-addr1 -- c-addr2 char )
 \ c-addr1, and put the character on top of the stack.
 
 
-synonym c!- !-  ( char c-addr1 -- c-addr2 )
+$___ opcode c!-  ( char c-addr1 -- c-addr2 )
 
 \ Write char to memory addres c-addr1. Subtract one from
 \ c-addr1 and put the result on top of the stack.
