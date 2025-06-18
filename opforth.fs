@@ -3233,9 +3233,13 @@ synonym i r@  ( Com: -- ) ( Exe: R:n|u -- n|u R:n|u )
 \ available.
 
 
-$____ opcode j  ( Com: -- )  ( Exe: R:n1|u1 R:n2|u2 R:n3|u3 --
-                               n3|u3 R:n1|u1 R:n2|u2 R:n3|u3 )
-  compile-only
+: j  ( Com: -- )  ( Exe: R:n1|u1 R:n2|u2 R:n3|u3 --
+                         n3|u3 R:n1|u1 R:n2|u2 R:n3|u3 )
+  postpone r>
+  postpone r>
+  postpone r@
+  postpone swap>r
+  postpone swap>r ; immediate compile-only
 
 \ Interpretation: Undefined
 
