@@ -724,8 +724,7 @@ $____ opcode tuck  ( x1 x2 -- x2 x1 x2 )
 
 
 : 2>r  ( Com: -- ) ( Exe: x1 x2 R: -- R:x1 R:x2 )
-  postpone swap
-  postpone >r
+  postpone swap>r
   postpone >r ; immediate compile-only
 
 \ Interpretation: Undefined
@@ -736,8 +735,7 @@ $____ opcode tuck  ( x1 x2 -- x2 x1 x2 )
 
 : 2r>  ( Com: -- ) ( Exe: R:x1 R:x2 -- x1 x2 R: )
   postpone r>
-  postpone r>
-  postpone swap ; immediate compile-only
+  postpone r>swap ; immediate compile-only
 
 \ Interpretation: Undefined
 
