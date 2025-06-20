@@ -4340,7 +4340,7 @@ variable scr  ( -- )  0 scr !
 \ use may corrupt the transient region identified by #>.
 
 
-: ?  ( a-addr -- )  something ;
+: ?  ( a-addr -- )  @ . ;
 
 \ Standard Forth description (to be revised):
 
@@ -4350,7 +4350,7 @@ variable scr  ( -- )  0 scr !
 \ use may corrupt the transient region identified by #>.
 
 
-: dump  ( addr u -- )  something ;
+: dump  ( addr u -- )  hex over + ?do i c@ u. loop decimal ;
 
 \ Standard Forth description (to be revised):
 
