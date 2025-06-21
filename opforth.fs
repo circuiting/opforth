@@ -4248,7 +4248,7 @@ variable blk  ( -- a-addr )  0 blk !
 \ number.
 
 
-: flush  ( -- )  something ;
+: flush  ( -- )  save-buffers empty-buffers ;
 
 \ Standard Forth description (to be revised):
 
