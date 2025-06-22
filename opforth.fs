@@ -562,6 +562,11 @@
 \ key?     -- flag
 
 
+\ Facility-Ext
+
+\ ekey    -- x
+
+
 \ Block
 
 \ blk             -- a-addr
@@ -4176,6 +4181,16 @@ synonym d>s drop  ( d -- n )
 \ of KEY? prior to the execution of KEY or EKEY also return true
 \ without discarding keyboard events.
 
+
+
+\ Facility-Ext Words
+
+
+: ekey  ( -- x )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Receive one keyboard event x.
 
 
 \ Block Words
