@@ -564,7 +564,8 @@
 
 \ Facility-Ext
 
-\ ekey    -- x
+\ ekey     -- x
+\ ekey?    -- flag
 
 
 \ Block
@@ -4191,6 +4192,20 @@ synonym d>s drop  ( d -- n )
 \ Standard Forth description (to be revised):
 
 \ Receive one keyboard event x.
+
+
+: ekey?  ( -- flag )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ If a keyboard event is available, flag is true. Otherwise flag
+\ is false. The event shall be returned by the next execution of
+\ EKEY.
+
+\ After EKEY? returns with a value of true, subsequent executions
+\ of EKEY? prior to the execution of KEY, KEY?, or EKEY also re-
+\ turn true, referring to the same event.
+
 
 
 \ Block Words
