@@ -564,8 +564,12 @@
 
 \ Facility-Ext
 
-\ ekey     -- x
-\ ekey?    -- flag
+\ ekey       -- x
+\ ekey?      -- flag
+\ k-up       -- u
+\ k-down     -- u
+\ k-right    -- u
+\ k-left     -- u
 
 
 \ Block
@@ -4205,6 +4209,38 @@ synonym d>s drop  ( d -- n )
 \ After EKEY? returns with a value of true, subsequent executions
 \ of EKEY? prior to the execution of KEY, KEY?, or EKEY also re-
 \ turn true, referring to the same event.
+
+
+: k-up  ( -- u )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Leaves the value u that the sequence EKEY EKEY>FKEY would pro-
+\ duce when the user presses the "cursor up" key.
+
+
+: k-down  ( -- u )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Leaves the value u that the sequence EKEY EKEY>FKEY would pro-
+\ duce when the user presses the "cursor down" key.
+
+
+: k-right  ( -- u )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Leaves the value u that the sequence EKEY EKEY>FKEY would pro-
+\ duce when the user presses the "cursor right" key.
+
+
+: k-left  ( -- u )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Leaves the value u that the sequence EKEY EKEY>FKEY would pro-
+\ duce when the user presses the "cursor left" key.
 
 
 
