@@ -564,12 +564,16 @@
 
 \ Facility-Ext
 
-\ ekey       -- x
-\ ekey?      -- flag
-\ k-up       -- u
-\ k-down     -- u
-\ k-right    -- u
-\ k-left     -- u
+\ ekey        -- x
+\ ekey?       -- flag
+\ k-up        -- u
+\ k-down      -- u
+\ k-right     -- u
+\ k-left      -- u
+\ k-home      -- u
+\ k-end       -- u
+\ k-delete    -- u
+\ k-insert    -- u
 
 
 \ Block
@@ -4241,6 +4245,38 @@ synonym d>s drop  ( d -- n )
 
 \ Leaves the value u that the sequence EKEY EKEY>FKEY would pro-
 \ duce when the user presses the "cursor left" key.
+
+
+: k-home  ( -- u )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Leaves the value u that the sequence EKEY EKEY>FKEY would pro-
+\ duce when the user presses the "home" or "Pos1" key.
+
+
+: k-end  ( -- u )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Leaves the value u that the sequence EKEY EKEY>FKEY would pro-
+\ duce when the user presses the "end" key.
+
+
+: k-delete  ( -- u )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Leaves the value u that the sequence EKEY EKEY>FKEY would pro-
+\ duce when the user presses the "delete" key.
+
+
+: k-insert  ( -- u )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Leaves the value u that the sequence EKEY EKEY>FKEY would pro-
+\ duce when the user presses the "insert" key.
 
 
 
