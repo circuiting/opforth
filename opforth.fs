@@ -564,16 +564,18 @@
 
 \ Facility-Ext
 
-\ ekey        -- x
-\ ekey?       -- flag
-\ k-up        -- u
-\ k-down      -- u
-\ k-right     -- u
-\ k-left      -- u
-\ k-home      -- u
-\ k-end       -- u
-\ k-delete    -- u
-\ k-insert    -- u
+\ ekey         -- x
+\ ekey?        -- flag
+\ ekey>char    x -- x false | char true
+\ ekey>fkey    x -- u flag
+\ k-up         -- u
+\ k-down       -- u
+\ k-right      -- u
+\ k-left       -- u
+\ k-home       -- u
+\ k-end        -- u
+\ k-delete     -- u
+\ k-insert     -- u
 
 
 \ Block
@@ -4213,6 +4215,24 @@ synonym d>s drop  ( d -- n )
 \ After EKEY? returns with a value of true, subsequent executions
 \ of EKEY? prior to the execution of KEY, KEY?, or EKEY also re-
 \ turn true, referring to the same event.
+
+
+: ekey>char  ( x -- x false | char true )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ If the keyboard event x corresponds to a character in the
+\ character set, return that character and true. Otherwise re-
+\ turn x and false.
+
+
+: ekey>fkey  ( x -- u flag )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ If the keyboard event x corresponds to a keypress in the spe-
+\ cial key set, return that key's id u and true. Otherwise re-
+\ turn x and false.
 
 
 : k-up  ( -- u )  something ;
