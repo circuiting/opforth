@@ -564,18 +564,21 @@
 
 \ Facility-Ext
 
-\ ekey         -- x
-\ ekey?        -- flag
-\ ekey>char    x -- x false | char true
-\ ekey>fkey    x -- u flag
-\ k-up         -- u
-\ k-down       -- u
-\ k-right      -- u
-\ k-left       -- u
-\ k-home       -- u
-\ k-end        -- u
-\ k-delete     -- u
-\ k-insert     -- u
+\ ekey            -- x
+\ ekey?           -- flag
+\ ekey>char       x -- x false | char true
+\ ekey>fkey       x -- u flag
+\ k-up             -- u
+\ k-down          -- u
+\ k-right         -- u
+\ k-left          -- u
+\ k-home          -- u
+\ k-end           -- u
+\ k-delete        -- u
+\ k-insert        -- u
+\ k-ctrl-mask     -- u
+\ k-alt-mask      -- u
+\ k-shift-mask    -- u
 
 
 \ Block
@@ -4297,6 +4300,33 @@ synonym d>s drop  ( d -- n )
 
 \ Leaves the value u that the sequence EKEY EKEY>FKEY would pro-
 \ duce when the user presses the "insert" key.
+
+
+: k-ctrl-mask  ( -- u )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Mask for the CTRL key, which can be ORed with the key value to
+\ produce a value that the sequence EKEY EKEY>FKEY may produce
+\ when the user presses the corresponding key combination.
+
+
+: k-alt-mask  ( -- u )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Mask for the ALT key, which can be ORed with the key value to
+\ produce a value that the sequence EKEY EKEY>FKEY may produce
+\ when the user presses the corresponding key combination.
+
+
+: k-shift-mask  ( -- u )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Mask for the SHIFT key, which can be ORed with the key value
+\ to produce a value that the sequence EKEY EKEY>FKEY may pro-
+\ duce when the user presses the corresponding key combination.
 
 
 
