@@ -579,6 +579,18 @@
 \ k-ctrl-mask     -- u
 \ k-alt-mask      -- u
 \ k-shift-mask    -- u
+\ k-f1            -- u
+\ k-f2            -- u
+\ k-f3            -- u
+\ k-f4            -- u
+\ k-f5            -- u
+\ k-f6            -- u
+\ k-f7            -- u
+\ k-f8            -- u
+\ k-f9            -- u
+\ k-f10           -- u
+\ k-f11           -- u
+\ k-f12           -- u
 
 
 \ Block
@@ -4327,6 +4339,102 @@ synonym d>s drop  ( d -- n )
 \ Mask for the SHIFT key, which can be ORed with the key value
 \ to produce a value that the sequence EKEY EKEY>FKEY may pro-
 \ duce when the user presses the corresponding key combination.
+
+
+: k-f1  ( -- u )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Leaves the value u that the sequence EKEY EKEY>FKEY would pro-
+\ duce when the user presses the "F1" key.
+
+
+: k-f2  ( -- u )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Leaves the value u that the sequence EKEY EKEY>FKEY would pro-
+\ duce when the user presses the "F2" key.
+
+
+: k-f3  ( -- u )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Leaves the value u that the sequence EKEY EKEY>FKEY would pro-
+\ duce when the user presses the "F3" key.
+
+
+: k-f4  ( -- u )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Leaves the value u that the sequence EKEY EKEY>FKEY would pro-
+\ duce when the user presses the "F4" key.
+
+
+: k-f5  ( -- u )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Leaves the value u that the sequence EKEY EKEY>FKEY would pro-
+\ duce when the user presses the "F5" key.
+
+
+: k-f6  ( -- u )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Leaves the value u that the sequence EKEY EKEY>FKEY would pro-
+\ duce when the user presses the "F6" key.
+
+
+: k-f7  ( -- u )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Leaves the value u that the sequence EKEY EKEY>FKEY would pro-
+\ duce when the user presses the "F7" key.
+
+
+: k-f8  ( -- u )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Leaves the value u that the sequence EKEY EKEY>FKEY would pro-
+\ duce when the user presses the "F8" key.
+
+
+: k-f9  ( -- u )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Leaves the value u that the sequence EKEY EKEY>FKEY would pro-
+\ duce when the user presses the "F9" key.
+
+
+: k-f10  ( -- u )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Leaves the value u that the sequence EKEY EKEY>FKEY would pro-
+\ duce when the user presses the "F10" key.
+
+
+: k-f11  ( -- u )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Leaves the value u that the sequence EKEY EKEY>FKEY would pro-
+\ duce when the user presses the "F11" key.
+
+
+: k-f12  ( -- u )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Leaves the value u that the sequence EKEY EKEY>FKEY would pro-
+\ duce when the user presses the "F12" key.
 
 
 
