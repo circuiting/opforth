@@ -564,33 +564,36 @@
 
 \ Facility-Ext
 
-\ ekey            -- x
-\ ekey?           -- flag
-\ ekey>char       x -- x false | char true
-\ ekey>fkey       x -- u flag
-\ k-up             -- u
-\ k-down          -- u
-\ k-right         -- u
-\ k-left          -- u
-\ k-home          -- u
-\ k-end           -- u
-\ k-delete        -- u
-\ k-insert        -- u
-\ k-ctrl-mask     -- u
-\ k-alt-mask      -- u
-\ k-shift-mask    -- u
-\ k-f1            -- u
-\ k-f2            -- u
-\ k-f3            -- u
-\ k-f4            -- u
-\ k-f5            -- u
-\ k-f6            -- u
-\ k-f7            -- u
-\ k-f8            -- u
-\ k-f9            -- u
-\ k-f10           -- u
-\ k-f11           -- u
-\ k-f12           -- u
+\ ekey               -- x
+\ ekey?              -- flag
+\ ekey>char          x -- x false | char true
+\ ekey>fkey          x -- u flag
+\ k-up               -- u
+\ k-down             -- u
+\ k-right            -- u
+\ k-left             -- u
+\ k-home             -- u
+\ k-end              -- u
+\ k-delete           -- u
+\ k-insert           -- u
+\ k-ctrl-mask        -- u
+\ k-alt-mask         -- u
+\ k-shift-mask       -- u
+\ k-f1               -- u
+\ k-f2               -- u
+\ k-f3               -- u
+\ k-f4               -- u
+\ k-f5               -- u
+\ k-f6               -- u
+\ k-f7               -- u
+\ k-f8               -- u
+\ k-f9               -- u
+\ k-f10              -- u
+\ k-f11              -- u
+\ k-f12              -- u
+\ begin-structure    '<spaces>name' -- struct-sys 0
+\                    Exe: -- +n
+\ end-structure      struct-sys +n --
 
 
 \ Block
@@ -4435,6 +4438,32 @@ synonym d>s drop  ( d -- n )
 
 \ Leaves the value u that the sequence EKEY EKEY>FKEY would pro-
 \ duce when the user presses the "F12" key.
+
+
+: begin-structure  ( '<spaces>name' -- struct-sys 0 )
+                   ( Exe: -- +n )
+  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Skip leading spaces and parse name delimited by a space. Cre-
+\ ate a definition for name with the execution semantics defined
+\ below. Return a struct-sys (zero or more items) that will be
+\ used by END-STRUCTURE and an initial offset of 0.
+
+\ name Execution: +n is the size in memory expressed in address
+\ units of the data structure.
+
+\ An ambiguous condition exists if name is executed prior to the
+\ associated END-STRUCTURE being executed.
+
+
+: end-structure  ( struct-sys +n -- )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Terminate definition of a structure started by
+\ BEGIN-STRUCTURE.
 
 
 
