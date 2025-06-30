@@ -598,6 +598,8 @@
 \                    Exe: addr1 -- addr2
 \ field:             '<spaces>name' n1 -- n2
 \                    Exe: addr1 -- addr2
+\ +field             '<spaces>name' n1 n2 -- n3
+\                    Exe: addr1 -- addr2
 
 
 \ Block
@@ -4502,6 +4504,22 @@ synonym d>s drop  ( d -- n )
 
 \ name Execution: Add the offset calculated during the compile-
 \ time action to addr1 giving the address addr2.
+
+
+: +field  ( '<spaces>name' n1 n2 -- n3 )
+          ( Exe: addr1 -- addr2 )
+  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Skip leading space delimiters and parse name delimited by a
+\ space. Create a definition for name with the execution seman-
+\ tics defined below. Return n3 = n1 + n2 where n1 is the offset
+\ in the data structure before +FIELD executes, and n2 is the
+\ size of the data to be added to the data structure. n1 and n2
+\ are in address units.
+
+\ name Execution: Add n1 to addr1 giving addr2.
 
 
 
