@@ -594,6 +594,10 @@
 \ begin-structure    '<spaces>name' -- struct-sys 0
 \                    Exe: -- +n
 \ end-structure      struct-sys +n --
+\ cfield:            '<spaces>name' n1 -- n2
+\                    Exe: addr1 -- addr2
+\ field:             '<spaces>name' n1 -- n2
+\                    Exe: addr1 -- addr2
 
 
 \ Block
@@ -4464,6 +4468,40 @@ synonym d>s drop  ( d -- n )
 
 \ Terminate definition of a structure started by
 \ BEGIN-STRUCTURE.
+
+
+: cfield:  ( '<spaces>name' n1 -- n2 )
+           ( Exe: addr1 -- addr2 )
+  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Skip leading space delimiters and parse name delimited by a
+\ space. Offset is the first character aligned value greater
+\ than or equal to n1. n2 = offset + 1 + character.
+
+\ Create a definition for name with the execution semantics de-
+\ fined below.
+
+\ name Execution: Add the offset calculated during the compile-
+\ time action to addr1 giving the address addr2.
+
+
+: field:  ( '<spaces>name' n1 -- n2 )
+          ( Exe: addr1 -- addr2 )
+  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Skip leading space delimiters and parse name delimited by a
+\ space. Offset is the first cell aligned value greater than or
+\ equal to n1. n2 = offset + 1 cell.
+
+\ Create a definition for name with the execution semantics de-
+\ fined below.
+
+\ name Execution: Add the offset calculated during the compile-
+\ time action to addr1 giving the address addr2.
 
 
 
