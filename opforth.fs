@@ -564,6 +564,7 @@
 
 \ Facility-Ext
 
+\ emit?              -- flag
 \ ekey               -- x
 \ ekey?              -- flag
 \ ekey>char          x -- x false | char true
@@ -4219,6 +4220,16 @@ synonym d>s drop  ( d -- n )
 
 
 \ Facility-Ext Words
+
+
+: emit?  ( -- flag )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ flag is true if the user output device is ready to accept data
+\ and the execution of EMIT in place of EMIT? would not have
+\ suffered an indefinite delay. If the device status is indeter-
+\ minate, flag is true.
 
 
 : ekey  ( -- x )  something ;
