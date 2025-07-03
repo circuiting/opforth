@@ -601,6 +601,7 @@
 \                    Exe: addr1 -- addr2
 \ +field             '<spaces>name' n1 n2 -- n3
 \                    Exe: addr1 -- addr2
+\ ms                 u --
 
 
 \ Block
@@ -4531,6 +4532,23 @@ synonym d>s drop  ( d -- n )
 \ are in address units.
 
 \ name Execution: Add n1 to addr1 giving addr2.
+
+
+: ms  ( u -- )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Wait at least u milliseconds.
+
+
+: time&date  ( -- +n1 +n2 +n3 +n4 +n5 +n6 )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Return the current time and date. +n1 is the second {0...59},
+\ +n2 is the minute {0...59}, +n3 is the hour {0...23}, +n4 is
+\ the day {1...31}, +n5 is the month {1...12} and +n6 is the
+\ year (e.g., 1991).
 
 
 
