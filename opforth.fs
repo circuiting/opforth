@@ -274,7 +274,7 @@
 \ \                Com,Exe: 'ccc<eol>' --
 \ parse            'ccc<char>' char -- c-addr u
 \ parse-name       '<spaces>name<space>' -- c-addr u
-\ source-id        -- 0 | -1
+\ source-id        -- 0 | -1 | fileid
 \ save-input       -- xn...x1 n
 \ restore-input    xn...x1 n -- flag
 \ refill           -- flag
@@ -1889,6 +1889,14 @@ $____ constant holdbuf  ( -- c-addr )
 \ outer interpreter to skip past the text enclosed in the paren-
 \ theses.
 
+\ Standard Forth description for File version (to be revised):
+
+\ When parsing from a text file, if the end of the parse area is
+\ reached before a right parenthesis is found, refill the input
+\ buffer from the next line of the file, set >IN to zero, and
+\ resume parsing, repeating this process until either a right
+\ parenthesis is found or the end of the file is reached.
+
 
 : source  ( -- c-addr u )  textinbuf #textinbuf ;
 
@@ -2001,11 +2009,15 @@ variable >in  ( -- a-addr )  0 >in !
 \ length.
 
 
-0 value source-id  ( -- 0 | -1 )
+0 value source-id  ( -- 0 | -1 | fileid )
 
 \ If the input source is the user input device, put 0 on the
 \ stack. If the input source is a string via EVALUATE, put -1
+\ on the stack. If the input source is a file, put the file ID
 \ on the stack.
+
+\ An ambiguous condition exists if SOURCE-ID is  used when BLK
+\ contains a non-zero value.
 
 
 : save-input  ( -- xn...x1 n )  textinbuf >in @ 2 ;
@@ -2050,6 +2062,13 @@ variable >in  ( -- a-addr )  0 >in !
 \ put source and current input buffer by adding one to the value
 \ of BLK and setting >IN to zero. If the new value of BLK is a
 \ valid block number, flag is true. Otherwise flag is false.
+
+\ Standard Forth description for File version (to be revised):
+
+\ When the input source is a text file, attempt to read the next
+\ line from the text-input file. If successful, make the result
+\ the current input buffer, set >IN to zero, and return true.
+\ Otherwise return false.
 
 
 
