@@ -623,6 +623,11 @@
 \ thru             i*x u1 u2 -- j*x
 
 
+\ File
+
+\ bin    fam1 -- fam2
+
+
 \ Tools
 
 \ .s      --
@@ -4717,6 +4722,18 @@ variable scr  ( -- )  0 scr !
 
 \ LOAD the mass storage blocks numbered u1 through u2 in se-
 \ quence. Other stack effects are due to the words LOADed.
+
+
+
+\ File Words
+
+: bin  ( fam1 -- fam2 )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Modify the implementation-dependent file access method fam1 to
+\ additionally select a "binary", i.e., not line oriented, file
+\ access method, giving access method fam2.
 
 
 
