@@ -625,7 +625,9 @@
 
 \ File
 
-\ bin    fam1 -- fam2
+\ open-file     c-addr u fam -- fileid ior
+\ close-file    fileid -- ior
+\ bin           fam1 -- fam2
 
 
 \ Tools
@@ -4726,6 +4728,31 @@ variable scr  ( -- )  0 scr !
 
 
 \ File Words
+
+
+: open-file  ( c-addr u fam -- fileid ior )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Open the file named in the character string specified by
+\ c-addr u, with file access method indicated by fam. The mean-
+\ ing of values of fam is implementation defined.
+
+\ If the file is successfully opened, ior is zero, fileid is its
+\ identifier, and the file has been positioned to the start of
+\ the file.
+
+\ Otherwise, ior is the implementation-defined I/O result code
+\ and fileid is undefined.
+
+
+: close-file  ( fileid -- ior )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Close the file identified by fileid, the implementation-
+\ defined I/O result code.
+
 
 : bin  ( fam1 -- fam2 )  something ;
 
