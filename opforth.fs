@@ -625,9 +625,10 @@
 
 \ File
 
-\ open-file     c-addr u fam -- fileid ior
-\ close-file    fileid -- ior
-\ bin           fam1 -- fam2
+\ open-file      c-addr u fam -- fileid ior
+\ close-file     fileid -- ior
+\ create-file    c-addr u fam -- fileid ior
+\ bin            fam1 -- fam2
 
 
 \ Tools
@@ -4752,6 +4753,24 @@ variable scr  ( -- )  0 scr !
 
 \ Close the file identified by fileid, the implementation-
 \ defined I/O result code.
+
+
+: create-file  ( c-addr u fam -- fileid ior )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Create the file named in the character string specified by
+\ c-addr and u, and open it with file access method fam. The
+\ meaning of values of fam is implementation defined. If a file
+\ with the same name already exists, recreate it as an empty
+\ file.
+
+\ If the file was successfully created and opened, ior is zero,
+\ fileid is its identifier, and the file has been positioned to
+\ the start of the file.
+
+\ Otherwise, ior is the implementation-defined I/O result code
+\ and fileid is undefined.
 
 
 : bin  ( fam1 -- fam2 )  something ;
