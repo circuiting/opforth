@@ -629,6 +629,7 @@
 \ close-file     fileid -- ior
 \ create-file    c-addr u fam -- fileid ior
 \ delete-file    c-adddr u -- ior
+\ rename-file    c-addr1 u1 c-addr2 u2 -- ior
 \ bin            fam1 -- fam2
 
 
@@ -4780,6 +4781,15 @@ variable scr  ( -- )  0 scr !
 
 \ Delete the file named in the character string specified by
 \ c-addr u. ior is the implementation-defined I/O result code.
+
+
+: rename-file  ( c-addr1 u1 c-addr2 u2 -- ior )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Rename the file named by the character string c-addr1 u1 to
+\ the name in the character string c-addr2 u2. ior is the
+\ implementation-defined I/O result code.
 
 
 : bin  ( fam1 -- fam2 )  something ;
