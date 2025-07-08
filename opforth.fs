@@ -628,6 +628,7 @@
 \ open-file      c-addr u fam -- fileid ior
 \ close-file     fileid -- ior
 \ create-file    c-addr u fam -- fileid ior
+\ delete-file    c-adddr u -- ior
 \ bin            fam1 -- fam2
 
 
@@ -4771,6 +4772,14 @@ variable scr  ( -- )  0 scr !
 
 \ Otherwise, ior is the implementation-defined I/O result code
 \ and fileid is undefined.
+
+
+: delete-file  ( c-addr u -- ior )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Delete the file named in the character string specified by
+\ c-addr u. ior is the implementation-defined I/O result code.
 
 
 : bin  ( fam1 -- fam2 )  something ;
