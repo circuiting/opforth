@@ -625,12 +625,13 @@
 
 \ File
 
-\ open-file      c-addr u fam -- fileid ior
-\ close-file     fileid -- ior
-\ create-file    c-addr u fam -- fileid ior
-\ delete-file    c-adddr u -- ior
-\ rename-file    c-addr1 u1 c-addr2 u2 -- ior
-\ bin            fam1 -- fam2
+\ open-file          c-addr u fam -- fileid ior
+\ close-file         fileid -- ior
+\ create-file        c-addr u fam -- fileid ior
+\ delete-file        c-adddr u -- ior
+\ rename-file        c-addr1 u1 c-addr2 u2 -- ior
+\ reposition-file    ud fileid -- ior
+\ bin                fam1 -- fam2
 
 
 \ Tools
@@ -4790,6 +4791,20 @@ variable scr  ( -- )  0 scr !
 \ Rename the file named by the character string c-addr1 u1 to
 \ the name in the character string c-addr2 u2. ior is the
 \ implementation-defined I/O result code.
+
+
+: reposition-file  ( ud fileid -- ior )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Reposition the file identifed by fileid to ud. ior is the
+\ implementation-defined I/O result code.
+
+\ At the conclusion of the operation, FILE-POSITION returns the
+\ value ud.
+
+\ An ambiguous condition exists if the file is positioned out-
+\ side the file boundaries.
 
 
 : bin  ( fam1 -- fam2 )  something ;
