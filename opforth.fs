@@ -632,6 +632,7 @@
 \ rename-file        c-addr1 u1 c-addr2 u2 -- ior
 \ reposition-file    ud fileid -- ior
 \ write-file         c-addr u fileid -- ior
+\ write-line         c-addr u fileid -- ior
 \ bin                fam1 -- fam2
 
 
@@ -4820,6 +4821,21 @@ variable scr  ( -- )  0 scr !
 \ next file position after the last character to be written to
 \ the file, and FILE-SIZE returns a value greater than or equal
 \ to the value returned by FILE-POSITION.
+
+
+: write-line  ( c-addr u fileid -- ior )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Write u characters from c-addr followed by the implementation-
+\ dependent line terminator to the file identified by fileid
+\ starting at its current position. ior is the implementation-
+\ defined I/O result code.
+
+\ At the conclusion of the operation, FILE-POSITION returns the
+\ next file position after the last character written to the
+\ file, and FILE-SIZE returns a value greater than or equal to
+\ the value returned by FILE-POSITION.
 
 
 : bin  ( fam1 -- fam2 )  something ;
