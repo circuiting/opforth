@@ -633,6 +633,7 @@
 \ reposition-file    ud fileid -- ior
 \ write-file         c-addr u fileid -- ior
 \ write-line         c-addr u fileid -- ior
+\ read-file          c-addr u1 fileid -- u2 ior
 \ bin                fam1 -- fam2
 
 
@@ -4836,6 +4837,37 @@ variable scr  ( -- )  0 scr !
 \ next file position after the last character written to the
 \ file, and FILE-SIZE returns a value greater than or equal to
 \ the value returned by FILE-POSITION.
+
+
+: read-file  ( c-addr u1 fileid -- u2 ior )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Read u1 consecutive characters to c-addr from the current po-
+\ sition of the file identified by fileid.
+
+\ If u1 characters are read without an exception, ior is zero
+\ and u2 is equal to u1.
+
+\ If the end of the file is reached before u1 characters are
+\ read, ior is zero and u2 is the number of characters actually
+\ read.
+
+\ If the operation is initiated when the value returned by
+\ FILE-POSITION is equal to the value returned by FILE-SIZE for
+\ the file identified by fileid, ior is zero and u2 is zero.
+
+\ If an exception occurs, ior is the implementation-defined I/O
+\ result code, and u2 is the number of characters transferred to
+\ c-addr without an exception.
+
+\ At the conclusion of the operation, FILE-POSITION returns the
+\ next file position after the last character read.
+
+\ An ambiguous condition exists if the operation is initiated
+\ when the value returned by FILE-SIZE for the file identified
+\ by fileid, or if the requested operation attempts to read por-
+\ tions of the file not written.
 
 
 : bin  ( fam1 -- fam2 )  something ;
