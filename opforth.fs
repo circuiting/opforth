@@ -634,6 +634,7 @@
 \ write-file         c-addr u fileid -- ior
 \ write-line         c-addr u fileid -- ior
 \ read-file          c-addr u1 fileid -- u2 ior
+\ read-line          c-addr u1 fileid -- u2 flag ior
 \ bin                fam1 -- fam2
 
 
@@ -4868,6 +4869,40 @@ variable scr  ( -- )  0 scr !
 \ when the value returned by FILE-SIZE for the file identified
 \ by fileid, or if the requested operation attempts to read por-
 \ tions of the file not written.
+
+
+: read-line  ( c-addr u1 fileid -- u2 flag ior )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ Read the next line from the file specified by fileid into mem-
+\ ory at the address c-addr. At most u1 characters are read. Up
+\ to two implementation-defined line-terminating characters may
+\ be read into memory at the end of the line, but are not in-
+\ cluded in the count u2. The line buffer provided by c-addr
+\ should be at least u1+2 characters long.
+
+\ If the operation succeeded, flag is true and ior is zero. If a
+\ line terminator was received before u1 characters were read,
+\ then u2 is the number of characters, not including the line
+\ terminator, actually read (0 <= u2 <= u1). When u1 = u2 the
+\ line terminator has yet to be reached.
+
+\ If the operation is initiated when the value returned by
+\ FILE-POSITION is equal to the value returned by FILE-SIZE for
+\ the file identified by fileid, flag is false, ior is zero, and
+\ u2 is zero. If ior is non-zero, an exception occurred during
+\ the operation and ior is the implementation-defined I/O result
+\ code.
+
+\ At the conclusion of the operation, FILE-POSITION returns the
+\ next file position after the last character read.
+
+\ An ambiguous condition exists if the operation is initiated
+\ when the value returned by FILE-POSITION is greater than the
+\ value returned by FILE-SIZE for the file identified by fileid,
+\ or if the requested operation attempts to read portions of the
+\ file not written.
 
 
 : bin  ( fam1 -- fam2 )  something ;
