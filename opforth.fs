@@ -636,6 +636,7 @@
 \ read-file          c-addr u1 fileid -- u2 ior
 \ read-line          c-addr u1 fileid -- u2 flag ior
 \ bin                fam1 -- fam2
+\ r/o                -- fam
 
 
 \ Tools
@@ -4912,6 +4913,14 @@ variable scr  ( -- )  0 scr !
 \ Modify the implementation-dependent file access method fam1 to
 \ additionally select a "binary", i.e., not line oriented, file
 \ access method, giving access method fam2.
+
+
+: r/o  ( -- fam )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ fam is the implementation-defined value for selecting the
+\ "read-only" file access method.
 
 
 
