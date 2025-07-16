@@ -637,6 +637,7 @@
 \ read-line          c-addr u1 fileid -- u2 flag ior
 \ bin                fam1 -- fam2
 \ r/o                -- fam
+\ r/w                -- fam
 
 
 \ Tools
@@ -4921,6 +4922,14 @@ variable scr  ( -- )  0 scr !
 
 \ fam is the implementation-defined value for selecting the
 \ "read-only" file access method.
+
+
+: r/w  ( -- fam )  something ;
+
+\ Standard Forth description (to be revised):
+
+\ fam is the implementation-defined value for selecting the
+\ "read/write" file access method.
 
 
 
